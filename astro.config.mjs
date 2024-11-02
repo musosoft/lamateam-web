@@ -9,21 +9,25 @@ import auth from 'auth-astro';
 const siteUrl = process.env.PUBLIC_SITE_URL || 'https://lama-web.pages.dev';
 
 export default defineConfig({
-  site: siteUrl, // Use fallback or predefined value
+  site: siteUrl,
+
+  integrations: [
+    tailwind({
+      nesting: true,
+      applyBaseStyles: true, // Apply Tailwind’s base styles
+    }),
+    auth(),
+  ],
+
+  output: 'server',
+  adapter: cloudflare(), // Use Cloudflare Pages adapter
 
   vite: {
     define: {
       'process.env': process.env, // Allows process.env usage in Vite
     },
+    ssr: {
+      noExternal: ['auth-astro'], // Do not externalize auth-astro to avoid bundling issues
+    },
   },
-
-  integrations: [
-    tailwind({
-      nesting: true,
-      applyBaseStyles: true, // Uses Tailwind’s base styles for consistency
-    }),
-    auth(),
-  ],
-  output: 'server',
-  adapter: cloudflare(),
 });
