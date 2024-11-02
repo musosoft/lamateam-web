@@ -111,7 +111,7 @@ const userName = session?.user?.name || "Player";
     };
 
     function showSection(section) {
-      [shoutbox, rules].forEach(sec => sec?.classList.add('hidden'));
+      [shoutbox, rules, info, vip].forEach(sec => sec?.classList.add('hidden'));
       section?.classList.remove('hidden');
     }
 
