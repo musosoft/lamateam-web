@@ -1,9 +1,8 @@
 // src/pages/api/auth/steam/callback.ts
 import type { APIRoute } from 'astro';
 
-const STEAM_API_KEY = import.meta.env.STEAM_CLIENT_ID ?? process.env.STEAM_CLIENT_ID;
-
-export const GET: APIRoute = async ({ request, cookies }) => {
+export const GET: APIRoute = async (context) => {
+  const { request, cookies } = context;
   const url = new URL(request.url);
   const params = url.searchParams;
 
@@ -15,33 +14,32 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     return new Response('Authentication failed', { status: 401 });
   }
 
+  // Access the Steam API key from both environments
+  const STEAM_API_KEY =
+    import.meta.env.STEAM_API_KEY || process.env.STEAM_API_KEY;
+
   if (!STEAM_API_KEY) {
     console.error('Steam API key is missing.');
     return new Response('Server configuration error', { status: 500 });
   }
 
-  // Log API key and URL
   console.log('Using Steam API Key:', STEAM_API_KEY);
+
   const apiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steamID}`;
   console.log('Fetching from Steam API URL:', apiUrl);
 
-  // Fetch player data from Steam API
   try {
     const response = await fetch(apiUrl);
-    const responseBody = await response.text();
-
-    // Log response body for debugging
-    console.log('Steam API response body:', responseBody);
-
     if (!response.ok) {
-      console.error('Error response from Steam API:', responseBody);
+      const errorText = await response.text();
+      console.error('Error response from Steam API:', errorText);
       return new Response('Authentication failed', { status: 401 });
     }
 
-    const data = JSON.parse(responseBody);
+    const data = await response.json();
     const player = data.response.players[0];
     const playerName = player?.personaname || `Player ${steamID}`;
-    const playerAvatar = player?.avatar || '';
+    const playerAvatar = player?.avatarfull || '/assets/default-avatar.webp';
 
     const sessionData = { steamID, playerName, playerAvatar };
     cookies.set('session', encodeURIComponent(JSON.stringify(sessionData)), {
@@ -53,9 +51,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
 
     return new Response(null, {
       status: 302,
-      headers: {
-        Location: '/',
-      },
+      headers: { Location: '/' },
     });
   } catch (error) {
     console.error('Error fetching Steam user data:', error);
