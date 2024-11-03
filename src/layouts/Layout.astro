@@ -49,12 +49,6 @@ const inGameAuthenticated = isGame && communityId && playerName;
         } else {
           // Non-authenticated users
           if (userGreeting) userGreeting.innerText = "Please log in with Steam to access this feature.";
-          if (loginBtn) {
-            loginBtn.classList.remove("hidden");
-            loginBtn.onclick = () => {
-              window.location.href = "/api/auth/steam";
-            };
-          }
         }
       });
     </script>
