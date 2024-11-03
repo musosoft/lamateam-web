@@ -1,7 +1,7 @@
 // src/pages/api/auth/steam/callback.ts
 import type { APIRoute } from 'astro';
 
-const STEAM_API_KEY = import.meta.env.STEAM_CLIENT_ID; // Use the correct environment variable
+const STEAM_API_KEY = import.meta.env.STEAM_CLIENT_ID ?? process.env.STEAM_CLIENT_ID;
 
 export const GET: APIRoute = async ({ request, cookies }) => {
   const url = new URL(request.url);
