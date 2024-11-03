@@ -7,6 +7,12 @@ interface Props {
 }
 
 const { title, isAuthenticated, userName, hero } = Astro.props;
+
+// Accessing query parameters using Astro.url
+const communityId = Astro.url.searchParams.get('communityid');
+const playerName = Astro.url.searchParams.get('name');
+const isGame = Astro.url.searchParams.get('valve') === 'true'; // Assuming 'valve' is passed in the URL for in-game detection
+const inGameAuthenticated = isGame && communityId && playerName;
 ---
 
 <!doctype html>
@@ -30,32 +36,25 @@ const { title, isAuthenticated, userName, hero } = Astro.props;
     </main>
 
     <!-- Script for handling authentication logic -->
-    <script is:inline define:vars={{ isAuthenticated, userName }}>
-      document.addEventListener("DOMContentLoaded", async () => {
-        const loginBtn = document.getElementById("login");
-        const logoutBtn = document.getElementById("logout");
+    <script is:inline define:vars={{ isAuthenticated, userName, inGameAuthenticated, playerName, communityId }}>
+      document.addEventListener("DOMContentLoaded", () => {
         const userGreeting = document.getElementById("greeting-message");
 
-        try {
-          const { signIn, signOut } = await import("auth-astro/client");
-
-          if (isAuthenticated) {
-            if (userGreeting) userGreeting.innerText = `Welcome, ${userName}`;
-            if (logoutBtn) {
-              logoutBtn.classList.remove("hidden");
-              logoutBtn.onclick = () => signOut();
-            }
-            if (loginBtn) loginBtn.classList.add("hidden");
-          } else {
-            if (userGreeting) userGreeting.innerText = "Please log in with Steam to access this feature.";
-            if (loginBtn) {
-              loginBtn.classList.remove("hidden");
-              loginBtn.onclick = () => signIn("steam");
-            }
-            if (logoutBtn) logoutBtn.classList.add("hidden");
+        if (inGameAuthenticated) {
+          // For in-game users with valid query params
+          if (userGreeting) userGreeting.innerText = `Welcome, ${playerName}`;
+        } else if (isAuthenticated) {
+          // Regular authenticated users
+          if (userGreeting) userGreeting.innerText = `Welcome, ${userName}`;
+        } else {
+          // Non-authenticated users
+          if (userGreeting) userGreeting.innerText = "Please log in with Steam to access this feature.";
+          if (loginBtn) {
+            loginBtn.classList.remove("hidden");
+            loginBtn.onclick = () => {
+              window.location.href = "/api/auth/steam";
+            };
           }
-        } catch (error) {
-          console.warn("auth-astro client not available. Using mock functions.");
         }
       });
     </script>
@@ -70,7 +69,7 @@ const { title, isAuthenticated, userName, hero } = Astro.props;
     75% { left: calc(100% - 75px); top: 0; transform: rotate(-135deg); }
     100% { left: 0; top: 0; transform: rotate(135deg); }
   }
-  
+
   .animate-pointer {
     position: fixed;
     left: 0;

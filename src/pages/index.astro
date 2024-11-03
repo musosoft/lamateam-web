@@ -2,11 +2,13 @@
 import Layout from '../layouts/Layout.astro';
 import Hero from '../assets/hero.svg?raw';
 import Shoutbox from '../components/Shoutbox.astro';
-import { getSession } from 'auth-astro/server';
 
-const session = await getSession(Astro.request);
-const isAuthenticated = Boolean(session);
-const userName = session?.user?.name || "Player";
+const cookies = Astro.cookies;
+const sessionCookie = cookies.get('session');
+const session = sessionCookie ? JSON.parse(decodeURIComponent(sessionCookie.value)) : {};
+const isAuthenticated = Boolean(session?.steamID);
+const userName = session?.steamID ? `Player ${session.steamID}` : "Guest";
+const baseUrl = import.meta.env.BASE_URL; // Add baseUrl here
 ---
 
 <Layout title="Welcome to LaMaTeam" isAuthenticated={isAuthenticated} userName={userName} hero={Hero}>
@@ -16,22 +18,19 @@ const userName = session?.user?.name || "Player";
         <div class="relative z-10 flex flex-col h-full justify-center gap-8 p-8 text-center text-white">
 
           <!-- Header Section with Navigation & Login Buttons -->
-          <div class="fixed top-1 left-0 right-0 max-w-4xl mx-auto grid w-full grid-cols-1 gap-4 sm:grid-cols-4">
-            <a id="shoutboxBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Shoutbox</a>
+          <div class="fixed top-1 left-0 right-0 max-w-4xl mx-auto grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
             <a id="rulesBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Pravidla</a>
             <a id="infoBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Prikazy</a>
             <a id="vipBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">VIP</a>
-            <a id="login" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600 hidden">Login with Steam</a>
-            <a id="logout" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600 hidden">Logout</a>
           </div>
 
           <!-- Content Sections -->
           <div id="shoutbox" class="space-y-4 hidden">
-            <Shoutbox />
+            <Shoutbox session={session} baseUrl={baseUrl} />
           </div>
 
           <!-- Additional sections -->
-          <div id='rules' class='space-y-4 hidden'>
+          <div id='rules' class='space-y-4'>
             <h1 class='mb-4 font-bold tracking-tight text-4xl'>Zákaz:</h1>
             <span class='text-yellow-500'>- T kemp na DE mapách déle jak 30 sekund - (SLAY)</span><br />
             <span class='text-yellow-500'>- SPAM (voice,chat) - (KICK/BAN)</span><br />
@@ -79,7 +78,7 @@ const userName = session?.user?.name || "Player";
           <div class="fixed bottom-1 left-0 right-0 max-w-4xl mx-auto grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
             <a href="https://sourcebans.fakaheda.eu/sbans_336496/" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Banlist</a>
             <a href="https://stats.lamateam.eu" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Stats</a>
-            <a href="http://lamateam.eu/contact.php" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Kontakt</a>
+            <a id="shoutboxBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Shoutbox</a>
           </div>
         </div>
       </div>
