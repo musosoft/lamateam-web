@@ -26,7 +26,10 @@ export const GET = async () => {
 
 export const POST = async ({ request }: { request: Request }) => {
   try {
-    const { steamid, player_name, message, player_avatar } = await request.json();
+    const body = await request.json();
+    console.log('Received payload:', body);
+
+    const { steamid, player_name, message, player_avatar } = body;
 
     if (!steamid || !player_name || !message || !player_avatar) {
       console.error('Validation Error: Missing required fields', { steamid, player_name, message, player_avatar });
@@ -37,6 +40,7 @@ export const POST = async ({ request }: { request: Request }) => {
     }
 
     const timestamp = new Date().toISOString();
+    console.log('Inserting into database:', { steamid, player_name, message, timestamp, player_avatar });
 
     await turso.execute({
       sql: `INSERT INTO Shoutbox (steamid, player_name, message, timestamp, player_avatar) VALUES (?, ?, ?, ?, ?)`,
