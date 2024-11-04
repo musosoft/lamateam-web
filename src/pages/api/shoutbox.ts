@@ -6,6 +6,7 @@ export const GET = async () => {
     const { rows } = await turso.execute(
       'SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC'
     );
+    console.log('Fetched messages:', rows);
 
     return new Response(JSON.stringify(rows), {
       status: 200,

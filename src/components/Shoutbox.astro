@@ -6,6 +6,8 @@ export interface Props {
 }
 
 const { baseUrl, session } = Astro.props;
+console.log('Base URL:', import.meta.env.BASE_URL || process.env.BASE_URL);
+
 
 // Detect in-game user and query parameters
 const communityId = Astro.url.searchParams.get('communityid');
@@ -51,6 +53,20 @@ const displayPlayerAvatar = session?.playerAvatar || '/assets/default-avatar.web
 
 <script is:inline define:vars={{ baseUrl, isAuthenticated, displayPlayerName, displayPlayerAvatar }}>
   document.addEventListener('DOMContentLoaded', async function () {
+
+    console.log('Document loaded');
+    const userAgent = navigator.userAgent;
+    const isGame = userAgent.includes('Valve Client');
+    console.log('User Agent:', userAgent);
+    console.log('Is Game:', isGame);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const communityId = urlParams.get('communityid');
+    const playerNameQuery = urlParams.get('name');
+    console.log('Community ID:', communityId);
+    console.log('Player Name Query:', playerNameQuery);
+
+
     const sendButton = document.getElementById('sendButton');
     const messageInput = document.getElementById('messageInput');
 
