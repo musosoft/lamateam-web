@@ -11,13 +11,13 @@ const isAuthenticated = Boolean(session?.steamID);
 const userName = session?.steamID ? `Player ${session.steamID}` : "Guest";
 
 // Check if environment variables are set correctly
-const baseUrl = import.meta.env.BASE_URL || process.env.BASE_URL || '/';
+const baseUrl = import.meta.env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL || '/';
 
 // Log environment variables for debugging
 console.log('Server-side Environment Variables:', {
-  BASE_URL: baseUrl,
+  PUBLIC_SITE_URL: baseUrl,
   STEAM_API_KEY: import.meta.env.STEAM_API_KEY || process.env.STEAM_API_KEY,
-  TURSO_DATABASE_URL: import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL,
+  TURSO_DATAPUBLIC_SITE_URL: import.meta.env.TURSO_DATAPUBLIC_SITE_URL || process.env.TURSO_DATAPUBLIC_SITE_URL,
   TURSO_AUTH_TOKEN: import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN,
 });
 ---
@@ -100,7 +100,7 @@ console.log('Server-side Environment Variables:', {
   <script is:inline>
     document.addEventListener('DOMContentLoaded', function () {
       console.log('Client-side Environment Variables:', {
-        BASE_URL: '{{baseUrl}}', // Log client-side base URL
+        PUBLIC_SITE_URL: '{{baseUrl}}', // Log client-side base URL
       });
 
       const userAgent = navigator.userAgent;

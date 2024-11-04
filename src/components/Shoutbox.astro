@@ -6,7 +6,7 @@ export interface Props {
 }
 
 const { baseUrl, session } = Astro.props;
-console.log('Base URL:', import.meta.env.BASE_URL || process.env.BASE_URL);
+console.log('Base URL:', import.meta.env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL);
 
 
 // Detect in-game user and query parameters
@@ -54,7 +54,7 @@ const displayPlayerAvatar = session?.playerAvatar || '/assets/default-avatar.web
 <script is:inline define:vars={{ baseUrl, isAuthenticated, displayPlayerName, displayPlayerAvatar }}>
   document.addEventListener('DOMContentLoaded', async function () {
     console.log('Client-side Environment Variables:', {
-      BASE_URL: baseUrl,
+      PUBLIC_SITE_URL: baseUrl,
     });
     console.log('Document loaded');
     const isGame = userAg
