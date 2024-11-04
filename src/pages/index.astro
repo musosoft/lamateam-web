@@ -1,4 +1,5 @@
 ---
+// src/pages/index.astro
 import Layout from '../layouts/Layout.astro';
 import Hero from '../assets/hero.svg?raw';
 import Shoutbox from '../components/Shoutbox.astro';
@@ -9,6 +10,14 @@ const session = sessionCookie ? JSON.parse(decodeURIComponent(sessionCookie.valu
 const isAuthenticated = Boolean(session?.steamID);
 const userName = session?.steamID ? `Player ${session.steamID}` : "Guest";
 const baseUrl = import.meta.env.BASE_URL || process.env.BASE_URL || '/';
+
+// Log environment variables
+console.log('Server-side Environment Variables:', {
+  BASE_URL: import.meta.env.BASE_URL || process.env.BASE_URL,
+  STEAM_API_KEY: import.meta.env.STEAM_API_KEY || process.env.STEAM_API_KEY,
+  TURSO_DATABASE_URL: import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL,
+  TURSO_AUTH_TOKEN: import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN,
+});
 ---
 
 <Layout title="Welcome to LaMaTeam" isAuthenticated={isAuthenticated} userName={userName} hero={Hero}>
