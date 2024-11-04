@@ -56,11 +56,6 @@ const displayPlayerAvatar = session?.playerAvatar || '/assets/default-avatar.web
     console.log('Client-side Environment Variables:', {
       PUBLIC_SITE_URL: baseUrl,
     });
-    console.log('Document loaded');
-    const isGame = userAg
-    const userAgent = navent.includes('Valve Client');
-    console.log('User Agent:', userAgent);
-    console.log('Is Game:', isGame);
 
     const urlParams = new URLSearchParams(window.location.search);
     const communityId = urlParams.get('communityid');
