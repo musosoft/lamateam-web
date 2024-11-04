@@ -6,16 +6,21 @@ export interface Props {
 }
 
 const { baseUrl, session } = Astro.props;
-const isAuthenticated = Boolean(session?.steamID);
-const playerName = session?.playerName || "Guest";
-const playerAvatar = session?.playerAvatar || '/assets/default-avatar.webp';
+
+// Detect in-game user and query parameters
+const communityId = Astro.url.searchParams.get('communityid');
+const playerNameQuery = Astro.url.searchParams.get('name');
+const isGame = navigator.userAgent.includes('Valve Client'); 
+const isAuthenticated = Boolean(session?.steamID) || (isGame && communityId && playerNameQuery);
+const displayPlayerName = isGame ? playerNameQuery : session?.playerName || "Guest";
+const displayPlayerAvatar = isGame ? '/assets/default-avatar.webp' : session?.playerAvatar || '/assets/default-avatar.webp';
 ---
 
 <div class="flex flex-col space-y-4 max-h-[400px] w-full p-4 bg-gray-800 rounded-md text-white text-sm">
   {isAuthenticated ? (
     <div class="flex items-center space-x-2">
-      <img src={playerAvatar} alt="Player Avatar" class="w-8 h-8 rounded-full" />
-      <div class="text-green-500">Welcome, {playerName}</div>
+      <img src={displayPlayerAvatar} alt="Player Avatar" class="w-8 h-8 rounded-full" />
+      <div class="text-green-500">Welcome, {displayPlayerName}</div>
     </div>
   ) : (
     <a href="/api/auth/steam" class="text-blue-500 underline">Login with Steam</a>
@@ -40,16 +45,10 @@ const playerAvatar = session?.playerAvatar || '/assets/default-avatar.webp';
   </div>
 </div>
 
-<script is:inline define:vars={{ baseUrl, isAuthenticated, playerName, playerAvatar }}>
+<script is:inline define:vars={{ baseUrl, isAuthenticated, displayPlayerName, displayPlayerAvatar }}>
   document.addEventListener('DOMContentLoaded', function () {
-    // Ensure the DOM elements are present
     const sendButton = document.getElementById('sendButton');
     const messageInput = document.getElementById('messageInput');
-
-    if (!sendButton || !messageInput) {
-      console.error('Required DOM elements are missing.');
-      return;
-    }
 
     async function fetchMessages() {
       try {
@@ -65,8 +64,6 @@ const playerAvatar = session?.playerAvatar || '/assets/default-avatar.webp';
 
     function renderMessages(messages) {
       const shoutboxContainer = document.getElementById('shoutboxMessages');
-      if (!shoutboxContainer) return;
-      
       shoutboxContainer.innerHTML = ""; // Clear existing messages
       messages.forEach((msg) => {
         const messageElement = document.createElement('div');
@@ -92,7 +89,7 @@ const playerAvatar = session?.playerAvatar || '/assets/default-avatar.webp';
         const response = await fetch(`${baseUrl}api/shoutbox`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ player_name: playerName, player_avatar: playerAvatar, message: newMessage }),
+          body: JSON.stringify({ player_name: displayPlayerName, player_avatar: displayPlayerAvatar, message: newMessage }),
         });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
