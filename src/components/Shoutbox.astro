@@ -10,10 +10,15 @@ const { baseUrl, session } = Astro.props;
 // Detect in-game user and query parameters
 const communityId = Astro.url.searchParams.get('communityid');
 const playerNameQuery = Astro.url.searchParams.get('name');
-const isGame = navigator.userAgent.includes('Valve Client'); 
-const isAuthenticated = Boolean(session?.steamID) || (isGame && communityId && playerNameQuery);
-const displayPlayerName = isGame ? playerNameQuery : session?.playerName || "Guest";
-const displayPlayerAvatar = isGame ? '/assets/default-avatar.webp' : session?.playerAvatar || '/assets/default-avatar.webp';
+
+const isGame = navigator.userAgent.includes('Valve Client');
+
+// Authentication logic: in-game users with valid query parameters or authenticated session users
+const isAuthenticated = (isGame && communityId && playerNameQuery) || Boolean(session?.steamID);
+
+const displayPlayerName = isGame && playerNameQuery ? playerNameQuery : session?.playerName || "Guest";
+const displayPlayerAvatar = session?.playerAvatar || '/assets/default-avatar.webp';
+const steamID = session?.steamID || communityId;
 ---
 
 <div class="flex flex-col space-y-4 max-h-[400px] w-full p-4 bg-gray-800 rounded-md text-white text-sm">
@@ -45,7 +50,7 @@ const displayPlayerAvatar = isGame ? '/assets/default-avatar.webp' : session?.pl
   </div>
 </div>
 
-<script is:inline define:vars={{ baseUrl, isAuthenticated, displayPlayerName, displayPlayerAvatar }}>
+<script is:inline define:vars={{ baseUrl, isAuthenticated, displayPlayerName, displayPlayerAvatar, steamID }}>
   document.addEventListener('DOMContentLoaded', function () {
     const sendButton = document.getElementById('sendButton');
     const messageInput = document.getElementById('messageInput');
@@ -89,7 +94,12 @@ const displayPlayerAvatar = isGame ? '/assets/default-avatar.webp' : session?.pl
         const response = await fetch(`${baseUrl}api/shoutbox`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ player_name: displayPlayerName, player_avatar: displayPlayerAvatar, message: newMessage }),
+          body: JSON.stringify({
+            steamid: steamID,
+            player_name: displayPlayerName,
+            player_avatar: displayPlayerAvatar,
+            message: newMessage
+          }),
         });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
