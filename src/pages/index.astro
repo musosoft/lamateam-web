@@ -9,11 +9,13 @@ const sessionCookie = cookies.get('session');
 const session = sessionCookie ? JSON.parse(decodeURIComponent(sessionCookie.value)) : {};
 const isAuthenticated = Boolean(session?.steamID);
 const userName = session?.steamID ? `Player ${session.steamID}` : "Guest";
+
+// Check if environment variables are set correctly
 const baseUrl = import.meta.env.BASE_URL || process.env.BASE_URL || '/';
 
-// Log environment variables
+// Log environment variables for debugging
 console.log('Server-side Environment Variables:', {
-  BASE_URL: import.meta.env.BASE_URL || process.env.BASE_URL,
+  BASE_URL: baseUrl,
   STEAM_API_KEY: import.meta.env.STEAM_API_KEY || process.env.STEAM_API_KEY,
   TURSO_DATABASE_URL: import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL,
   TURSO_AUTH_TOKEN: import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN,
@@ -95,37 +97,44 @@ console.log('Server-side Environment Variables:', {
   </div>
 </Layout>
 
-<script is:inline>
-  document.addEventListener('DOMContentLoaded', function () {
-    const userAgent = navigator.userAgent;
-    const isGame = userAgent.includes('Valve Client'); // In-game detection for Valve client
-    const mainContent = document.getElementById('main-content');
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('Client-side Environment Variables:', {
+        BASE_URL: '{{baseUrl}}', // Log client-side base URL
+      });
 
-    // Apply or remove bg-opacity-0 based on userAgent detection
-    if (isGame && mainContent) {
-      mainContent.classList.add('bg-opacity-0');
-    }
+      const userAgent = navigator.userAgent;
+      const isGame = userAgent.includes('Valve Client');
+      const mainContent = document.getElementById('main-content');
 
-    // Toggle visibility of sections
-    const shoutbox = document.getElementById('shoutbox');
-    const rules = document.getElementById('rules');
-    const info = document.getElementById('info');
-    const vip = document.getElementById('vip');
-    const buttons = {
-      shoutboxBtn: document.getElementById('shoutboxBtn'),
-      rulesBtn: document.getElementById('rulesBtn'),
-      infoBtn: document.getElementById('infoBtn'),
-      vipBtn: document.getElementById('vipBtn'),
-    };
+      console.log('Document loaded');
+      console.log('User Agent:', userAgent);
+      console.log('Is Game:', isGame);
 
-    function showSection(section) {
-      [shoutbox, rules, info, vip].forEach(sec => sec?.classList.add('hidden'));
-      section?.classList.remove('hidden');
-    }
+      if (isGame && mainContent) {
+        mainContent.classList.add('bg-opacity-0');
+      }
 
-    buttons.shoutboxBtn?.addEventListener('click', () => showSection(shoutbox));
-    buttons.rulesBtn?.addEventListener('click', () => showSection(rules));
-    buttons.infoBtn?.addEventListener('click', () => showSection(info));
-    buttons.vipBtn?.addEventListener('click', () => showSection(vip));
-  });
-</script>
+      const shoutbox = document.getElementById('shoutbox');
+      const rules = document.getElementById('rules');
+      const info = document.getElementById('info');
+      const vip = document.getElementById('vip');
+      const buttons = {
+        shoutboxBtn: document.getElementById('shoutboxBtn'),
+        rulesBtn: document.getElementById('rulesBtn'),
+        infoBtn: document.getElementById('infoBtn'),
+        vipBtn: document.getElementById('vipBtn'),
+      };
+
+      function showSection(section) {
+        [shoutbox, rules, info, vip].forEach(sec => sec?.classList.add('hidden'));
+        section?.classList.remove('hidden');
+      }
+
+      buttons.shoutboxBtn?.addEventListener('click', () => showSection(shoutbox));
+      buttons.rulesBtn?.addEventListener('click', () => showSection(rules));
+      buttons.infoBtn?.addEventListener('click', () => showSection(info));
+      buttons.vipBtn?.addEventListener('click', () => showSection(vip));
+    });
+  </script>
+</Layout>
