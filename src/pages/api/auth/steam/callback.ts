@@ -2,7 +2,6 @@
 import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async ({ request, cookies, locals }) => {
-  // Access environment variables using locals.runtime.env for Cloudflare
   const { env } = locals.runtime || {};
   const STEAM_API_KEY = env.STEAM_API_KEY || import.meta.env.STEAM_CLIENT_ID || process.env.STEAM_CLIENT_ID;
 
