@@ -12,11 +12,12 @@ export const GET = async () => {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    const err = error as Error;
     console.error('Error fetching messages:', {
-      error: error.message,
-      stack: error.stack,
+      error: err.message,
+      stack: err.stack,
     });
-    return new Response(JSON.stringify({ error: 'Failed to fetch messages', details: error.message }), {
+    return new Response(JSON.stringify({ error: 'Failed to fetch messages', details: err.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -47,14 +48,14 @@ export const POST = async ({ request }: { request: Request }) => {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    const err = error as Error;
     console.error('Error saving message:', {
-      error: error.message,
-      stack: error.stack,
+      error: err.message,
+      stack: err.stack,
     });
-    return new Response(JSON.stringify({ error: 'Failed to save message', details: error.message }), {
+    return new Response(JSON.stringify({ error: 'Failed to save message', details: err.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 };
-
