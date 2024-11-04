@@ -65,7 +65,22 @@ const displayPlayerAvatar = session?.playerAvatar || '/assets/default-avatar.web
     const playerNameQuery = urlParams.get('name');
     console.log('Community ID:', communityId);
     console.log('Player Name Query:', playerNameQuery);
+    if (isGame && communityId && playerNameQuery) {
+      const welcomeMessage = document.getElementById('welcome-message');
+      const avatarImage = document.getElementById('player-avatar');
 
+      if (welcomeMessage && avatarImage) {
+        welcomeMessage.innerText = `Welcome, ${playerNameQuery}`;
+        avatarImage.src = '/assets/default-avatar.webp'; // Replace with the Steam avatar if available
+        document.getElementById('messageInput').disabled = false;
+        document.getElementById('sendButton').disabled = false;
+        console.log('In-game authentication successful. UI updated.');
+      } else {
+        console.error('Required elements not found in DOM.');
+      }
+    } else {
+      console.log('In-game authentication not triggered.');
+    }
 
     const sendButton = document.getElementById('sendButton');
     const messageInput = document.getElementById('messageInput');
