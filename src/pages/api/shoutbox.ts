@@ -1,6 +1,11 @@
 // src/pages/api/shoutbox.ts
 import { turso } from '../../turso';
 
+console.log('API Route Environment Variables:', {
+  TURSO_DATABASE_URL: import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL,
+  TURSO_AUTH_TOKEN: import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN,
+});
+
 export const GET = async () => {
   try {
     const { rows } = await turso.execute(

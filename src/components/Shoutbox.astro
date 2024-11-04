@@ -53,9 +53,12 @@ const displayPlayerAvatar = session?.playerAvatar || '/assets/default-avatar.web
 
 <script is:inline define:vars={{ baseUrl, isAuthenticated, displayPlayerName, displayPlayerAvatar }}>
   document.addEventListener('DOMContentLoaded', async function () {
-    console.log('Document loaded');
-    const userAgent = navigator.userAgent;
-    const isGame = userAgent.includes('Valve Client');
+    console.log('Client-side Environment Variables:', {
+      BASE_URL: baseUrl,
+    });
+    console.log('Document loaded');igator.userAgent;
+    const isGame = userAg
+    const userAgent = navent.includes('Valve Client');
     console.log('User Agent:', userAgent);
     console.log('Is Game:', isGame);
 
