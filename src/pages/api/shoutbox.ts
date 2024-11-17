@@ -1,13 +1,20 @@
 // src/pages/api/shoutbox.ts
-import { getTursoClient } from '../../turso';
 import type { APIRoute } from 'astro';
 import { parse } from 'cookie';
+import { createClient } from '@libsql/client/web';
 
-export const GET: APIRoute = async ({ request, locals }) => {
+export const GET: APIRoute = async () => {
   try {
-    const env = locals.env || import.meta.env;
+    const { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } = import.meta.env;
 
-    const turso = getTursoClient(env);
+    if (!TURSO_DATABASE_URL) {
+      throw new Error('TURSO_DATABASE_URL is not set');
+    }
+
+    const turso = createClient({
+      url: TURSO_DATABASE_URL,
+      authToken: TURSO_AUTH_TOKEN,
+    });
 
     const { rows } = await turso.execute(
       'SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC LIMIT 50',
@@ -30,8 +37,19 @@ export const GET: APIRoute = async ({ request, locals }) => {
   }
 };
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   try {
+    const { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } = import.meta.env;
+
+    if (!TURSO_DATABASE_URL) {
+      throw new Error('TURSO_DATABASE_URL is not set');
+    }
+
+    const turso = createClient({
+      url: TURSO_DATABASE_URL,
+      authToken: TURSO_AUTH_TOKEN,
+    });
+
     const body = await request.json();
     const { steamid, player_name, message, player_avatar } = body;
 
@@ -63,10 +81,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-
-    const env = locals.env || import.meta.env;
-
-    const turso = getTursoClient(env);
 
     // Proceed to save the message in the database
     const timestamp = new Date().toISOString();
