@@ -3,10 +3,10 @@ import { turso } from '../../turso';
 import type { APIRoute } from 'astro';
 import { parse } from 'cookie';
 
-export const GET = async () => {
+export const GET: APIRoute = async ({ request }) => {
   try {
     const { rows } = await turso.execute(
-      'SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC'
+      'SELECT * FROM Shoutbox ORDER BY timestamp DESC LIMIT 50'
     );
 
     return new Response(JSON.stringify(rows), {
@@ -14,15 +14,15 @@ export const GET = async () => {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    const err = error as Error;
-    console.error('Error fetching messages:', {
-      error: err.message,
-      stack: err.stack,
-    });
-    return new Response(JSON.stringify({ error: 'Failed to fetch messages', details: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error('Error fetching messages:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch messages', details: errorMessage }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 };
 
@@ -49,6 +49,9 @@ export const POST: APIRoute = async ({ request }) => {
     const userAgent = request.headers.get('user-agent') || '';
     const isGame = userAgent.includes('Valve Client');
 
+    console.log('User Agent in API request:', userAgent);
+    console.log('isGame in API request:', isGame);
+
     // Verify authentication
     if (session?.steamID !== steamid && !isGame) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -73,9 +76,7 @@ export const POST: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     console.error('Error saving message:', error);
-  
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-  
     return new Response(
       JSON.stringify({ error: 'Failed to save message', details: errorMessage }),
       {
