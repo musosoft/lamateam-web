@@ -1,10 +1,14 @@
 // src/pages/api/shoutbox.ts
-import { turso } from '../../turso';
+import { getTursoClient } from '../../turso';
 import type { APIRoute } from 'astro';
 import { parse } from 'cookie';
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
   try {
+    const env = locals.env || import.meta.env;
+
+    const turso = getTursoClient(env);
+
     const { rows } = await turso.execute(
       'SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC LIMIT 50',
     );
@@ -26,7 +30,7 @@ export const GET: APIRoute = async ({ request }) => {
   }
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const body = await request.json();
     const { steamid, player_name, message, player_avatar } = body;
@@ -59,6 +63,10 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    const env = locals.env || import.meta.env;
+
+    const turso = getTursoClient(env);
 
     // Proceed to save the message in the database
     const timestamp = new Date().toISOString();
