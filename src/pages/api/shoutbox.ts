@@ -6,7 +6,7 @@ import { parse } from 'cookie';
 export const GET: APIRoute = async ({ request }) => {
   try {
     const { rows } = await turso.execute(
-      'SELECT * FROM Shoutbox ORDER BY timestamp DESC LIMIT 50'
+      'SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC LIMIT 50',
     );
 
     return new Response(JSON.stringify(rows), {
