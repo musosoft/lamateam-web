@@ -1,9 +1,10 @@
 // src/pages/api/steamUser.ts
 import type { APIRoute } from 'astro';
 
-const STEAM_API_KEY = import.meta.env.STEAM_API_KEY || process.env.STEAM_API_KEY;
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
+  const { env } = locals.runtime;
+  const { STEAM_API_KEY } = import.meta.env ?? env;
   const url = new URL(request.url);
   const steamid = url.searchParams.get('steamid');
 

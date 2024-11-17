@@ -19,7 +19,7 @@ function convertToSteam64(communityId: string) {
   }
 }
 
-const baseUrl = import.meta.env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL || '/';
+const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || '/';
 
 const cookies = Astro.cookies;
 const sessionCookie = cookies.get('session');
@@ -47,7 +47,7 @@ if (isGame && communityId && playerName) {
   steamID = convertToSteam64(communityId);
   
   if (steamID) {
-    const STEAM_API_KEY = import.meta.env.STEAM_API_KEY || process.env.STEAM_API_KEY;
+    const STEAM_API_KEY = Astro.locals.runtime.env.STEAM_API_KEY;
     if (STEAM_API_KEY) {
       // Fetch avatar from Steam API
       const steamApiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steamID}`;

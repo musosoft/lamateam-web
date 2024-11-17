@@ -3,9 +3,10 @@ import type { APIRoute } from 'astro';
 import { parse } from 'cookie';
 import { createClient } from '@libsql/client/web';
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ locals }) => {
   try {
-    const { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } = import.meta.env;
+    const { env } = locals.runtime;
+    const { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } = import.meta.env ?? env;
 
     if (!TURSO_DATABASE_URL) {
       throw new Error('TURSO_DATABASE_URL is not set');
@@ -37,9 +38,10 @@ export const GET: APIRoute = async () => {
   }
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } = import.meta.env;
+    const { env } = locals.runtime;
+    const { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } = import.meta.env ?? env;
 
     if (!TURSO_DATABASE_URL) {
       throw new Error('TURSO_DATABASE_URL is not set');
