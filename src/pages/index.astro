@@ -3,32 +3,88 @@
 import Layout from '../layouts/Layout.astro';
 import Hero from '../assets/hero.svg?raw';
 import Shoutbox from '../components/Shoutbox.astro';
+import Info from '../components/Info.astro';
+import Rules from '../components/Rules.astro';
+import Vip from '../components/Vip.astro';
+
+function convertToSteam64(communityId) {
+  const steamIdMatch = communityId.match(/^\[U:1:(\d+)\]$/);
+  if (steamIdMatch) {
+    const accountId = BigInt(steamIdMatch[1]);
+    const steam64Id = accountId + BigInt('76561197960265728');
+    return steam64Id.toString();
+  } else {
+    console.error('Invalid communityId format:', communityId);
+    return '';
+  }
+}
+
+const baseUrl = import.meta.env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL || '/';
 
 const cookies = Astro.cookies;
 const sessionCookie = cookies.get('session');
 const session = sessionCookie ? JSON.parse(decodeURIComponent(sessionCookie.value)) : {};
-const isAuthenticated = Boolean(session?.steamID);
-const userName = session?.steamID ? `Player ${session.steamID}` : "Guest";
 
-// Check if environment variables are set correctly
-const baseUrl = import.meta.env.PUBLIC_SITE_URL || process.env.PUBLIC_SITE_URL || '/';
+// Get the user agent and determine if the request is from the game
+const userAgent = Astro.request.headers.get('user-agent') || '';
+const isGame = userAgent.includes('Valve Client');
 
-// Log environment variables for debugging
-console.log('Server-side Environment Variables:', {
-  PUBLIC_SITE_URL: baseUrl,
-  STEAM_API_KEY: import.meta.env.STEAM_API_KEY || process.env.STEAM_API_KEY,
-  TURSO_DATAPUBLIC_SITE_URL: import.meta.env.TURSO_DATAPUBLIC_SITE_URL || process.env.TURSO_DATAPUBLIC_SITE_URL,
-  TURSO_AUTH_TOKEN: import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN,
-});
+// Access query parameters
+const communityId = Astro.url.searchParams.get('communityid');
+const playerName = Astro.url.searchParams.get('name');
+
+// Initialize variables
+let isAuthenticated = false;
+let displayPlayerName = 'Guest';
+let displayPlayerAvatar = '/assets/default-avatar.webp';
+let steamID = '';
+
+// Authentication logic
+if (isGame && communityId && playerName) {
+  // Authenticated via in-game parameters
+  isAuthenticated = true;
+  displayPlayerName = playerName;
+  steamID = convertToSteam64(communityId);
+  
+  if (steamID) {
+    const STEAM_API_KEY = import.meta.env.STEAM_API_KEY || process.env.STEAM_API_KEY;
+    if (STEAM_API_KEY) {
+      // Fetch avatar from Steam API
+      const steamApiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steamID}`;
+      try {
+        const response = await fetch(steamApiUrl);
+        if (response.ok) {
+          const data = await response.json();
+          const player = data.response.players[0];
+          displayPlayerAvatar = player?.avatarfull || '/assets/default-avatar.webp';
+        } else {
+          console.error('Failed to fetch avatar from Steam API. Status:', response.status);
+        }
+      } catch (error) {
+        console.error('Error fetching avatar from Steam API:', error);
+      }
+    } else {
+      console.error('STEAM_API_KEY is not set.');
+    }
+  }
+} else if (session?.steamID) {
+  // Authenticated via session (Steam web login)
+  isAuthenticated = true;
+  displayPlayerName = session.playerName || 'Guest';
+  displayPlayerAvatar = session.playerAvatar || '/assets/default-avatar.webp';
+  steamID = session.steamID;
+} else {
+  // Not authenticated
+  isAuthenticated = false;
+}
 ---
 
-<Layout title="Welcome to LaMaTeam" isAuthenticated={isAuthenticated} userName={userName} hero={Hero}>
+<Layout title="Welcome to LaMaTeam" isAuthenticated={isAuthenticated} userName={displayPlayerName} hero={Hero}>
   <div class="relative hidden group-hover:flex h-full mx-4 w-full max-w-3xl animate-fade-in-up p-8 items-center">
     <div class="bg-gray-800 shadow-lg rounded-lg grow">
       <div class="relative flex flex-col h-full w-full overflow-hidden rounded-lg">
         <div class="relative z-10 flex flex-col h-full justify-center gap-8 p-8 text-center text-white">
-
-          <!-- Header Section with Navigation & Login Buttons -->
+          <!-- Header Section -->
           <div class="fixed top-1 left-0 right-0 max-w-4xl mx-auto grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
             <a id="rulesBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Pravidla</a>
             <a id="infoBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Prikazy</a>
@@ -37,52 +93,22 @@ console.log('Server-side Environment Variables:', {
 
           <!-- Content Sections -->
           <div id="shoutbox" class="space-y-4 hidden">
-            <Shoutbox session={session} baseUrl={baseUrl} />
+            <Shoutbox
+              baseUrl={baseUrl}
+              isAuthenticated={isAuthenticated}
+              displayPlayerName={displayPlayerName}
+              displayPlayerAvatar={displayPlayerAvatar}
+              steamID={steamID}
+            />
           </div>
-
-          <!-- Additional sections -->
           <div id='rules' class='space-y-4'>
-            <h1 class='mb-4 font-bold tracking-tight text-4xl'>Zákaz:</h1>
-            <span class='text-yellow-500'>- T kemp na DE mapách déle jak 30 sekund - (SLAY)</span><br />
-            <span class='text-yellow-500'>- SPAM (voice,chat) - (KICK/BAN)</span><br />
-            <span class='text-yellow-500'>- Opětovné nakupování - (KICK/BAN)</span><br />
-            <span class='text-yellow-500'>- Sprostá mluva, nadávky, urážky, rasismus bez nadsázky - (BAN)</span><br />
-            <span class='text-yellow-500'>- kradení nicků, napodobování, vydávání se za admina (BAN)</span><br />
-            <span class='text-yellow-500'>- používání cheatů (PERMABAN)</span><br />
-            <span class='text-yellow-500'>- BHOP / více jak dva skoky (SLAY/KICK/BAN)</span><br /><br />
-            <span class='text-red-500'>!!! NEZNALOST PRAVIDEL NEOMLOUVÁ !!!</span><br /><br /><br />
-            <span class='text-red-500'>!!! ÚPLNÁ PRAVIDLA NA LAMATEAM.EU !!!</span>
+            <Rules />
           </div>
           <div id='info' class='space-y-4 hidden'>
-            <h1 class='mb-4 font-bold tracking-tight text-4xl'>Užitečné informace:</h1>
-            <span class='text-yellow-500'>Pro odstrčení od hráče napiš do chatu </span>
-            <span class='text-green-500'>!nb</span>
-            <span class='text-yellow-500'><br />Pokud chceš ve hře zobrazit tohle okno, napiš </span>
-            <span class='text-green-500'>!motd</span>
-            <span class='text-yellow-500'><br />Pokud máš připomínky, nápady na zlepšení, nebo chceš nahlásit podvádějícího či jinak hru znepříjemňujícího hráče, </span>
-            <a class='text-green-500' href='http://lamateam.eu/contact.php'>napiš nám</a>
-            <span class='text-yellow-500'><br />- - - - - - - - - - -<br />Chceš nahrát demo na cheatera?<br />Otevři konzoli a napiš </span>
-            <span class='text-red-500'>record název_dema<br /></span>
-            <span class='text-yellow-500'>Když chceš nahrávání ukončit, napiš </span>
-            <span class='text-red-500'>stop</span>
-            <span class='text-yellow-500'
-              ><br />Nahrané demo najdeš v hlavním adresáři hry (/cstrike)<br />Pošli ho adminům!<br />- - - - - - - - - - -<br />Majitelem serveru crazy69 | Hosting zabezpečuje
-              FakaHeda.eu<br />Najdeš nás taky na discordu a na facebooku - hledej:
-            </span>
-            <span class='text-red-500'><a href='https://www.facebook.com/groups/437402000675912'>LaMaTeAm.eu</a></span>
+            <Info />
           </div>
           <div id='vip' class='space-y-4 hidden'>
-            <h1 class='mb-4 font-bold tracking-tight text-4xl'>Chceš se stát VIP?</h1>
-            <span class='text-yellow-500'>Chceš nás sponzorovat a vždy se připojit, když je plný server? Podpoř nás:</span><br />
-            <span class='text-yellow-500'>1 měsíc = 100 Kč</span><br />
-            <span class='text-yellow-500'>6 měsíců = 300 Kč</span><br />
-            <span class='text-yellow-500'>12 mesíců = 500 Kč</span><br /><br />
-            <span class='text-yellow-500'>Peníze můžete zasílat na číslo účtu: 1939775153/0800</span><br />
-            <span class='text-yellow-500'>(IBAN CZ88 0800 0000 0019 3977 5153)</span><br />
-            <span class='text-yellow-500'>Do informace pro příjemce uveď svůj nick, ať víme kdo poslal příspěvek.</span><br />
-            <span class='text-yellow-500'>Podpořit provoz serveru můžeš i zcela nezjištně i libovolnou částkou. Napiš nám a určitě se dohodneme</span><br /><br />
-            <span class='text-yellow-500'>PŘIPOJIT DO VIP SLOTU LZE V KONZOLE: </span>
-            <span class='text-red-500'>connect 82.208.17.101:27516</span>
+            <Vip />
           </div>
 
           <!-- Footer Links -->
@@ -95,21 +121,12 @@ console.log('Server-side Environment Variables:', {
       </div>
     </div>
   </div>
-</Layout>
 
   <script is:inline>
     document.addEventListener('DOMContentLoaded', function () {
-      console.log('Client-side Environment Variables:', {
-        PUBLIC_SITE_URL: '{{baseUrl}}', // Log client-side base URL
-      });
-
       const userAgent = navigator.userAgent;
       const isGame = userAgent.includes('Valve Client');
       const mainContent = document.getElementById('main-content');
-
-      console.log('Document loaded');
-      console.log('User Agent:', userAgent);
-      console.log('Is Game:', isGame);
 
       if (isGame && mainContent) {
         mainContent.classList.add('bg-opacity-0');

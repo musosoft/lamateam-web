@@ -1,4 +1,5 @@
 ---
+// src/layouts/Layout.astro
 interface Props {
   title: string;
   isAuthenticated: boolean;
@@ -11,8 +12,10 @@ const { title, isAuthenticated, userName, hero } = Astro.props;
 // Accessing query parameters using Astro.url
 const communityId = Astro.url.searchParams.get('communityid');
 const playerName = Astro.url.searchParams.get('name');
-const isGame = Astro.url.searchParams.get('valve') === 'true'; // Assuming 'valve' is passed in the URL for in-game detection
+const isGame = navigator.userAgent.includes('Valve Client');
 const inGameAuthenticated = isGame && communityId && playerName;
+
+// Pass these variables globally for use in child components
 ---
 
 <!doctype html>
@@ -31,11 +34,11 @@ const inGameAuthenticated = isGame && communityId && playerName;
         <Fragment set:html={hero} />
       </div>
 
-      <!-- Slot for main content (index) -->
+      <!-- Slot for main content (index or others) -->
       <slot />
     </main>
 
-    <!-- Script for handling authentication logic -->
+    <!-- Script for handling global authentication and in-game logic -->
     <script is:inline define:vars={{ isAuthenticated, userName, inGameAuthenticated, playerName, communityId }}>
       document.addEventListener("DOMContentLoaded", () => {
         const userGreeting = document.getElementById("greeting-message");

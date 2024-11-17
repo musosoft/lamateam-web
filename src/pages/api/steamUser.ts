@@ -3,10 +3,6 @@ import type { APIRoute } from 'astro';
 
 const STEAM_API_KEY = import.meta.env.STEAM_API_KEY || process.env.STEAM_API_KEY;
 
-console.log('API Route Environment Variables:', {
-  STEAM_API_KEY,
-});
-
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const steamid = url.searchParams.get('steamid');

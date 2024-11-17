@@ -21,14 +21,11 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
     return new Response('Authentication failed', { status: 401 });
   }
 
-  console.log('Using Steam API Key:', STEAM_API_KEY);
   const apiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steamID}`;
-  console.log('Fetching from Steam API URL:', apiUrl);
 
   try {
     const response = await fetch(apiUrl);
     const responseBody = await response.text();
-    console.log('Steam API response body:', responseBody);
 
     if (!response.ok) {
       console.error('Error response from Steam API:', responseBody);
