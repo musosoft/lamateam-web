@@ -73,8 +73,11 @@ export const POST: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     console.error('Error saving message:', error);
+  
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  
     return new Response(
-      JSON.stringify({ error: 'Failed to save message', details: error.message }),
+      JSON.stringify({ error: 'Failed to save message', details: errorMessage }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },

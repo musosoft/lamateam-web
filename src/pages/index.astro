@@ -7,7 +7,7 @@ import Info from '../components/Info.astro';
 import Rules from '../components/Rules.astro';
 import Vip from '../components/Vip.astro';
 
-function convertToSteam64(communityId) {
+function convertToSteam64(communityId: string) {
   const steamIdMatch = communityId.match(/^\[U:1:(\d+)\]$/);
   if (steamIdMatch) {
     const accountId = BigInt(steamIdMatch[1]);
