@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async ({ request, cookies, locals }) => {
   const { env } = locals.runtime;
-  const { STEAM_API_KEY } = import.meta.env ?? env;
+  const { STEAM_API_KEY } = import.meta.env.DEV ? import.meta.env : env;
 
   if (!STEAM_API_KEY) {
     console.error('Steam API key is missing.');
