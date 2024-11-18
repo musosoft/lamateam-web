@@ -6,6 +6,7 @@ import Shoutbox from '../components/Shoutbox.astro';
 import Info from '../components/Info.astro';
 import Rules from '../components/Rules.astro';
 import Vip from '../components/Vip.astro';
+import { Icon } from 'astro-icon/components';
 
 function convertToSteam64(communityId: string) {
   const steamIdMatch = communityId.match(/^\[U:1:(\d+)\]$/);
@@ -84,15 +85,42 @@ if (isGame && communityId && playerName) {
     <div class="bg-gray-800 shadow-lg rounded-lg grow">
       <div class="relative flex flex-col h-full w-full overflow-hidden rounded-lg">
         <div class="relative z-10 flex flex-col h-full justify-center gap-8 p-8 text-center text-white">
-          <!-- Header Section -->
-          <div class="fixed top-1 left-0 right-0 max-w-4xl mx-auto grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
-            <a id="rulesBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Pravidla</a>
-            <a id="infoBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Prikazy</a>
-            <a id="vipBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">VIP</a>
-          </div>
+                    <!-- Modal for Banlist -->
+                    <div id="banlistModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden">
+                      <div class="relative bg-gray-900 rounded-lg max-w-7xl mx-auto h-full">
+                        <button
+                          id="closeBanlist"
+                          class="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg"
+                        >
+                          Close
+                        </button>
+                        <iframe
+                          src="https://sourcebans.fakaheda.eu/sbans_336496/"
+                          class="w-full h-full rounded-lg"
+                          frameborder="0"
+                        ></iframe>
+                      </div>
+                    </div>
+          
+                    <!-- Modal for Stats -->
+                    <div id="statsModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden">
+                      <div class="relative bg-gray-900 rounded-lg max-w-7xl mx-auto h-full">
+                        <button
+                          id="closeStats"
+                          class="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg"
+                        >
+                          Close
+                        </button>
+                        <iframe
+                          src="https://stats.lamateam.eu"
+                          class="w-full h-full rounded-lg"
+                          frameborder="0"
+                        ></iframe>
+                      </div>
+                    </div>
 
           <!-- Content Sections -->
-          <div id="shoutbox" class="space-y-4 hidden">
+          <div id="shoutbox" class="space-y-4">
             <Shoutbox
               baseUrl={baseUrl}
               isAuthenticated={isAuthenticated}
@@ -101,7 +129,7 @@ if (isGame && communityId && playerName) {
               steamID={steamID}
             />
           </div>
-          <div id='rules' class='space-y-4'>
+          <div id='rules' class='space-y-4 hidden'>
             <Rules />
           </div>
           <div id='info' class='space-y-4 hidden'>
@@ -111,11 +139,40 @@ if (isGame && communityId && playerName) {
             <Vip />
           </div>
 
-          <!-- Footer Links -->
-          <div class="fixed bottom-1 left-0 right-0 max-w-4xl mx-auto grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
-            <a href="https://sourcebans.fakaheda.eu/sbans_336496/" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Banlist</a>
-            <a href="https://stats.lamateam.eu" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Stats</a>
-            <a id="shoutboxBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">Shoutbox</a>
+          <!-- Footer Links -->          
+          <div
+            class="fixed bottom-[-3rem] left-0 right-0 max-w-4xl mx-auto grid w-full grid-cols-1 gap-2 sm:grid-cols-6 bg-slate-600 p-2 rounded-lg transition-all duration-300 ease-in-out hover:bottom-1"
+          >
+            <a id="rulesBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">
+              <Icon name="mdi:book" class="mr-2" />
+              Pravidla
+            </a>
+            <a id="infoBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">
+              <Icon name="mdi:information-outline" class="mr-2" />
+              Prikazy
+            </a>
+            <a id="vipBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">
+              <Icon name="mdi:star-outline" class="mr-2" />
+              VIP
+            </a>
+            <button
+              id="openBanlist"
+              class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600"
+            >
+              <Icon name="mdi:ban" class="mr-2" />
+              Banlist
+            </button>
+            <button
+              id="openStats"
+              class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600"
+            >
+              <Icon name="mdi:chart-bar" class="mr-2" />
+              Stats
+            </button>
+            <a id="shoutboxBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">
+              <Icon name="mdi:message-outline" class="mr-2" />
+              Shoutbox
+            </a>
           </div>
         </div>
       </div>
@@ -152,6 +209,28 @@ if (isGame && communityId && playerName) {
       buttons.rulesBtn?.addEventListener('click', () => showSection(rules));
       buttons.infoBtn?.addEventListener('click', () => showSection(info));
       buttons.vipBtn?.addEventListener('click', () => showSection(vip));
+
+      const banlistModal = document.getElementById('banlistModal');
+      const statsModal = document.getElementById('statsModal');
+
+      const openBanlist = document.getElementById('openBanlist');
+      const closeBanlist = document.getElementById('closeBanlist');
+      const openStats = document.getElementById('openStats');
+      const closeStats = document.getElementById('closeStats');
+
+      openBanlist.addEventListener('click', () => {
+        banlistModal.classList.remove('hidden');
+      });
+      closeBanlist.addEventListener('click', () => {
+        banlistModal.classList.add('hidden');
+      });
+
+      openStats.addEventListener('click', () => {
+        statsModal.classList.remove('hidden');
+      });
+      closeStats.addEventListener('click', () => {
+        statsModal.classList.add('hidden');
+      });
     });
   </script>
 </Layout>

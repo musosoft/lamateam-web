@@ -13,8 +13,10 @@
     "@astrojs/check": "^0.9.4",
     "@astrojs/cloudflare": "^11.2.0",
     "@astrojs/tailwind": "^5.1.2",
+    "@iconify-json/mdi": "^1.2.1",
     "@libsql/client": "^0.14.0",
     "astro": "^4.16.13",
+    "astro-icon": "^1.1.2",
     "cookie": "^1.0.1",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3"
