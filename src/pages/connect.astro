@@ -1,11 +1,12 @@
 ---
 // src/pages/connect.astro
 import Layout from '../layouts/Layout.astro';
+import Hero from '../assets/hero.svg?raw';
 const serverIP = '82.208.17.101:27516';
 const redirectURL = `steam://connect/${serverIP}`;
 ---
 
-<Layout title='Connect to Server'>
+<Layout title="Connect to Server" isAuthenticated={false} userName="" hero={Hero}>
   <head>
     <!-- Meta tag for automatic redirect -->
     <meta http-equiv='refresh' content=`0; url=${redirectURL}` />
@@ -32,16 +33,29 @@ const redirectURL = `steam://connect/${serverIP}`;
             </div>
             <div class="flex flex-wrap p-4 gap-2">
                 <img class="w-full" src="http://query.fakaheda.eu/82.208.17.101:27516.jpg?size=550x100" alt="[CZ/SK] LaMaTeAm [FAST DL]">
-                <iframe src="https://discord.com/widget?id=817862677886926900&amp;theme=dark" width="300" height="500" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
-                <iframe src="https://cache.gametracker.com/components/html0/?host=82.208.17.101:27516&amp;bgColor=333333&amp;fontColor=cccccc&amp;titleBgColor=222222&amp;titleColor=ff9900&amp;borderColor=555555&amp;linkColor=ffcc00&amp;borderLinkColor=222222&amp;showMap=1¤tPlayersHeight=100&amp;showCurrPlayers=1&amp;topPlayersHeight=100&amp;showTopPlayers=1&amp;showBlogs=0&amp;width=300" frameborder="0" scrolling="no" width="300" height="500"></iframe>
+                <iframe
+                src="https://discord.com/widget?id=817862677886926900&amp;theme=dark"
+                width="300"
+                height="500"
+                allow="fullscreen; clipboard-write; encrypted-media; picture-in-picture"
+                sandbox="allow-popups allow-same-origin allow-scripts"
+              ></iframe>
+              <iframe
+                src="https://cache.gametracker.com/components/html0/?host=82.208.17.101:27516&amp;bgColor=333333&amp;fontColor=cccccc&amp;titleBgColor=222222&amp;titleColor=ff9900&amp;borderColor=555555&amp;linkColor=ffcc00&amp;borderLinkColor=222222&amp;showMap=1&amp;currPlayersHeight=100&amp;showCurrPlayers=1&amp;topPlayersHeight=100&amp;showTopPlayers=1&amp;showBlogs=0&amp;width=300"
+                width="300"
+                height="500"
+                class="border-none overflow-hidden"
+              ></iframe>
             </div>
             <script is:inline>
-              function copyToClipboard() {
-                const copyText = document.getElementById('server-ip');
-                copyText.select();
-                copyText.setSelectionRange(0, 99999); // For mobile devices
-                document.execCommand('copy');
-                alert('IP copied to clipboard: ' + copyText.value);
+              async function copyToClipboard() {
+                const copyText = document.getElementById("server-ip").value;
+                try {
+                  await navigator.clipboard.writeText(copyText);
+                  alert("IP copied to clipboard: " + copyText);
+                } catch (err) {
+                  console.error("Failed to copy text: ", err);
+                }
               }
             </script>
           </div>

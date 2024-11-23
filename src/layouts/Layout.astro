@@ -17,7 +17,6 @@ const inGameAuthenticated = isGame && communityId && playerName;
 
 // Pass these variables globally for use in child components
 ---
-
 <!doctype html>
 <html lang="en">
   <head>
@@ -29,9 +28,9 @@ const inGameAuthenticated = isGame && communityId && playerName;
   </head>
   <body>
     <main id="main-content" class="group fixed inset-0 flex items-center justify-center bg-gray-900 backdrop-blur-sm">
-      <div class="absolute inset-0 opacity-100 block group-hover:hidden animate-pointer"></div>
+      <div class=`absolute inset-0 opacity-100 block ${isGame ? 'group-hover:hidden animate-pointer' : ''}`></div>
       <div class="absolute inset-0 flex items-center justify-center">
-        <Fragment set:html={hero} />
+        {isGame && <Fragment set:html={hero} />}
       </div>
 
       <!-- Slot for main content (index or others) -->
