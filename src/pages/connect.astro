@@ -1,0 +1,52 @@
+---
+// src/pages/connect.astro
+import Layout from '../layouts/Layout.astro';
+const serverIP = '82.208.17.101:27516';
+const redirectURL = `steam://connect/${serverIP}`;
+---
+
+<Layout title='Connect to Server'>
+  <head>
+    <!-- Meta tag for automatic redirect -->
+    <meta http-equiv='refresh' content=`0; url=${redirectURL}` />
+  </head>
+  <div class='relative hidden group-hover:flex h-full mx-4 w-full max-w-3xl animate-fade-in-up p-8 items-center'>
+    <div class='bg-gray-800 shadow-lg rounded-lg grow'>
+      <div class='relative flex flex-col h-full w-full overflow-hidden rounded-lg'>
+        <div class='relative z-10 flex flex-col h-full justify-center gap-8 p-8 text-center text-white'>
+          <div>
+            <div class='mb-2'>
+              <h1 class="text-xl mb-2">Connecting to Lamateam Server...</h1>
+              <p>
+                If you are not redirected, click
+                <a href={redirectURL} class='text-blue-500 underline'>here</a>
+                to join directly.
+              </p>
+
+              <!-- Display IP with a Copy button if redirect fails -->
+              <p>If the link doesn’t open, copy the server IP below:</p>
+            </div>
+            <div class='flex items-center gap-2 justify-center'>
+              <input type='text' id='server-ip' value={serverIP} readonly class='bg-gray-700 text-white p-2 rounded-md w-full max-w-xs text-center' />
+              <button onclick='copyToClipboard()' class='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md'> Copy IP </button>
+            </div>
+            <div class="flex flex-wrap p-4 gap-2">
+                <img class="w-full" src="http://query.fakaheda.eu/82.208.17.101:27516.jpg?size=550x100" alt="[CZ/SK] LaMaTeAm [FAST DL]">
+                <iframe src="https://discord.com/widget?id=817862677886926900&amp;theme=dark" width="300" height="500" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+                <iframe src="https://cache.gametracker.com/components/html0/?host=82.208.17.101:27516&amp;bgColor=333333&amp;fontColor=cccccc&amp;titleBgColor=222222&amp;titleColor=ff9900&amp;borderColor=555555&amp;linkColor=ffcc00&amp;borderLinkColor=222222&amp;showMap=1¤tPlayersHeight=100&amp;showCurrPlayers=1&amp;topPlayersHeight=100&amp;showTopPlayers=1&amp;showBlogs=0&amp;width=300" frameborder="0" scrolling="no" width="300" height="500"></iframe>
+            </div>
+            <script is:inline>
+              function copyToClipboard() {
+                const copyText = document.getElementById('server-ip');
+                copyText.select();
+                copyText.setSelectionRange(0, 99999); // For mobile devices
+                document.execCommand('copy');
+                alert('IP copied to clipboard: ' + copyText.value);
+              }
+            </script>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
