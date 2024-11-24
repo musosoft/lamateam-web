@@ -68,26 +68,26 @@ const pages = [
   userName="Guest"
   hero={Hero}
 >
-  <section class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-center text-white mb-8">
-      Vítejte na LaMaTeam
-    </h1>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {
-        pages.map((page) => (
-          <a
-            href={page.link}
-            class="group flex flex-col items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-200 p-4 text-center"
-            data-astro-prefetch="load"
-          >
-            <div class="text-4xl text-indigo-400 mb-4 group-hover:text-indigo-300 transition">
-              <Icon name={page.icon} />
-            </div>
-            <h2 class="text-xl font-semibold text-white mb-2">{page.title}</h2>
-            <p class="text-sm text-gray-300">{page.description}</p>
-          </a>
-        ))
-      }
-    </div>
-  </section>
+  <h1 class="~text-lg/3xl font-bold text-center text-white mb-8">
+    Vítejte na LaMaTeam
+  </h1>
+  <div class="grid grid-cols-3 ~gap-2/6">
+    {
+      pages.map((page) => (
+        <a
+          href={page.link}
+          class="group flex flex-col items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-200 ~p-2/4 text-center"
+          data-astro-prefetch="load"
+        >
+          <div class="~text-lg/4xl text-indigo-400 mb-4 group-hover:text-indigo-300 transition">
+            <Icon name={page.icon} />
+          </div>
+          <h2 class="~text-sm/xl font-semibold text-white mb-2">
+            {page.title}
+          </h2>
+          <p class="~text-xs/sm text-gray-300">{page.description}</p>
+        </a>
+      ))
+    }
+  </div>
 </Layout>
