@@ -4,7 +4,7 @@ import Layout from '../layouts/Layout.astro';
 import Hero from '../assets/hero.svg?raw';
 
 // Server-Side Variables
-const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || '/';
+const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || '/shoutbox/';
 const cookies = Astro.cookies;
 const sessionCookie = cookies.get('session');
 const session = sessionCookie
