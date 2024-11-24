@@ -1,0 +1,12 @@
+---
+// src/components/CandyBox.astro
+import { Icon } from 'astro-icon/components';
+const { communityId, playerName } = Astro.props;
+---
+
+<a
+  href={`${communityId && playerName ? `/?communityid=${encodeURIComponent(communityId)}&name=${encodeURIComponent(playerName)}` : `/`}`}
+  class="absolute top-2 right-2 text-white bg-gray-600 hover:bg-blue-700 p-2 rounded-lg text-4xl z-50"
+>
+  <Icon name="mdi:dots-grid" />
+</a>
