@@ -1,6 +1,6 @@
 ---
 // src/layouts/Layout.astro
-import { Icon } from 'astro-icon/components';
+import CandyBox from '../components/CandyBox.astro';
 interface Props {
   title: string;
   isAuthenticated: boolean;
@@ -43,12 +43,7 @@ const inGameAuthenticated = isGame && communityId && playerName;
       <div
         class="relative flex grow flex-col h-full w-full overflow-y-auto rounded-lg z-10 justify-center ~p-2/8 text-center text-white text-sm"
       >
-        <a
-          href="/"
-          class="absolute top-2 right-2 text-white bg-gray-600 hover:bg-blue-700 p-2 rounded-lg text-4xl z-50"
-        >
-          <Icon name="mdi:dots-grid" /></a
-        >
+        <CandyBox communityId={communityId} playerName={playerName} />
         <slot />
       </div>
     </main></body

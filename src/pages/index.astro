@@ -47,7 +47,7 @@ const pages = [
   {
     title: 'Shoutbox',
     description: 'Zapojte se do konverzace ve shoutboxu.',
-    link: `/shoutbox?communityid=${encodeURIComponent(communityId)}&name=${encodeURIComponent(playerName)}`,
+    link: `/shoutbox`,
     icon: 'mdi:message-outline',
   },
   {
@@ -78,7 +78,7 @@ const pages = [
     {
       pages.map((page) => (
         <a
-          href={page.link}
+          href={`${page.link}?communityid=${encodeURIComponent(communityId)}&name=${encodeURIComponent(playerName)}`}
           class="group flex flex-col items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-200 ~p-2/4 text-center"
           data-astro-prefetch="load"
         >
