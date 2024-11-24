@@ -1,0 +1,220 @@
+---
+// src/pages/faq.astro
+import Layout from '../layouts/Layout.astro';
+import Hero from '../assets/hero.svg?raw';
+---
+
+<Layout title="FAQ" isAuthenticated={false} userName="" hero={Hero}>
+  <section class="container mx-auto px-4 py-8 text-white">
+    <h1 class="text-3xl font-bold text-center mb-8">Často kladené otázky</h1>
+    <div class="space-y-4">
+      <details class="bg-gray-800 rounded-lg shadow-lg">
+        <summary
+          class="cursor-pointer py-3 px-4 font-semibold hover:bg-gray-700 rounded-lg text-xl"
+          >Úplná pravidla serveru
+        </summary>
+        <div class="p-4 text-sm leading-6 overflow-y-scroll max-h-96">
+          <ol class="list-decimal list-inside space-y-2">
+            <li>
+              Zákaz používání cheatu, scriptu, externích programů a nastavení
+              zvýhodňující Vás oproti ostatním hráčům.
+            </li>
+            <li>
+              Zákaz nadávaní, vyhrožování, ponižování a urážení jiných hráčů -
+              jakoukoliv formou (chat, voice i spray).
+            </li>
+            <li>Zákaz úmyslného Team Attacku, Team Killu.</li>
+            <li>
+              Zákaz úmyslného blokovaní a zavázení ve výhledu svojím
+              spoluhráčům.
+            </li>
+            <li>
+              Používaní voice klientů (TS, Skype, Mumble, Ventrilo, atp.) není
+              zakázané, ale prozrazování protihráče je zakázané...
+            </li>
+            <li>Zákaz vydávaní se za Admina.</li>
+            <li>
+              Zákaz propagovaní hnutí, rasismu, fašismu, politické názory,
+              politiky atp.
+            </li>
+            <li>Zákaz bugovaní map/serveru a zneužívaní chyb hry/map.</li>
+            <li>Zákaz bug defus - defúzovanie cez stenu, debnu atď...</li>
+            <li>Zákaz reconnectu do toho istého kola...</li>
+            <li>Zákaz kempenia na spawne a v jeho blízkom okolí...</li>
+            <li>Zákaz používania nevhodného Spray-u a nicku...</li>
+            <li>Zákaz propagovania iných herných serverov...</li>
+            <li>Zákaz zahadzovania bomby na zem...</li>
+            <li>Zákaz napomáhania a radenia hráčom z nepriateľského tímu...</li>
+            <li>Zákaz nakupovania viacej ako 1x He, 2x Flash...</li>
+            <li>Hráč ktorý zabije posledného žijúceho teroristu...</li>
+            <li>Zákaz obchádzania BAN-u...</li>
+            <li>Zákaz navádzania hráčov na hlasovanie...</li>
+            <li>Zákaz osočovania hráčov za cheating bez jasného dôkazu...</li>
+            <li>Každý hráč, který bude mít opakovaně BAN za stejnou věc...</li>
+            <li>Každý hráč má právo podať protest na svoj BAN...</li>
+            <li>
+              Každý hráč který se na server připojí je seznámený s pravidlami...
+            </li>
+            <li>
+              Nepsat stížnosti majiteli. Majitel nebude reagovat na tyto
+              zprávy...
+            </li>
+            <li>BHOP je zakázaný...</li>
+          </ol>
+        </div>
+      </details>
+
+      <details class="bg-gray-800 rounded-lg shadow-lg">
+        <summary
+          class="cursor-pointer py-3 px-4 font-semibold hover:bg-gray-700 rounded-lg text-xl"
+          >Užitečné informace</summary
+        >
+        <div class="p-4 text-sm leading-6 overflow-y-scroll max-h-96">
+          <p>
+            Pokud chceš ve hře zobrazit tohle okno, napiš <code>!motd</code>.
+          </p>
+          <p>
+            Pokud máš připomínky, nápady na zlepšení, nebo chceš nahlásit
+            podvádějícího hráče, napiš nám v sekci KONTAKT.
+          </p>
+          <p><strong>Majitelem serveru je crazy69.</strong></p>
+          <p>Hosting zabezpečuje FakaHeda.eu.</p>
+          <p>Najdeš nás taky na Facebooku - hledej: LaMaTeAm.eu.</p>
+        </div>
+      </details>
+
+      <details class="bg-gray-800 rounded-lg shadow-lg">
+        <summary
+          class="cursor-pointer py-3 px-4 font-semibold hover:bg-gray-700 rounded-lg text-xl"
+          >Jak nahrát demo?</summary
+        >
+        <div class="p-4 text-sm leading-6 overflow-y-scroll max-h-96">
+          <ol class="list-decimal list-inside space-y-2">
+            <li>
+              Nahrávaní dema spusť příkazem v console <code
+                >record „název_dema“</code
+              >.
+            </li>
+            <li>Nahrávání ukončíš příkazem <code>stop</code>.</li>
+            <li>
+              Nahrané demo spustíš příkazem <code>playdemo „název_dema“</code>.
+            </li>
+          </ol>
+          <p>
+            <strong>Hint:</strong> Příkazy <code>sv_cheats 1</code> a <code
+              >r_drawothermodels 2</code
+            > nepoužívej na herním serveru...
+          </p>
+        </div>
+      </details>
+
+      <details class="bg-gray-800 rounded-lg shadow-lg">
+        <summary
+          class="cursor-pointer py-3 px-4 font-semibold hover:bg-gray-700 rounded-lg text-xl"
+          >Kdo podpořil server?</summary
+        >
+        <div class="p-4 text-sm leading-6 overflow-y-scroll max-h-96">
+          <p><strong>Podporovatelé:</strong></p>
+          <ul class="flex flex-wrap items-center justify-center gap-2">
+            <li>HoR</li>
+            <li>Qatro-SPS</li>
+            <li>Zuzule</li>
+            <li>Voody312</li>
+            <li>Ipos</li>
+            <li>BOT - Luc@sonE™</li>
+            <li>Bassik</li>
+            <li>HantenPuardon</li>
+            <li>Majuško ™</li>
+            <li>Belly Savalas</li>
+            <li>Paty</li>
+            <li>.C</li>
+            <li>Pese</li>
+            <li>Jezis</li>
+            <li>.@xel</li>
+            <li>InhumaN ErectioN</li>
+            <li>Kubajs♥L</li>
+            <li>Old Supik</li>
+            <li>majk25</li>
+            <li>Volavka</li>
+            <li>(CZ)Kropi "exploited victim"</li>
+            <li>Karko ︻芫 一</li>
+            <li>KuCHaŘ - čtvrtá cenová</li>
+            <li>Jacoooob</li>
+            <li>Domča</li>
+            <li>Bobik189</li>
+            <li>KissAngel - Mliko</li>
+            <li>Jerzi!</li>
+            <li>Mirec</li>
+            <li>CTHULHU</li>
+            <li>Mr.SV</li>
+            <li>HLAVOMLAT TEQUILA JOE</li>
+            <li>Rainer</li>
+            <li>DonJuanDeag</li>
+            <li>MarekQX</li>
+            <li>štefan</li>
+            <li>Deadman</li>
+            <li>paty</li>
+            <li>vladko</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="bg-gray-800 rounded-lg shadow-lg">
+        <summary
+          class="cursor-pointer py-3 px-4 font-semibold hover:bg-gray-700 rounded-lg text-xl"
+          >Kdo je admin?</summary
+        >
+        <div class="p-4 text-sm leading-6 overflow-y-scroll max-h-96">
+          <ul>
+            <li>Bassik</li>
+            <li>Hor</li>
+            <li>Ipos</li>
+            <li>BOT - Luc@sonE™</li>
+            <li>muso.sk</li>
+            <li>Qatro-SPS</li>
+            <li>Voody</li>
+            <li>Zuzule</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="bg-gray-800 rounded-lg shadow-lg">
+        <summary
+          class="cursor-pointer py-3 px-4 font-semibold hover:bg-gray-700 rounded-lg text-xl"
+          >Kto má rezervovaný slot</summary
+        >
+        <div class="p-4 text-sm leading-6 overflow-y-scroll max-h-96">
+          <ul>
+            <li>.C</li>
+            <li>Belly</li>
+            <li>HantenPuardon</li>
+            <li>Jezis</li>
+            <li>Majuško</li>
+            <li>Paty</li>
+            <li>Pese</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+  <script is:inline>
+    // Fetch all the details element.
+    const details = document.querySelectorAll('details');
+
+    // Add the onclick listeners.
+    details.forEach((detail) => {
+      detail.addEventListener('toggle', () => {
+        if (detail.open) setTargetDetail(detail);
+      });
+    });
+
+    // Close all the details that are not targetDetail.
+    function setTargetDetail(targetDetail) {
+      details.forEach((detail) => {
+        if (detail !== targetDetail) {
+          detail.open = false;
+        }
+      });
+    }
+  </script>
+</Layout>

@@ -1,0 +1,46 @@
+---
+// src/pages/contact.astro
+import Layout from '../layouts/Layout.astro';
+import Hero from '../assets/hero.svg?raw';
+---
+
+<Layout title="Contact" isAuthenticated={false} userName="" hero={Hero}>
+  <h1 class="text-2xl text-center mb-4">Kontaktuj nás</h1>
+  <form
+    class="flex flex-col gap-2 p-2"
+    action="https://formspree.io/f/xovqnqna"
+    method="POST"
+  >
+    <!-- Email Input -->
+    <label class="flex flex-col gap-1 mb-4">
+      <span class="font-medium text-sm text-gray-300">Tvůj Email</span>
+      <input
+        type="email"
+        name="email"
+        required
+        placeholder="no@brainer.cz"
+        class="p-3 rounded-md bg-gray-900 text-gray-100 border border-gray-600 focus:ring focus:ring-blue-500 focus:outline-none"
+      />
+    </label>
+
+    <!-- Message Textarea -->
+    <label class="flex flex-col gap-1 mb-4">
+      <span class="font-medium text-sm text-gray-300">Tvoja Message</span>
+      <textarea
+        name="message"
+        required
+        rows="5"
+        placeholder="Ahoj, ..."
+        class="p-3 rounded-md bg-gray-900 text-gray-100 border border-gray-600 focus:ring focus:ring-blue-500 focus:outline-none resize-none"
+      ></textarea>
+    </label>
+
+    <!-- Submit Button -->
+    <button
+      type="submit"
+      class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium shadow-md transition duration-200 ease-in-out"
+    >
+      Odeslat
+    </button>
+  </form>
+</Layout>

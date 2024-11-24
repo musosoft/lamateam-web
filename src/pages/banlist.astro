@@ -1,0 +1,16 @@
+---
+// src/pages/banlist.astro
+import Layout from '../layouts/Layout.astro';
+import Hero from '../assets/hero.svg?raw';
+---
+
+<Layout title="Banlist" isAuthenticated={false} userName="" hero={Hero}>
+  <!-- Modal for Banlist -->
+  <div class="fixed inset-0">
+    <div class="relative bg-gray-900 rounded-lg mx-auto h-full">
+      <iframe
+        src="https://sourcebans.fakaheda.eu/sbans_336496/"
+        class="w-full h-full rounded-lg"></iframe>
+    </div>
+  </div>
+</Layout>

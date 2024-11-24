@@ -2,237 +2,92 @@
 // src/pages/index.astro
 import Layout from '../layouts/Layout.astro';
 import Hero from '../assets/hero.svg?raw';
-import Shoutbox from '../components/Shoutbox.astro';
-import Info from '../components/Info.astro';
-import Rules from '../components/Rules.astro';
-import Vip from '../components/Vip.astro';
 import { Icon } from 'astro-icon/components';
 
-function convertToSteam64(communityId: string) {
-  const steamIdMatch = communityId.match(/^\[U:1:(\d+)\]$/);
-  if (steamIdMatch) {
-    const accountId = BigInt(steamIdMatch[1]);
-    const steam64Id = accountId + BigInt('76561197960265728');
-    return steam64Id.toString();
-  } else {
-    console.error('Invalid communityId format:', communityId);
-    return '';
-  }
-}
-
-const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || '/';
-
-const cookies = Astro.cookies;
-const sessionCookie = cookies.get('session');
-const session = sessionCookie ? JSON.parse(decodeURIComponent(sessionCookie.value)) : {};
-
-// Get the user agent and determine if the request is from the game
-const userAgent = Astro.request.headers.get('user-agent') || '';
-const isGame = userAgent.includes('Valve Client');
-
-// Access query parameters
-const communityId = Astro.url.searchParams.get('communityid');
-const playerName = Astro.url.searchParams.get('name');
-
-// Initialize variables
-let isAuthenticated = false;
-let displayPlayerName = 'Guest';
-let displayPlayerAvatar = '/assets/default-avatar.webp';
-let steamID = '';
-
-// Authentication logic
-if (isGame && communityId && playerName) {
-  // Authenticated via in-game parameters
-  isAuthenticated = true;
-  displayPlayerName = playerName;
-  steamID = convertToSteam64(communityId);
-  
-  if (steamID) {
-    const STEAM_API_KEY = Astro.locals.runtime.env.STEAM_API_KEY;
-    if (STEAM_API_KEY) {
-      // Fetch avatar from Steam API
-      const steamApiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steamID}`;
-      try {
-        const response = await fetch(steamApiUrl);
-        if (response.ok) {
-          const data = await response.json();
-          const player = data.response.players[0];
-          displayPlayerAvatar = player?.avatarfull || '/assets/default-avatar.webp';
-        } else {
-          console.error('Failed to fetch avatar from Steam API. Status:', response.status);
-        }
-      } catch (error) {
-        console.error('Error fetching avatar from Steam API:', error);
-      }
-    } else {
-      console.error('STEAM_API_KEY is not set.');
-    }
-  }
-} else if (session?.steamID) {
-  // Authenticated via session (Steam web login)
-  isAuthenticated = true;
-  displayPlayerName = session.playerName || 'Guest';
-  displayPlayerAvatar = session.playerAvatar || '/assets/default-avatar.webp';
-  steamID = session.steamID;
-} else {
-  // Not authenticated
-  isAuthenticated = false;
-}
+const pages = [
+  {
+    title: 'Seznam banů',
+    description: 'Zobrazte si nejnovější provinilce.',
+    link: '/banlist',
+    icon: 'mdi:ban',
+  },
+  {
+    title: 'Statistiky',
+    description: 'Prohlédněte si statistiky hráčů a žebříčky.',
+    link: '/stats',
+    icon: 'mdi:chart-bar',
+  },
+  {
+    title: 'Kontakt',
+    description: 'Kontaktujte nás pro podporu nebo dotazy.',
+    link: '/contact',
+    icon: 'mdi:card-account-mail',
+  },
+  {
+    title: 'VIP',
+    description: 'Exkluzivní funkce a výhody pro VIP členy.',
+    link: '/vip',
+    icon: 'mdi:star-outline',
+  },
+  {
+    title: 'Pravidla',
+    description: 'Přečtěte si pravidla a pokyny komunity.',
+    link: '/rules',
+    icon: 'mdi:book',
+  },
+  {
+    title: 'Příkazy',
+    description: 'Naučte se užitečné příkazy do hry.',
+    link: '/info',
+    icon: 'mdi:information-outline',
+  },
+  {
+    title: 'Shoutbox',
+    description: 'Zapojte se do konverzace ve shoutboxu.',
+    link: '/shoutbox',
+    icon: 'mdi:message-outline',
+  },
+  {
+    title: 'Připojení',
+    description: 'Připojte se na server rychle z prohlížeče.',
+    link: '/connect',
+    icon: 'mdi:connection',
+  },
+  {
+    title: 'Často kladené dotazy',
+    description: 'Často kladené otázky a další informace.',
+    link: '/faq',
+    icon: 'mdi:frequently-asked-questions',
+  },
+];
 ---
 
-<Layout title="Welcome to LaMaTeam" isAuthenticated={isAuthenticated} userName={displayPlayerName} hero={Hero}>
-  <div class=`relative ${isGame ? 'hidden group-hover:flex' : 'flex'} h-full mx-4 w-full max-w-3xl animate-fade-in-up p-8 items-center`>
-    <div class="bg-gray-800 shadow-lg rounded-lg grow">
-      <div class="relative flex flex-col h-full w-full overflow-hidden rounded-lg">
-        <div class="relative z-10 flex flex-col h-full justify-center gap-8 p-8 text-center text-white">
-                    <!-- Modal for Banlist -->
-                    <div id="banlistModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden">
-                      <div class="relative bg-gray-900 rounded-lg max-w-7xl mx-auto h-full">
-                        <button
-                          id="closeBanlist"
-                          class="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg"
-                        >
-                          Close
-                        </button>
-                        <iframe
-                          src="https://sourcebans.fakaheda.eu/sbans_336496/"
-                          class="w-full h-full rounded-lg"
-                        ></iframe>
-                      </div>
-                    </div>
-          
-                    <!-- Modal for Stats -->
-                    <div id="statsModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden">
-                      <div class="relative bg-gray-900 rounded-lg max-w-7xl mx-auto h-full">
-                        <button
-                          id="closeStats"
-                          class="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg"
-                        >
-                          Close
-                        </button>
-                        <iframe
-                          src="https://stats.lamateam.eu"
-                          class="w-full h-full rounded-lg"
-                        ></iframe>
-                      </div>
-                    </div>
-
-          <!-- Content Sections -->
-          <div id="shoutbox" class="space-y-4">
-            <Shoutbox
-              baseUrl={baseUrl}
-              isAuthenticated={isAuthenticated}
-              displayPlayerName={displayPlayerName}
-              displayPlayerAvatar={displayPlayerAvatar}
-              steamID={steamID}
-            />
-          </div>
-          <div id='rules' class='space-y-4 hidden'>
-            <Rules />
-          </div>
-          <div id='info' class='space-y-4 hidden'>
-            <Info />
-          </div>
-          <div id='vip' class='space-y-4 hidden'>
-            <Vip />
-          </div>
-
-          <!-- Footer Links -->          
-          <div
-            class=`fixed ${isGame ? 'bottom-[-3rem] sm:grid-cols-6 max-w-4xl' : 'bottom-1 sm:grid-cols-7 max-w-5xl'} left-0 right-0 mx-auto grid w-full grid-cols-1 gap-2 bg-slate-600 p-2 rounded-lg transition-all duration-300 ease-in-out hover:bottom-1`
+<Layout
+  title="Welcome to LaMaTeam"
+  isAuthenticated={false}
+  userName="Guest"
+  hero={Hero}
+>
+  <section class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-center text-white mb-8">
+      Vítejte na LaMaTeam
+    </h1>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {
+        pages.map((page) => (
+          <a
+            href={page.link}
+            class="group flex flex-col items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-200 p-4 text-center"
+            data-astro-prefetch="load"
           >
-            <a id="rulesBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">
-              <Icon name="mdi:book" class="mr-2" />
-              Pravidla
-            </a>
-            <a id="infoBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">
-              <Icon name="mdi:information-outline" class="mr-2" />
-              Prikazy
-            </a>
-            <a id="vipBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">
-              <Icon name="mdi:star-outline" class="mr-2" />
-              VIP
-            </a>
-            <button
-              id="openBanlist"
-              class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600"
-            >
-              <Icon name="mdi:ban" class="mr-2" />
-              Banlist
-            </button>
-            <button
-              id="openStats"
-              class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600"
-            >
-              <Icon name="mdi:chart-bar" class="mr-2" />
-              Stats
-            </button>
-            <a id="shoutboxBtn" href="#" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">
-              <Icon name="mdi:message-outline" class="mr-2" />
-              Shoutbox
-            </a>
-            {!isGame && <a id="connectBtn" href="/connect" class="flex items-center justify-center rounded-lg bg-gray-700 px-6 py-3 font-medium transition hover:bg-indigo-600">
-              <Icon name="mdi:connection" class="mr-2" />
-              Connect
-            </a>}
-          </div>
-        </div>
-      </div>
+            <div class="text-4xl text-indigo-400 mb-4 group-hover:text-indigo-300 transition">
+              <Icon name={page.icon} />
+            </div>
+            <h2 class="text-xl font-semibold text-white mb-2">{page.title}</h2>
+            <p class="text-sm text-gray-300">{page.description}</p>
+          </a>
+        ))
+      }
     </div>
-  </div>
-
-  <script is:inline>
-    document.addEventListener('DOMContentLoaded', function () {
-      const userAgent = navigator.userAgent;
-      const isGame = userAgent.includes('Valve Client');
-      const mainContent = document.getElementById('main-content');
-
-      if (isGame && mainContent) {
-        mainContent.classList.add('bg-opacity-0');
-      }
-
-      const shoutbox = document.getElementById('shoutbox');
-      const rules = document.getElementById('rules');
-      const info = document.getElementById('info');
-      const vip = document.getElementById('vip');
-      const buttons = {
-        shoutboxBtn: document.getElementById('shoutboxBtn'),
-        rulesBtn: document.getElementById('rulesBtn'),
-        infoBtn: document.getElementById('infoBtn'),
-        vipBtn: document.getElementById('vipBtn'),
-      };
-
-      function showSection(section) {
-        [shoutbox, rules, info, vip].forEach(sec => sec?.classList.add('hidden'));
-        section?.classList.remove('hidden');
-      }
-
-      buttons.shoutboxBtn?.addEventListener('click', () => showSection(shoutbox));
-      buttons.rulesBtn?.addEventListener('click', () => showSection(rules));
-      buttons.infoBtn?.addEventListener('click', () => showSection(info));
-      buttons.vipBtn?.addEventListener('click', () => showSection(vip));
-
-      const banlistModal = document.getElementById('banlistModal');
-      const statsModal = document.getElementById('statsModal');
-
-      const openBanlist = document.getElementById('openBanlist');
-      const closeBanlist = document.getElementById('closeBanlist');
-      const openStats = document.getElementById('openStats');
-      const closeStats = document.getElementById('closeStats');
-
-      openBanlist.addEventListener('click', () => {
-        banlistModal.classList.remove('hidden');
-      });
-      closeBanlist.addEventListener('click', () => {
-        banlistModal.classList.add('hidden');
-      });
-
-      openStats.addEventListener('click', () => {
-        statsModal.classList.remove('hidden');
-      });
-      closeStats.addEventListener('click', () => {
-        statsModal.classList.add('hidden');
-      });
-    });
-  </script>
+  </section>
 </Layout>
