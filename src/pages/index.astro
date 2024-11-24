@@ -4,6 +4,9 @@ import Layout from '../layouts/Layout.astro';
 import Hero from '../assets/hero.svg?raw';
 import { Icon } from 'astro-icon/components';
 
+const communityId = Astro.url.searchParams.get('communityid') ?? '';
+const playerName = Astro.url.searchParams.get('name') ?? 'Guest';
+
 const pages = [
   {
     title: 'Seznam banů',
@@ -44,7 +47,7 @@ const pages = [
   {
     title: 'Shoutbox',
     description: 'Zapojte se do konverzace ve shoutboxu.',
-    link: '/shoutbox',
+    link: `/shoutbox?communityid=${encodeURIComponent(communityId)}&name=${encodeURIComponent(playerName)}`,
     icon: 'mdi:message-outline',
   },
   {
@@ -69,7 +72,7 @@ const pages = [
   hero={Hero}
 >
   <h1 class="~text-lg/3xl font-bold text-center text-white mb-8">
-    Vítejte na LaMaTeam
+    Vítej na LaMaTeam
   </h1>
   <div class="grid grid-cols-3 ~gap-2/6">
     {

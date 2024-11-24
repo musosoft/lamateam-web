@@ -4,7 +4,7 @@ import Layout from '../layouts/Layout.astro';
 import Hero from '../assets/hero.svg?raw';
 
 // Server-Side Variables
-const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || '/shoutbox/';
+const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || '/';
 const cookies = Astro.cookies;
 const sessionCookie = cookies.get('session');
 const session = sessionCookie
@@ -93,7 +93,7 @@ function convertToSteam64(communityId: string): string {
             class="w-12 h-12 rounded-full border-2 border-gray-700"
           />
           <p id="welcomeMessage" class="text-lg text-green-400">
-            Vítejte, <strong>{displayPlayerName}</strong>!
+            Vítej, <strong>{displayPlayerName}</strong>!
           </p>
         </div>
       ) : (
