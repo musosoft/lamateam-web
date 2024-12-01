@@ -3,7 +3,7 @@
 import Layout from '../layouts/Layout.astro';
 
 // Environment Variables
-const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL;
+const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || '/';
 const STEAM_API_KEY = Astro.locals.runtime.env.STEAM_API_KEY || import.meta.env.STEAM_API_KEY;
 const cookies = Astro.cookies;
 
@@ -12,7 +12,7 @@ const communityId = cookies.get('communityid')?.value || '';
 const playerName = cookies.get('name')?.value || 'Guest';
 
 // Determine authentication state
-const isGame = Astro.request.headers.get('user-agent')?.includes('Valve Client');
+const isGame = Astro.request.headers.get('user-agent')?.includes('Valve Client') || false;
 const isAuthenticated = isGame && communityId && playerName;
 
 // Initialize properties
@@ -172,7 +172,7 @@ if (isAuthenticated) {
                 <p class="text-white"><strong>${player_name}</strong>: ${message}</p>
                 <p class="text-gray-400 text-sm ml-auto">${timeSince(timestamp)}</p>
               </div>
-            </div>`,
+            </div>`
             );
           },
         );
