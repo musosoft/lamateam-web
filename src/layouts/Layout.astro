@@ -1,22 +1,31 @@
 ---
 // src/layouts/Layout.astro
 import CandyBox from '../components/CandyBox.astro';
-interface Props {
-  title: string;
-  isAuthenticated: boolean;
-  userName: string;
-  hero: string;
+
+const cookies = Astro.cookies;
+
+// Retrieve query parameters and cookies
+const queryCommunityId = Astro.url.searchParams.get('communityid');
+const queryPlayerName = Astro.url.searchParams.get('name');
+let communityId = cookies.get('communityid')?.value || '';
+let playerName = cookies.get('name')?.value || '';
+
+// Update cookies if query parameters are present
+if (queryCommunityId) {
+  communityId = queryCommunityId;
+  cookies.set('communityid', communityId, { path: '/', httpOnly: false });
+}
+if (queryPlayerName) {
+  playerName = queryPlayerName;
+  cookies.set('name', playerName, { path: '/', httpOnly: false });
 }
 
-const { title, isAuthenticated, userName, hero } = Astro.props;
+interface Props {
+  title: string;
+}
 
-// Accessing query parameters using Astro.url
-const communityId = Astro.url.searchParams.get('communityid');
-const playerName = Astro.url.searchParams.get('name');
+const { title } = Astro.props;
 const isGame = navigator.userAgent.includes('Valve Client');
-const inGameAuthenticated = isGame && communityId && playerName;
-
-// Pass these variables globally for use in child components
 ---
 
 <!doctype html>
@@ -37,15 +46,16 @@ const inGameAuthenticated = isGame && communityId && playerName;
         class=`absolute inset-0 opacity-100 block ${isGame ? 'group-hover:hidden animate-pointer' : ''}`
       >
       </div>
-      <div class="absolute inset-0 flex items-center justify-center">
-        {isGame && <Fragment set:html={hero} />}
-      </div>
       <div
         class="relative flex grow flex-col h-full w-full overflow-y-auto rounded-lg z-10 justify-center ~p-2/8 text-center text-white text-sm"
       >
-        <CandyBox communityId={communityId} playerName={playerName} />
+        <CandyBox />
         <slot />
       </div>
-    </main></body
-  >
+    </main>
+    <script is:inline>
+      console.log("Stored communityId:", communityId);
+      console.log("Stored playerName:", playerName);
+    </script>
+    </body>
 </html>

@@ -1,11 +1,7 @@
 ---
 // src/pages/index.astro
 import Layout from '../layouts/Layout.astro';
-import Hero from '../assets/hero.svg?raw';
 import { Icon } from 'astro-icon/components';
-
-const communityId = Astro.url.searchParams.get('communityid') ?? '';
-const playerName = Astro.url.searchParams.get('name') ?? 'Guest';
 
 const pages = [
   {
@@ -65,12 +61,7 @@ const pages = [
 ];
 ---
 
-<Layout
-  title="Welcome to LaMaTeam"
-  isAuthenticated={false}
-  userName="Guest"
-  hero={Hero}
->
+<Layout title="Welcome to LaMaTeam">
   <h1 class="~text-lg/3xl font-bold text-center text-white mb-8">
     Vítej na LaMaTeam
   </h1>
@@ -78,7 +69,7 @@ const pages = [
     {
       pages.map((page) => (
         <a
-          href={`${page.link}?communityid=${encodeURIComponent(communityId)}&name=${encodeURIComponent(playerName)}`}
+          href={page.link}
           class="group flex flex-col items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-200 ~p-2/4 text-center"
           data-astro-prefetch="load"
         >

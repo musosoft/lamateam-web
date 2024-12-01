@@ -1,17 +1,11 @@
 ---
 // src/pages/connect.astro
 import Layout from '../layouts/Layout.astro';
-import Hero from '../assets/hero.svg?raw';
 const serverIP = '82.208.17.101:27516';
 const redirectURL = `steam://connect/${serverIP}`;
 ---
 
-<Layout
-  title="Připojení k serveru"
-  isAuthenticated={false}
-  userName=""
-  hero={Hero}
->
+<Layout title="Připojení k serveru">
   <head>
     <!-- Meta tag for automatic redirect -->
     <meta http-equiv="refresh" content=`0; url=${redirectURL}` />

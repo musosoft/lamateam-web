@@ -1,27 +1,67 @@
 ---
 // src/pages/rules.astro
 import Layout from '../layouts/Layout.astro';
-import Hero from '../assets/hero.svg?raw';
 ---
 
-<Layout title="Rules" isAuthenticated={false} userName="" hero={Hero}>
-  <h1 class="mb-4 font-bold tracking-tight text-4xl">Zákaz:</h1>
-  <span class="text-yellow-500"
-    >- T kemp na DE mapách déle jak 30 sekund - (SLAY)</span
-  ><br />
-  <span class="text-yellow-500">- SPAM (voice,chat) - (KICK/BAN)</span><br />
-  <span class="text-yellow-500">- Opětovné nakupování - (KICK/BAN)</span><br />
-  <span class="text-yellow-500"
-    >- Sprostá mluva, nadávky, urážky, rasismus bez nadsázky - (BAN)</span
-  ><br />
-  <span class="text-yellow-500"
-    >- kradení nicků, napodobování, vydávání se za admina (BAN)</span
-  ><br />
-  <span class="text-yellow-500">- používání cheatů (PERMABAN)</span><br />
-  <span class="text-yellow-500"
-    >- BHOP / více jak dva skoky (SLAY/KICK/BAN)</span
-  ><br /><br />
-  <span class="text-red-500">!!! NEZNALOST PRAVIDEL NEOMLOUVÁ !!!</span><br
-  /><br /><br />
-  <span class="text-red-500">!!! ÚPLNÁ PRAVIDLA NA LAMATEAM.EU !!!</span>
+<Layout title="Pravidla">
+  <h1 class="mb-6 text-4xl font-extrabold tracking-tight text-center text-gray-900">Pravidla Serveru</h1>
+  
+  <div class="overflow-x-auto">
+    <table class="w-full table-auto border-collapse border border-gray-600 rounded-lg contain-paint">
+      <thead class="bg-gray-800">
+        <tr>
+          <th class="px-4 py-2 text-left font-semibold text-gray-200 border border-gray-700 uppercase">Zákaz</th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-200 border border-gray-700 uppercase">Postih</th>
+        </tr>
+      </thead>
+      <tbody class="bg-gray-800 text-gray-200 text-left">
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ cheaty, scripty, externé programy a nastavení zvýhodňující hráče oproti ostatním.</td>
+          <td class="px-4 py-2 border border-gray-700">⛔</td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ nadávky, rasismus, vyhrožování, politizování, nebo ponižování jiných hráčů a menšin.</td>
+          <td class="px-4 py-2 border border-gray-700">🔇⏳</td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ úmyslný attack, kill, flash, a blokování spoluhráčů.</td>
+          <td class="px-4 py-2 border border-gray-700">⚡🦵⏳</td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ kempení na T (de_) / CT (cs_) spawne déle než 30 sekund.</td>
+          <td class="px-4 py-2 border border-gray-700">⚡</td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ používání nevhodného spraye nebo nicku.</td>
+          <td class="px-4 py-2 border border-gray-700">🦵⏳</td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ bugování map/serveru, defus přes stěnu, reconnectů nebo exploitů herních chyb.</td>
+          <td class="px-4 py-2 border border-gray-700">🦵⏳</td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ nakupování více než 1 HE, 2 Flash⏳gů.</td>
+          <td class="px-4 py-2 border border-gray-700">🦵⏳</td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ vydávání se za admina nebo kradení nicků.</td>
+          <td class="px-4 py-2 border border-gray-700">⏳</td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ BHOP Strafe Jumping více než dva skoky.</td>
+          <td class="px-4 py-2 border border-gray-700">⚡🦵⏳</td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ spamování příkazů, chatu, voice a navádění hráčů na hlasování map.</td>
+          <td class="px-4 py-2 border border-gray-700">🔇🦵⏳</td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">❌ obcházet nebo opakovaně porušovat pravidla.</td>
+          <td class="px-4 py-2 border border-gray-700">⛔</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="mt-6 text-center text-red-600 font-semibold">NEZNALOST PRAVIDEL NEOMLOUVÁ! Hráči mají právo podat protest prostřednictvím formuláře. Nepište stížnosti přímo majiteli serveru.</p>
 </Layout>

@@ -1,99 +1,77 @@
 ---
 // src/pages/shoutbox.astro
 import Layout from '../layouts/Layout.astro';
-import Hero from '../assets/hero.svg?raw';
 
-// Server-Side Variables
-const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || '/';
+// Environment Variables
+const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL;
+const STEAM_API_KEY = Astro.locals.runtime.env.STEAM_API_KEY || import.meta.env.STEAM_API_KEY;
 const cookies = Astro.cookies;
-const sessionCookie = cookies.get('session');
-const session = sessionCookie
-  ? JSON.parse(decodeURIComponent(sessionCookie.value))
-  : {};
 
-// Get the user agent and determine if the request is from the game
-const userAgent = Astro.request.headers.get('user-agent') || '';
-const isGame = userAgent.includes('Valve Client');
+// Get stored values from cookies
+const communityId = cookies.get('communityid')?.value || '';
+const playerName = cookies.get('name')?.value || 'Guest';
 
-// Access query parameters
-const communityId = Astro.url.searchParams.get('communityid');
-const playerName = Astro.url.searchParams.get('name');
+// Determine authentication state
+const isGame = Astro.request.headers.get('user-agent')?.includes('Valve Client');
+const isAuthenticated = isGame && communityId && playerName;
 
-// Initialize props
-let isAuthenticated = false;
-let displayPlayerName = 'Guest';
-let displayPlayerAvatar = '/assets/default-avatar.webp';
+// Initialize properties
+let playerAvatar = '/assets/default-avatar.webp';
 let steamID = '';
-
-// Authentication logic
-if (isGame && communityId && playerName) {
-  isAuthenticated = true;
-  displayPlayerName = playerName;
-  steamID = convertToSteam64(communityId);
-
-  if (steamID) {
-    const STEAM_API_KEY = Astro.locals.runtime.env.STEAM_API_KEY;
-    if (STEAM_API_KEY) {
-      const steamApiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steamID}`;
-      try {
-        const response = await fetch(steamApiUrl);
-        if (response.ok) {
-          const data = await response.json();
-          const player = data.response.players[0];
-          displayPlayerAvatar =
-            player?.avatarfull || '/assets/default-avatar.webp';
-        } else {
-          console.error(
-            'Failed to fetch avatar from Steam API. Status:',
-            response.status,
-          );
-        }
-      } catch (error) {
-        console.error('Error fetching avatar from Steam API:', error);
-      }
-    } else {
-      console.error('STEAM_API_KEY is not set.');
-    }
-  }
-} else if (session?.steamID) {
-  isAuthenticated = true;
-  displayPlayerName = session.playerName || 'Guest';
-  displayPlayerAvatar = session.playerAvatar || '/assets/default-avatar.webp';
-  steamID = session.steamID;
-}
 
 // Helper function to convert communityId to Steam64
 function convertToSteam64(communityId: string): string {
-  const steamIdMatch = communityId.match(/^\[U:1:(\d+)\]$/);
-  if (steamIdMatch) {
-    const accountId = BigInt(steamIdMatch[1]);
-    const steam64Id = accountId + BigInt('76561197960265728');
-    return steam64Id.toString();
-  } else {
-    console.error('Invalid communityId format:', communityId);
-    return '';
+  const match = communityId.match(/^\[U:1:(\d+)\]$/);
+  if (match) {
+    return (BigInt(match[1]) + BigInt('76561197960265728')).toString();
   }
+  return '';
+}
+
+// Fetch Steam API data if authenticated
+async function fetchSteamAvatar(steamID: string) {
+  if (!STEAM_API_KEY) {
+    console.error('STEAM_API_KEY is not set.');
+    return '/assets/default-avatar.webp';
+  }
+
+  try {
+    const steamApiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steamID}`;
+    const response = await fetch(steamApiUrl);
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.response.players[0]?.avatarfull || '/assets/default-avatar.webp';
+    } else {
+      console.error('Failed to fetch avatar from Steam API. Status:', response.status);
+      return '/assets/default-avatar.webp';
+    }
+  } catch (error) {
+    console.error('Error fetching avatar from Steam API:', error);
+    return '/assets/default-avatar.webp';
+  }
+}
+
+// Execute only if authenticated
+if (isAuthenticated) {
+  steamID = convertToSteam64(communityId);
+  playerAvatar = await fetchSteamAvatar(steamID);
 }
 ---
 
-<Layout
-  title="Shoutbox"
-  isAuthenticated={isAuthenticated}
-  userName={displayPlayerName}
-  hero={Hero}
->
+<Layout title="Shoutbox">
   <section class="mx-auto w-full">
     {
       isAuthenticated ? (
         <div class="flex items-center space-x-4 mb-6">
           <img
             id="playerAvatar"
-            src={displayPlayerAvatar}
+            src={playerAvatar}
             alt="Avatar hráče"
             class="w-12 h-12 rounded-full border-2 border-gray-700"
           />
           <p id="welcomeMessage" class="text-lg text-green-400">
-            Vítej, <strong>{displayPlayerName}</strong>!
+            Vítej, <strong>{playerName}</strong>!
           </p>
         </div>
       ) : (
@@ -138,7 +116,7 @@ function convertToSteam64(communityId: string): string {
 
   <script
     is:inline
-    define:vars={{ baseUrl, displayPlayerName, displayPlayerAvatar, steamID }}
+    define:vars={{ baseUrl, playerName, playerAvatar, steamID }}
   >
     document.addEventListener('DOMContentLoaded', function () {
       const messageInput = document.getElementById('messageInput');
@@ -204,8 +182,7 @@ function convertToSteam64(communityId: string): string {
       async function fetchMessages() {
         try {
           const response = await fetch(`${normalizedBaseUrl}api/shoutbox`);
-          if (!response.ok)
-            throw new Error(`HTTP error! status: ${response.status}`);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const messages = await response.json();
           renderMessages(messages);
         } catch (error) {
@@ -224,13 +201,12 @@ function convertToSteam64(communityId: string): string {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               steamid: steamID || '',
-              player_name: displayPlayerName,
-              player_avatar: displayPlayerAvatar,
+              player_name: playerName,
+              player_avatar: playerAvatar,
               message,
             }),
           });
-          if (!response.ok)
-            throw new Error(`HTTP error! status: ${response.status}`);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           messageInput.value = '';
           fetchMessages();
         } catch (error) {
