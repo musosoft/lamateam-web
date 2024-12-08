@@ -3,8 +3,12 @@
 import Layout from '../layouts/Layout.astro';
 
 // Environment Variables
-const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || '/';
-const STEAM_API_KEY = Astro.locals.runtime.env.STEAM_API_KEY || import.meta.env.STEAM_API_KEY;
+const baseUrl =
+  Astro.locals.runtime.env.PUBLIC_SITE_URL ||
+  import.meta.env.PUBLIC_SITE_URL ||
+  '/';
+const STEAM_API_KEY =
+  Astro.locals.runtime.env.STEAM_API_KEY || import.meta.env.STEAM_API_KEY;
 const cookies = Astro.cookies;
 
 // Get stored values from cookies
@@ -12,7 +16,8 @@ const communityId = cookies.get('communityid')?.value || '';
 const playerName = cookies.get('name')?.value || 'Guest';
 
 // Determine authentication state
-const isGame = Astro.request.headers.get('user-agent')?.includes('Valve Client') || false;
+const isGame =
+  Astro.request.headers.get('user-agent')?.includes('Valve Client') || false;
 const isAuthenticated = isGame && communityId && playerName;
 
 // Initialize properties
@@ -41,9 +46,14 @@ async function fetchSteamAvatar(steamID: string) {
 
     if (response.ok) {
       const data = await response.json();
-      return data.response.players[0]?.avatarfull || '/assets/default-avatar.webp';
+      return (
+        data.response.players[0]?.avatarfull || '/assets/default-avatar.webp'
+      );
     } else {
-      console.error('Failed to fetch avatar from Steam API. Status:', response.status);
+      console.error(
+        'Failed to fetch avatar from Steam API. Status:',
+        response.status,
+      );
       return '/assets/default-avatar.webp';
     }
   } catch (error) {
@@ -114,9 +124,7 @@ if (isAuthenticated) {
     </div>
   </section>
 
-  <script
-    is:inline
-    define:vars={{ baseUrl, playerName, playerAvatar, steamID }}
+  <script is:inline define:vars={{ baseUrl, playerName, playerAvatar, steamID }}
   >
     document.addEventListener('DOMContentLoaded', function () {
       const messageInput = document.getElementById('messageInput');
@@ -172,7 +180,7 @@ if (isAuthenticated) {
                 <p class="text-white"><strong>${player_name}</strong>: ${message}</p>
                 <p class="text-gray-400 text-sm ml-auto">${timeSince(timestamp)}</p>
               </div>
-            </div>`
+            </div>`,
             );
           },
         );
@@ -182,7 +190,8 @@ if (isAuthenticated) {
       async function fetchMessages() {
         try {
           const response = await fetch(`${normalizedBaseUrl}api/shoutbox`);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          if (!response.ok)
+            throw new Error(`HTTP error! status: ${response.status}`);
           const messages = await response.json();
           renderMessages(messages);
         } catch (error) {
@@ -206,7 +215,8 @@ if (isAuthenticated) {
               message,
             }),
           });
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          if (!response.ok)
+            throw new Error(`HTTP error! status: ${response.status}`);
           messageInput.value = '';
           fetchMessages();
         } catch (error) {
