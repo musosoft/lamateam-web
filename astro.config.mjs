@@ -27,5 +27,6 @@ export default defineConfig({
     "/search.php": "/",
     "/home.php": "/",
     "/tv": "/faq#sourcetv",
+    "/TV": "/faq#sourcetv",
   },
 });
