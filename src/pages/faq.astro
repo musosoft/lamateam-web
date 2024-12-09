@@ -148,7 +148,7 @@ try {
       </div>
     </details>
 
-    <details class="bg-gray-800 rounded-lg shadow-lg">
+    <details id="sourcetv" class="bg-gray-800 rounded-lg shadow-lg">
       <summary
         class="cursor-pointer py-3 px-4 font-semibold hover:bg-gray-700 rounded-lg text-xl"
       >
@@ -373,5 +373,18 @@ try {
         console.error('Failed to copy text: ', err);
       }
     }
+
+    function openTarget() {
+      const hash = location.hash.substring(1);
+      if (hash) {
+        const target = document.getElementById(hash);
+        if (target) {
+          const details = target.closest('details');
+          if (details) details.open = true;
+        }
+      }
+    }
+    openTarget();
+    window.addEventListener('hashchange', openTarget);
   </script>
 </Layout>
