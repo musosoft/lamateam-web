@@ -1,0 +1,17 @@
+---
+interface Props {
+  id?: string;
+  summary: string;
+}
+
+const { id, summary } = Astro.props;
+---
+
+<details id={id ?? ''} class="bg-gray-800 rounded-lg shadow-lg">
+  <summary class="cursor-pointer py-3 px-4 font-semibold hover:bg-gray-700 rounded-lg text-xl">
+    {summary}
+  </summary>
+  <div class="p-4 text-sm leading-6 overflow-y-scroll max-h-96">
+    <slot />
+  </div>
+</details>
