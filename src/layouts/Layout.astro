@@ -57,7 +57,7 @@ const isGame = navigator.userAgent.includes('Valve Client');
       </div>
     </main>
     <script is:inline>
-      function googleTranslateElementInit() {
+      window.googleTranslateElementInit = () => {
         new google.translate.TranslateElement({ pageLanguage: 'cs' }, 'google_translate_element');
       }
     </script>

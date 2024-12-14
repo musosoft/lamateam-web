@@ -126,7 +126,7 @@ if (isAuthenticated) {
 
   <script is:inline define:vars={{ baseUrl, playerName, playerAvatar, steamID }}
   >
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('astro:page-load', () => {
       const messageInput = document.getElementById('messageInput');
       const sendButton = document.getElementById('sendButton');
       const shoutboxMessages = document.getElementById('shoutboxMessages');
@@ -144,8 +144,8 @@ if (isAuthenticated) {
         const minutes = Math.floor(seconds / 60);
         const hours = Math.floor(minutes / 60);
         const days = Math.floor(hours / 24);
-        const months = Math.floor(days / 30); // Přibližný výpočet
-        const years = Math.floor(days / 365); // Přibližný výpočet
+        const months = Math.floor(days / 30);
+        const years = Math.floor(days / 365);
 
         if (years > 0)
           return `${years} rok${years > 1 && years < 5 ? 'y' : years > 4 ? 'ů' : ''}`;
@@ -182,8 +182,7 @@ if (isAuthenticated) {
               </div>
             </div>`,
             );
-          },
-        );
+          });
       }
 
       // Fetch and Render Messages
@@ -199,7 +198,6 @@ if (isAuthenticated) {
         }
       }
 
-      // Submit Message
       async function handleSubmit() {
         const message = messageInput.value.trim();
         if (!message) return;
@@ -224,10 +222,8 @@ if (isAuthenticated) {
         }
       }
 
-      // Event Listeners
       sendButton?.addEventListener('click', handleSubmit);
 
-      // Initial Fetch
       fetchMessages();
     });
   </script>
