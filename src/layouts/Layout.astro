@@ -51,16 +51,25 @@ const isGame = navigator.userAgent.includes('Valve Client');
       >
         <CandyBox />
         <slot />
-        <div id="translate-wrapper" class="fixed bottom-2 right-2 z-50 h-5 contain-paint">
+        <div
+          id="translate-wrapper"
+          class="fixed bottom-2 right-2 z-50 h-5 contain-paint"
+        >
           <div id="google_translate_element"></div>
         </div>
       </div>
     </main>
     <script is:inline>
       window.googleTranslateElementInit = () => {
-        new google.translate.TranslateElement({ pageLanguage: 'cs' }, 'google_translate_element');
-      }
+        new google.translate.TranslateElement(
+          { pageLanguage: 'cs' },
+          'google_translate_element',
+        );
+      };
     </script>
-    <script is:inline src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script
+      is:inline
+      src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+    ></script>
   </body>
 </html>

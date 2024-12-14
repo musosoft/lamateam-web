@@ -25,83 +25,174 @@ try {
   <div class="space-y-4 overflow-y-auto">
     <Accordion summary="Užitečné informace">
       <p>Pokud chceš ve hře zobrazit tohle okno, napiš <code>!motd</code>.</p>
-      <p>Pokud máš připomínky, nápady na zlepšení, nebo chceš nahlásit podvádějícího hráče, napiš nám v sekci KONTAKT.</p>
+      <p>
+        Pokud máš připomínky, nápady na zlepšení, nebo chceš nahlásit
+        podvádějícího hráče, napiš nám v sekci KONTAKT.
+      </p>
       <p><strong>Majitelem serveru je crazy69.</strong></p>
       <p>Hosting zabezpečuje FakaHeda.eu.</p>
       <p>Najdeš nás taky na Facebooku - hledej: LaMaTeAm.eu.</p>
     </Accordion>
 
     <Accordion summary="Hitboxy, Hitreg, Rate...">
-        <h2 class="text-xl font-bold">📜 Shrnutí</h2>
-        
-        <ul class="space-y-2">
-          <li><strong>🎯 Hitbox</strong> — Neviditelná krabice kolem hráče, kterou server používá k detekci zásahů. Pokud trefíš model, ale ne hitbox, server to nepočítá jako zásah.</li>
-          
-          <li><strong>📡 Hitreg</strong> — Kontrola, zda jsi trefil hitbox. Střely se kontrolují <strong>na serveru, ne na tvém PC</strong>. Můžeš vidět krev, ale neudělat žádný damage, protože server rozhoduje, ne tvoje obrazovka.</li>
-          
-          <li><strong>⏲️ Tickrate 100</strong> — Server přepočítává hru <strong>100x za sekundu</strong>. To znamená lepší registraci střel, plynulejší pohyb a přesnější fyziku. Vše je přesnější než na serveru s 64 tickrate.</li>
-          
-          <li><strong>📥 Updaterate 100</strong> — Server ti posílá <strong>100 aktualizací za sekundu</strong>. Vidíš plynulý pohyb hráčů bez sekání. Server vynucuje <strong>updaterate 100</strong> pro všechny hráče – nelze změnit.</li>
-          
-          <li><strong>📤 Cmdrate 100</strong> — Tvoje příkazy (střelba, pohyb) se posílají <strong>100x za sekundu</strong> na server. Tím je zajištěno, že server vždy ví, co děláš, bez zpoždění. Server vynucuje <strong>cmdrate 100</strong> pro všechny hráče – nelze změnit.</li>
-          
-          <li><strong>🚀 Rate 80000</strong> — Maximální rychlost dat, která můžeš přijmout od serveru, je <strong>80 000 bajtů za sekundu</strong>. Server vynucuje <strong>rate 80000</strong> – nelze změnit.</li>
-          
-          <li><strong>📐 Interp 0-0.031</strong> — To je rezerva, která zajišťuje plynulost pohybu i při menších ztrátách dat. Server vynucuje interp mezi <strong>0 a 0.031</strong>. Čím nižší interp, tím přesnější zásahy.</li>
-          
-          <li><strong>⚡ Ping vs Latency</strong> —  
-            <ul class="list-disc list-inside ml-6">
-              <li><strong>Ping</strong>: Celkový čas, který trvá odeslání a přijetí paketů (tam i zpět).</li>
-              <li><strong>Latency</strong>: Čas, který trvá, než tvůj příkaz dorazí na server (pouze jedna cesta).</li>
-            </ul>
-          </li>
-          
-          <li><strong>🩸 Krev, ale žádný damage</strong> — Krev se zobrazuje <strong>na tvém PC</strong>, ale o zásahu rozhoduje server. Pokud server výstřel nezaznamená, neuvidíš damage, i když jsi viděl krev.</li>
-          
-          <li><strong>📈 Net_Graph 4</strong> —  
-            <ul class="list-disc list-inside ml-6">
-              <li><strong>Loss</strong> — Pakety se ztratí po cestě na server. Hráči teleportují a střely se nezaregistrují.</li>
-              <li><strong>Choke</strong> — Chybí snímky, protože tvé připojení je přetížené. Vidíš trhaný pohyb hráčů.</li>
-              <li>Mezery v čarách = Chybějící snímky (choke) nebo ztracené pakety (loss).</li>
-            </ul>
-          </li>
-          
-          <li><strong>📦 Co je Loss?</strong> — Ztracené pakety, které se nikdy nedostanou na server. Pokud máš <strong>loss > 0%</strong>, tvoje střely se nemusí dostat na server a hráči teleportují.</li>
-          
-          <li><strong>🌐 Co je Choke?</strong> — Data od serveru se ti nevejdou do připojení. Chybí snímky, takže vidíš trhaný pohyb hráčů.</li>
-          
-          <li><strong>💡 Co dělá Rate Checker?</strong> — <strong>Rate Checker je BLBOST!</strong> Ukazuje, co máš nastaveno <strong>lokálně</strong>, ale server vynucuje své hodnoty. Server nastaví <strong>rate 80000, cmdrate 100, updaterate 100</strong> a hráč to nemůže změnit.</li>
-        </ul>
-        
-        <h2 class="text-xl font-bold mt-6">🔴 Takže, když ti to "nehituje", zkontroluj toto:</h2>
-        <ul class="list-decimal list-inside space-y-2 mt-4">
-          <li><strong>Loss</strong> — Pokud je <strong>loss > 0%</strong>, tvoje střely se nemusí dostat na server.</li>
-          <li><strong>Ping</strong> — Vysoký ping = větší zpoždění zásahu.</li>
-          <li><strong>Choke</strong> — Pokud je choke > 0%, vidíš pohyby později a trhaně.</li>
-          <li><strong>Net_Graph 4</strong> — Sleduj mezery ve žlutých a zelených čarách.</li>
-        </ul>
-        
-        <h2 class="text-xl font-bold mt-6">📜 Co vynucuje server?</h2>
-        <ul class="list-disc list-inside space-y-2">
-          <li><strong>Rate</strong> = 80000</li>
-          <li><strong>Cmdrate</strong> = 100</li>
-          <li><strong>Updaterate</strong> = 100</li>
-          <li><strong>Interp</strong> = 0-0.031</li>
-        </ul>
-        
-        <p class="mt-6">Pokud někdo ještě někdy řekne <strong>"nehituje to"</strong>, odkaž ho na tento seznam. <strong>Server je šéf! 🎉</strong></p>
+      <h2 class="text-xl font-bold">📜 Shrnutí</h2>
+
+      <ul class="space-y-2">
+        <li>
+          <strong>🎯 Hitbox</strong> — Neviditelná krabice kolem hráče, kterou server
+          používá k detekci zásahů. Pokud trefíš model, ale ne hitbox, server to
+          nepočítá jako zásah.
+        </li>
+
+        <li>
+          <strong>📡 Hitreg</strong> — Kontrola, zda jsi trefil hitbox. Střely se
+          kontrolují <strong>na serveru, ne na tvém PC</strong>. Můžeš vidět
+          krev, ale neudělat žádný damage, protože server rozhoduje, ne tvoje
+          obrazovka.
+        </li>
+
+        <li>
+          <strong>⏲️ Tickrate 100</strong> — Server přepočítává hru <strong
+            >100x za sekundu</strong
+          >. To znamená lepší registraci střel, plynulejší pohyb a přesnější
+          fyziku. Vše je přesnější než na serveru s 64 tickrate.
+        </li>
+
+        <li>
+          <strong>📥 Updaterate 100</strong> — Server ti posílá <strong
+            >100 aktualizací za sekundu</strong
+          >. Vidíš plynulý pohyb hráčů bez sekání. Server vynucuje <strong
+            >updaterate 100</strong
+          > pro všechny hráče – nelze změnit.
+        </li>
+
+        <li>
+          <strong>📤 Cmdrate 100</strong> — Tvoje příkazy (střelba, pohyb) se posílají
+          <strong>100x za sekundu</strong> na server. Tím je zajištěno, že server
+          vždy ví, co děláš, bez zpoždění. Server vynucuje <strong
+            >cmdrate 100</strong
+          > pro všechny hráče – nelze změnit.
+        </li>
+
+        <li>
+          <strong>🚀 Rate 80000</strong> — Maximální rychlost dat, která můžeš přijmout
+          od serveru, je <strong>80 000 bajtů za sekundu</strong>. Server
+          vynucuje <strong>rate 80000</strong> – nelze změnit.
+        </li>
+
+        <li>
+          <strong>📐 Interp 0-0.031</strong> — To je rezerva, která zajišťuje plynulost
+          pohybu i při menších ztrátách dat. Server vynucuje interp mezi <strong
+            >0 a 0.031</strong
+          >. Čím nižší interp, tím přesnější zásahy.
+        </li>
+
+        <li>
+          <strong>⚡ Ping vs Latency</strong> —
+          <ul class="list-disc list-inside ml-6">
+            <li>
+              <strong>Ping</strong>: Celkový čas, který trvá odeslání a přijetí
+              paketů (tam i zpět).
+            </li>
+            <li>
+              <strong>Latency</strong>: Čas, který trvá, než tvůj příkaz dorazí
+              na server (pouze jedna cesta).
+            </li>
+          </ul>
+        </li>
+
+        <li>
+          <strong>🩸 Krev, ale žádný damage</strong> — Krev se zobrazuje <strong
+            >na tvém PC</strong
+          >, ale o zásahu rozhoduje server. Pokud server výstřel nezaznamená,
+          neuvidíš damage, i když jsi viděl krev.
+        </li>
+
+        <li>
+          <strong>📈 Net_Graph 4</strong> —
+          <ul class="list-disc list-inside ml-6">
+            <li>
+              <strong>Loss</strong> — Pakety se ztratí po cestě na server. Hráči
+              teleportují a střely se nezaregistrují.
+            </li>
+            <li>
+              <strong>Choke</strong> — Chybí snímky, protože tvé připojení je přetížené.
+              Vidíš trhaný pohyb hráčů.
+            </li>
+            <li>
+              Mezery v čarách = Chybějící snímky (choke) nebo ztracené pakety
+              (loss).
+            </li>
+          </ul>
+        </li>
+
+        <li>
+          <strong>📦 Co je Loss?</strong> — Ztracené pakety, které se nikdy nedostanou
+          na server. Pokud máš <strong>loss > 0%</strong>, tvoje střely se
+          nemusí dostat na server a hráči teleportují.
+        </li>
+
+        <li>
+          <strong>🌐 Co je Choke?</strong> — Data od serveru se ti nevejdou do připojení.
+          Chybí snímky, takže vidíš trhaný pohyb hráčů.
+        </li>
+
+        <li>
+          <strong>💡 Co dělá Rate Checker?</strong> — <strong
+            >Rate Checker je BLBOST!</strong
+          > Ukazuje, co máš nastaveno <strong>lokálně</strong>, ale server
+          vynucuje své hodnoty. Server nastaví <strong
+            >rate 80000, cmdrate 100, updaterate 100</strong
+          > a hráč to nemůže změnit.
+        </li>
+      </ul>
+
+      <h2 class="text-xl font-bold mt-6">
+        🔴 Takže, když ti to "nehituje", zkontroluj toto:
+      </h2>
+      <ul class="list-decimal list-inside space-y-2 mt-4">
+        <li>
+          <strong>Loss</strong> — Pokud je <strong>loss > 0%</strong>, tvoje
+          střely se nemusí dostat na server.
+        </li>
+        <li><strong>Ping</strong> — Vysoký ping = větší zpoždění zásahu.</li>
+        <li>
+          <strong>Choke</strong> — Pokud je choke > 0%, vidíš pohyby později a trhaně.
+        </li>
+        <li>
+          <strong>Net_Graph 4</strong> — Sleduj mezery ve žlutých a zelených čarách.
+        </li>
+      </ul>
+
+      <h2 class="text-xl font-bold mt-6">📜 Co vynucuje server?</h2>
+      <ul class="list-disc list-inside space-y-2">
+        <li><strong>Rate</strong> = 80000</li>
+        <li><strong>Cmdrate</strong> = 100</li>
+        <li><strong>Updaterate</strong> = 100</li>
+        <li><strong>Interp</strong> = 0-0.031</li>
+      </ul>
+
+      <p class="mt-6">
+        Pokud někdo ještě někdy řekne <strong>"nehituje to"</strong>, odkaž ho
+        na tento seznam. <strong>Server je šéf! 🎉</strong>
+      </p>
     </Accordion>
 
-
-    <Accordion summary="Hra se seká, špatný skin hráče, chybí radar, blbnou zvuky...?">
+    <Accordion
+      summary="Hra se seká, špatný skin hráče, chybí radar, blbnou zvuky...?"
+    >
       <!-- FAQ Item 1 -->
       <div class="space-y-2 mb-4">
         <p class="text-gray-100 text-xl">1. Pokus - vyzkoušej magický fix:</p>
-        <div class="text-sm inline-flex items-center space-x-4 bg-gray-900 text-gray-200 rounded-lg p-4">
+        <div
+          class="text-sm inline-flex items-center space-x-4 bg-gray-900 text-gray-200 rounded-lg p-4"
+        >
           <span class="flex gap-4">
             <span class="shrink-0 text-blue-500 pointer-events-none">~</span>
             <span class="flex-1 copy-content">
-              exec config;exec autoexec;record null;stop;soundscape_flush;snd_restart;hud_reloadscheme;overview_mode 1
+              exec config;exec autoexec;record
+              null;stop;soundscape_flush;snd_restart;hud_reloadscheme;overview_mode
+              1
             </span>
             <button
               onclick="copyToClipboard(this)"
@@ -109,7 +200,7 @@ try {
             >
               <Icon name="mdi:content-copy" class="h-5 w-5" />
             </button>
-          </div>
+          </span>
         </div>
 
         <!-- FAQ Item 2 -->
@@ -162,9 +253,9 @@ try {
             3. Napíš "exec autoexec.cfg" do konzole.
           </p>
         </div>
-    </Accordion>
+      </div>
 
-    <Accordion summary="Jak nahrát demo?">
+      <Accordion summary="Jak nahrát demo?">
         <ol class="list-decimal list-inside space-y-2">
           <li>
             Nahrávaní dema spusť příkazem v console <code
@@ -181,9 +272,9 @@ try {
             >r_drawothermodels 2</code
           > nepoužívej na herním serveru...
         </p>
-    </Accordion>
+      </Accordion>
 
-    <Accordion id="sourcetv" summary="Jak stáhnout SourceTV demo?">
+      <Accordion id="sourcetv" summary="Jak stáhnout SourceTV demo?">
         <p>
           Chcete-li si stáhnout SourceTV demo, vyberte si jeden z níže uvedených
           souborů. Kliknutím na odkaz zahájíte stahování.
@@ -208,9 +299,9 @@ try {
             </ul>
           )
         }
-    </Accordion>
+      </Accordion>
 
-    <Accordion summary="Běžím s knifem rychleji?">
+      <Accordion summary="Běžím s knifem rychleji?">
         <table
           class="w-auto mx-auto table-auto border-collapse border border-gray-600 rounded-lg contain-paint"
         >
@@ -273,125 +364,124 @@ try {
             </tr>
           </tbody>
         </table>
-      </div>
+      </Accordion>
     </Accordion>
 
     <Accordion summary="Kdo podpořil server?">
-        <p><strong>Podporovatelé:</strong></p>
-        <ul class="flex flex-wrap items-center justify-center gap-2">
-          <li>HoR</li>
-          <li>Qatro-SPS</li>
-          <li>Zuzule</li>
-          <li>Voody312</li>
-          <li>Ipos</li>
-          <li>BOT - Luc@sonE™</li>
-          <li>Bassik</li>
-          <li>HantenPuardon</li>
-          <li>Majuško ™</li>
-          <li>Belly Savalas</li>
-          <li>Paty</li>
-          <li>.C</li>
-          <li>Pese</li>
-          <li>Jezis</li>
-          <li>.@xel</li>
-          <li>InhumaN ErectioN</li>
-          <li>Kubajs♥L</li>
-          <li>Old Supik</li>
-          <li>majk25</li>
-          <li>Volavka</li>
-          <li>(CZ)Kropi "exploited victim"</li>
-          <li>Karko ︻芫 一</li>
-          <li>KuCHaŘ - čtvrtá cenová</li>
-          <li>Jacoooob</li>
-          <li>Domča</li>
-          <li>Bobik189</li>
-          <li>KissAngel - Mliko</li>
-          <li>Jerzi!</li>
-          <li>Mirec</li>
-          <li>CTHULHU</li>
-          <li>Mr.SV</li>
-          <li>HLAVOMLAT TEQUILA JOE</li>
-          <li>Rainer</li>
-          <li>DonJuanDeag</li>
-          <li>MarekQX</li>
-          <li>štefan</li>
-          <li>Deadman</li>
-          <li>paty</li>
-          <li>vladko</li>
-        </ul>
-      </div>
-    </details>
-
-    <Accordion summary="Kdo je admin?">
-      <ul>
-          <li>Bassik</li>
-          <li>Hor</li>
-          <li>Ipos</li>
-          <li>BOT - Luc@sonE™</li>
-          <li>muso.sk</li>
-          <li>Qatro-SPS</li>
-          <li>Voody</li>
-          <li>Zuzule</li>
-        </ul>
-      </div>
+      <p><strong>Podporovatelé:</strong></p>
+      <ul class="flex flex-wrap items-center justify-center gap-2">
+        <li>HoR</li>
+        <li>Qatro-SPS</li>
+        <li>Zuzule</li>
+        <li>Voody312</li>
+        <li>Ipos</li>
+        <li>BOT - Luc@sonE™</li>
+        <li>Bassik</li>
+        <li>HantenPuardon</li>
+        <li>Majuško ™</li>
+        <li>Belly Savalas</li>
+        <li>Paty</li>
+        <li>.C</li>
+        <li>Pese</li>
+        <li>Jezis</li>
+        <li>.@xel</li>
+        <li>InhumaN ErectioN</li>
+        <li>Kubajs♥L</li>
+        <li>Old Supik</li>
+        <li>majk25</li>
+        <li>Volavka</li>
+        <li>(CZ)Kropi "exploited victim"</li>
+        <li>Karko ︻芫 一</li>
+        <li>KuCHaŘ - čtvrtá cenová</li>
+        <li>Jacoooob</li>
+        <li>Domča</li>
+        <li>Bobik189</li>
+        <li>KissAngel - Mliko</li>
+        <li>Jerzi!</li>
+        <li>Mirec</li>
+        <li>CTHULHU</li>
+        <li>Mr.SV</li>
+        <li>HLAVOMLAT TEQUILA JOE</li>
+        <li>Rainer</li>
+        <li>DonJuanDeag</li>
+        <li>MarekQX</li>
+        <li>štefan</li>
+        <li>Deadman</li>
+        <li>paty</li>
+        <li>vladko</li>
+      </ul>
     </Accordion>
+  </div>
 
-    <Accordion summary="Kto má rezervovaný slot?">
+  <Accordion summary="Kdo je admin?">
     <ul>
-          <li>.C</li>
-          <li>Belly</li>
-          <li>HantenPuardon</li>
-          <li>Jezis</li>
-          <li>Majuško</li>
-          <li>Paty</li>
-          <li>Pese</li>
-        </ul>
-      </div>
-    </Accordion>
-  <script is:inline>
-    // Fetch all the details element.
-    const details = document.querySelectorAll('details');
-
-    // Add the onclick listeners.
-    details.forEach((detail) => {
-      detail.addEventListener('toggle', () => {
-        if (detail.open) setTargetDetail(detail);
-      });
-    });
-
-    // Close all the details that are not targetDetail.
-    function setTargetDetail(targetDetail) {
-      details.forEach((detail) => {
-        if (detail !== targetDetail) {
-          detail.open = false;
-        }
-      });
-    }
-
-    async function copyToClipboard(button) {
-      try {
-        // Find the nearest sibling <span> element with the content to copy
-        const contentElement =
-          button.parentElement.querySelector('.copy-content');
-        const content = contentElement.innerText.trim(); // Get the text content and trim any whitespace
-        await navigator.clipboard.writeText(content); // Copy content to clipboard
-        alert('Zkopírováno do schránky: ' + content);
-      } catch (err) {
-        console.error('Failed to copy text: ', err);
-      }
-    }
-
-    function openTarget() {
-      const hash = location.hash.substring(1);
-      if (hash) {
-        const target = document.getElementById(hash);
-        if (target) {
-          const details = target.closest('details');
-          if (details) details.open = true;
-        }
-      }
-    }
-    openTarget();
-    window.addEventListener('hashchange', openTarget);
-  </script>
+      <li>Bassik</li>
+      <li>Hor</li>
+      <li>Ipos</li>
+      <li>BOT - Luc@sonE™</li>
+      <li>muso.sk</li>
+      <li>Qatro-SPS</li>
+      <li>Voody</li>
+      <li>Zuzule</li>
+    </ul>
+  </Accordion>
 </Layout>
+
+<Accordion summary="Kto má rezervovaný slot?">
+  <ul>
+    <li>.C</li>
+    <li>Belly</li>
+    <li>HantenPuardon</li>
+    <li>Jezis</li>
+    <li>Majuško</li>
+    <li>Paty</li>
+    <li>Pese</li>
+  </ul>
+</Accordion>
+
+<script is:inline>
+  // Fetch all the details element.
+  const details = document.querySelectorAll('details');
+
+  // Add the onclick listeners.
+  details.forEach((detail) => {
+    detail.addEventListener('toggle', () => {
+      if (detail.open) setTargetDetail(detail);
+    });
+  });
+
+  // Close all the details that are not targetDetail.
+  function setTargetDetail(targetDetail) {
+    details.forEach((detail) => {
+      if (detail !== targetDetail) {
+        detail.open = false;
+      }
+    });
+  }
+
+  async function copyToClipboard(button) {
+    try {
+      // Find the nearest sibling <span> element with the content to copy
+      const contentElement =
+        button.parentElement.querySelector('.copy-content');
+      const content = contentElement.innerText.trim(); // Get the text content and trim any whitespace
+      await navigator.clipboard.writeText(content); // Copy content to clipboard
+      alert('Zkopírováno do schránky: ' + content);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  }
+
+  function openTarget() {
+    const hash = location.hash.substring(1);
+    if (hash) {
+      const target = document.getElementById(hash);
+      if (target) {
+        const details = target.closest('details');
+        if (details) details.open = true;
+      }
+    }
+  }
+  openTarget();
+  window.addEventListener('hashchange', openTarget);
+</script>
