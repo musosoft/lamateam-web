@@ -1,7 +1,7 @@
 // astro.config.mjs
 import { defineConfig } from "astro/config";
 import cloudflare from "@astrojs/cloudflare";
-import tailwind from "@astrojs/tailwind";
+import tailwindcss from "@tailwindcss/vite";
 
 import icon from "astro-icon";
 
@@ -9,7 +9,10 @@ export default defineConfig({
   site: import.meta.env.PUBLIC_SITE_URL ?? process.env.PUBLIC_SITE_URL,
   output: "server", // Enables server-side rendering
   adapter: cloudflare({ mode: "directory" }),
-  integrations: [tailwind(), icon()],
+  integrations: [icon()],
+  vite: {
+    plugins: [tailwindcss()],
+  },
   prefetch: true,
   redirects: {
     "/contact.php": "/contact",
