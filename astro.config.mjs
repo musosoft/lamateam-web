@@ -28,5 +28,6 @@ export default defineConfig({
     "/home.php": "/",
     "/tv": "/faq#sourcetv",
     "/TV": "/faq#sourcetv",
+    "/stats": "https://stats.lamateam.eu/",
   },
 });
