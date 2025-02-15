@@ -9,63 +9,54 @@ const pages = [
     description: 'Zobrazte si nejnovější provinilce.',
     link: '/banlist',
     icon: 'mdi:ban',
-    prefetch: 'load',
   },
   {
     title: 'Statistiky',
     description: 'Prohlédněte si statistiky hráčů a žebříčky.',
     link: '/stats',
     icon: 'mdi:chart-bar',
-    prefetch: 'false',
   },
   {
     title: 'Kontakt',
     description: 'Kontaktujte nás pro podporu nebo dotazy.',
     link: '/contact',
     icon: 'mdi:card-account-mail',
-    prefetch: 'load',
   },
   {
     title: 'VIP',
     description: 'Exkluzivní funkce a výhody pro VIP členy.',
     link: '/vip',
     icon: 'mdi:star-outline',
-    prefetch: 'load',
   },
   {
     title: 'Pravidla',
     description: 'Přečtěte si pravidla a pokyny komunity.',
     link: '/rules',
     icon: 'mdi:book',
-    prefetch: 'load',
   },
   {
     title: 'Příkazy',
     description: 'Naučte se užitečné příkazy do hry.',
     link: '/info',
     icon: 'mdi:information-outline',
-    prefetch: 'load',
   },
   {
     title: 'Shoutbox',
     description: 'Zapojte se do konverzace ve shoutboxu.',
     link: `/shoutbox`,
     icon: 'mdi:message-outline',
-    prefetch: 'load',
   },
   {
     title: 'Připojení',
     description: 'Připojte se na server rychle z prohlížeče.',
     link: '/connect',
     icon: 'mdi:connection',
-    prefetch: 'load',
   },
   {
     title: 'Často kladené dotazy',
     description: 'Často kladené otázky a další informace.',
     link: '/faq',
     icon: 'mdi:frequently-asked-questions',
-    prefetch: 'load',
   },
 ];
 ---
@@ -80,7 +71,7 @@ const pages = [
         <a
           href={page.link}
           class="group flex flex-col items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-200 ~p-2/4 text-center"
-          data-astro-prefetch={page.prefetch}
+          data-astro-prefetch="load"
         >
           <div class="~text-lg/4xl text-indigo-400 mb-4 group-hover:text-indigo-300 transition">
             <Icon name={page.icon} />
