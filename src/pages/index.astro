@@ -3,6 +3,90 @@
 import Layout from '../layouts/Layout.astro';
 import { Icon } from 'astro-icon/components';
 
+// 1) SERVER-SIDE LOGIC (similar to shoutbox.astro)
+const baseUrlValue =
+  Astro.locals.runtime.env.PUBLIC_SITE_URL ||
+  import.meta.env.PUBLIC_SITE_URL ||
+  '/';
+const STEAM_API_KEY =
+  Astro.locals.runtime.env.STEAM_API_KEY ||
+  import.meta.env.STEAM_API_KEY;
+
+const cookies = Astro.cookies;
+
+// Helper to parse the "session" cookie
+function parseSessionCookie() {
+  const raw = cookies.get('session')?.value;
+  if (!raw) return {};
+  try {
+    return JSON.parse(decodeURIComponent(raw));
+  } catch {
+    return {};
+  }
+}
+
+// Check user-agent for in-game scenario
+const userAgent = Astro.request.headers.get('user-agent')?.toLowerCase() || '';
+const isGame = userAgent.includes('valve') || userAgent.includes('steam');
+
+// Possibly set by in-game environment
+const rawCommunityId = cookies.get('communityid')?.value || '';
+const rawPlayerName = cookies.get('name')?.value || '';
+
+function convertToSteam64(communityId: string) {
+  const match = communityId.match(/^\[U:1:(\d+)\]$/);
+  if (match) {
+    return (BigInt(match[1]) + BigInt('76561197960265728')).toString();
+  }
+  return communityId; // if it's already 64-bit
+}
+
+const session = parseSessionCookie();
+
+// Decide final steamID & playerName
+let steamIDValue = '';
+let playerNameValue = 'Guest';
+
+if (isGame && rawCommunityId) {
+  // In-game scenario
+  steamIDValue = convertToSteam64(rawCommunityId);
+  playerNameValue = rawPlayerName || 'Guest';
+} else {
+  // Normal browser scenario from session
+  steamIDValue = session?.steamID || '';
+  playerNameValue = session?.playerName || 'Guest';
+}
+
+// Check if user is “authenticated”
+const isAuthenticated = Boolean(steamIDValue && playerNameValue !== 'Guest');
+
+// If we have steamID, try fetching the avatar from Steam
+async function fetchSteamAvatar(steam64: string) {
+  if (!STEAM_API_KEY) {
+    console.error('STEAM_API_KEY is not set.');
+    return '/assets/default-avatar.webp';
+  }
+  try {
+    const steamApiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steam64}`;
+    const resp = await fetch(steamApiUrl);
+    if (!resp.ok) {
+      console.error('Steam API error:', resp.status);
+      return '/assets/default-avatar.webp';
+    }
+    const data = await resp.json();
+    return data.response.players[0]?.avatarfull || '/assets/default-avatar.webp';
+  } catch (err) {
+    console.error('Error fetching avatar from Steam:', err);
+    return '/assets/default-avatar.webp';
+  }
+}
+
+let playerAvatarValue = '/assets/default-avatar.webp';
+if (steamIDValue) {
+  playerAvatarValue = await fetchSteamAvatar(steamIDValue);
+}
+
+// 2) PAGE DATA
 const pages = [
   {
     title: 'Seznam banů',
@@ -43,7 +127,7 @@ const pages = [
   {
     title: 'Shoutbox',
     description: 'Zapojte se do konverzace ve shoutboxu.',
-    link: `/shoutbox`,
+    link: '/shoutbox',
     icon: 'mdi:message-outline',
   },
   {
@@ -62,9 +146,27 @@ const pages = [
 ---
 
 <Layout title="Welcome to LaMaTeam">
+  <!-- Conditional heading or user avatar + name -->
+  {
+    isAuthenticated ? (
+      <div class="flex items-center space-x-4 mb-8 justify-center">
+        <img
+          src={playerAvatarValue}
+          alt="Avatar hráče"
+          class="w-14 h-14 rounded-full border-2 border-gray-700"
+        />
+        <h1 class="text-lg font-bold text-white">
+          Vítej <strong>{playerNameValue}</strong> na LaMaTeam!
+        </h1>
+      </div>
+    ) : (
   <h1 class="~text-lg/3xl font-bold text-center text-white mb-8">
-    Vítej na LaMaTeam
+    Vítej na LaMaTeam!
   </h1>
+    )
+  }
+
+  <!-- The grid of pages/links -->
   <div class="grid grid-cols-3 ~gap-2/6">
     {
       pages.map((page) => (
