@@ -2,69 +2,92 @@
 // src/pages/shoutbox.astro
 import Layout from '../layouts/Layout.astro';
 
-// Environment Variables
-const baseUrl =
-  Astro.locals.runtime.env.PUBLIC_SITE_URL ||
-  import.meta.env.PUBLIC_SITE_URL ||
-  '/';
-const STEAM_API_KEY =
-  Astro.locals.runtime.env.STEAM_API_KEY || import.meta.env.STEAM_API_KEY;
+// Read environment
+const baseUrl = Astro.locals.runtime.env.PUBLIC_SITE_URL
+  || import.meta.env.PUBLIC_SITE_URL
+  || '/';
+const STEAM_API_KEY = Astro.locals.runtime.env.STEAM_API_KEY
+  || import.meta.env.STEAM_API_KEY;
+
+// Grab cookies
 const cookies = Astro.cookies;
 
-// Get stored values from cookies
-const communityId = cookies.get('communityid')?.value || '';
-const playerName = cookies.get('name')?.value || 'Guest';
+// Helper: parse session cookie
+function parseSessionCookie() {
+  const raw = cookies.get('session')?.value;
+  if (!raw) return {};
+  try {
+    return JSON.parse(decodeURIComponent(raw));
+  } catch {
+    return {};
+  }
+}
 
-// Determine authentication state
-const isGame =
-  Astro.request.headers.get('user-agent')?.includes('Valve Client') || false;
-const isAuthenticated = isGame && communityId && playerName;
+// In-game detection
+const userAgent = Astro.request.headers.get('user-agent')?.toLowerCase() || '';
+const isGame = userAgent.includes('valve') || userAgent.includes('steam');
 
-// Initialize properties
-let playerAvatar = '/assets/default-avatar.webp';
-let steamID = '';
+// For in-game usage, read these cookies if they exist
+const rawCommunityId = cookies.get('communityid')?.value || '';
+const rawPlayerName = cookies.get('name')?.value || '';
 
-// Helper function to convert communityId to Steam64
+// Convert [U:1:xxxx] → 64-bit
 function convertToSteam64(communityId: string): string {
   const match = communityId.match(/^\[U:1:(\d+)\]$/);
   if (match) {
     return (BigInt(match[1]) + BigInt('76561197960265728')).toString();
   }
-  return '';
+  return communityId; // If it's already 64-bit or invalid
 }
 
-// Fetch Steam API data if authenticated
-async function fetchSteamAvatar(steamID: string) {
+// Parse session
+const session = parseSessionCookie();
+
+// Decide final steamID & playerName
+let steamID = '';
+let playerName = 'Guest';
+
+if (isGame && rawCommunityId) {
+  // In-game scenario
+  steamID = convertToSteam64(rawCommunityId);
+  playerName = rawPlayerName || 'Guest';
+} else {
+  // Normal browser scenario
+  steamID = session?.steamID || '';
+  playerName = session?.playerName || 'Guest';
+}
+
+// isAuthenticated: true if we have a valid steamID & not "Guest"
+const isAuthenticated = Boolean(steamID && playerName !== 'Guest');
+
+// Set a default avatar
+let playerAvatar = '/assets/default-avatar.webp';
+
+// If we have steamID, fetch avatar from the Steam API
+async function fetchSteamAvatar(steam64: string) {
   if (!STEAM_API_KEY) {
     console.error('STEAM_API_KEY is not set.');
     return '/assets/default-avatar.webp';
   }
-
   try {
-    const steamApiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steamID}`;
+    const steamApiUrl =
+      `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/`
+      + `?key=${STEAM_API_KEY}&steamids=${steam64}`;
     const response = await fetch(steamApiUrl);
-
-    if (response.ok) {
-      const data = await response.json();
-      return (
-        data.response.players[0]?.avatarfull || '/assets/default-avatar.webp'
-      );
-    } else {
-      console.error(
-        'Failed to fetch avatar from Steam API. Status:',
-        response.status,
-      );
+    if (!response.ok) {
+      console.error('Steam API error:', response.status);
       return '/assets/default-avatar.webp';
     }
-  } catch (error) {
-    console.error('Error fetching avatar from Steam API:', error);
+    const data = await response.json();
+    return data.response.players[0]?.avatarfull || '/assets/default-avatar.webp';
+  } catch (err) {
+    console.error('Error fetching avatar:', err);
     return '/assets/default-avatar.webp';
   }
 }
 
-// Execute only if authenticated
-if (isAuthenticated) {
-  steamID = convertToSteam64(communityId);
+// Only fetch avatar if we have a steamID
+if (steamID) {
   playerAvatar = await fetchSteamAvatar(steamID);
 }
 ---
@@ -124,20 +147,19 @@ if (isAuthenticated) {
     </div>
   </section>
 
-  <script is:inline define:vars={{ baseUrl, playerName, playerAvatar, steamID }}
-  >
-    document.addEventListener('astro:page-load', () => {
+  <script is:inline define:vars={{ baseUrl, playerName, playerAvatar, steamID }}>
+  // This code will run in the browser on page load
+  document.addEventListener('DOMContentLoaded', () => {
       const messageInput = document.getElementById('messageInput');
       const sendButton = document.getElementById('sendButton');
       const shoutboxMessages = document.getElementById('shoutboxMessages');
 
       const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
-      // Formát času od
+      // timeSince
       function timeSince(timestamp) {
         const now = Date.now();
         const diffTime = now - new Date(timestamp).getTime();
-
         if (isNaN(diffTime)) return 'Neplatný čas';
 
         const seconds = Math.floor(diffTime / 1000);
@@ -147,27 +169,30 @@ if (isAuthenticated) {
         const months = Math.floor(days / 30);
         const years = Math.floor(days / 365);
 
-        if (years > 0)
+        if (years > 0) {
           return `${years} rok${years > 1 && years < 5 ? 'y' : years > 4 ? 'ů' : ''}`;
-        if (months > 0)
+        }
+        if (months > 0) {
           return `${months} měsíc${months > 1 && months < 5 ? 'e' : months > 4 ? 'ů' : ''}`;
+        }
         if (days > 0) {
           if (days === 1) return '1 den';
           if (days > 1 && days < 5) return `${days} dny`;
-          return `${days} dní`; // For 5+ days
+          return `${days} dní`;
         }
-        if (hours > 0)
+        if (hours > 0) {
           return `${hours} hodin${hours > 1 && hours < 5 ? 'y' : ''}`;
-        if (minutes > 0)
+        }
+        if (minutes > 0) {
           return `${minutes} minut${minutes > 1 && minutes < 5 ? 'y' : ''}`;
+        }
         return `${seconds} sekund${seconds > 1 && seconds < 5 ? 'y' : ''}`;
       }
 
-      // Render Messages in DOM
+      // Render messages
       function renderMessages(messages) {
         shoutboxMessages.innerHTML = '';
-        messages.forEach(
-          ({ player_avatar, player_name, message, timestamp }) => {
+        messages.forEach(({ player_avatar, player_name, message, timestamp }) => {
             shoutboxMessages.insertAdjacentHTML(
               'beforeend',
               `<div class="flex items-center space-x-4 mb-4">
@@ -180,18 +205,18 @@ if (isAuthenticated) {
                 <p class="text-white"><strong>${player_name}</strong>: ${message}</p>
                 <p class="text-gray-400 text-sm ml-auto">${timeSince(timestamp)}</p>
               </div>
-            </div>`,
-            );
-          },
+             </div>`
         );
+        });
       }
 
-      // Fetch and Render Messages
+      // Fetch & render
       async function fetchMessages() {
         try {
           const response = await fetch(`${normalizedBaseUrl}api/shoutbox`);
-          if (!response.ok)
+          if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
+          }
           const messages = await response.json();
           renderMessages(messages);
         } catch (error) {
@@ -199,9 +224,10 @@ if (isAuthenticated) {
         }
       }
 
+      // Submit new message
       async function handleSubmit() {
-        const message = messageInput.value.trim();
-        if (!message) return;
+      const message = messageInput.value.trim();
+      if (!message) return;
 
         try {
           const response = await fetch(`${normalizedBaseUrl}api/shoutbox`, {
@@ -211,11 +237,12 @@ if (isAuthenticated) {
               steamid: steamID || '',
               player_name: playerName,
               player_avatar: playerAvatar,
-              message,
+            message,
             }),
           });
-          if (!response.ok)
+        if (!response.ok)
             throw new Error(`HTTP error! status: ${response.status}`);
+        
           messageInput.value = '';
           fetchMessages();
         } catch (error) {
@@ -223,8 +250,9 @@ if (isAuthenticated) {
         }
       }
 
-      sendButton?.addEventListener('click', handleSubmit);
+    sendButton?.addEventListener('click', handleSubmit);
 
+    // On load, fetch existing messages
       fetchMessages();
     });
   </script>

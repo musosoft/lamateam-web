@@ -19,8 +19,9 @@ export const GET: APIRoute = async ({ locals }) => {
       authToken: TURSO_AUTH_TOKEN,
     });
 
+    // Fetch last 50 messages
     const { rows } = await turso.execute(
-      "SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC LIMIT 50",
+      "SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC LIMIT 50"
     );
 
     return new Response(JSON.stringify(rows), {
@@ -39,7 +40,7 @@ export const GET: APIRoute = async ({ locals }) => {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      },
+      }
     );
   }
 };
@@ -63,18 +64,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const body = await request.json();
     const { steamid, player_name, message, player_avatar } = body;
 
-    // Validate input
+    // Basic validation
     if (!steamid || !player_name || !message || !player_avatar) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
-        },
+        }
       );
     }
 
-    // Retrieve cookies from the request headers
+    // Read cookies
     const cookieHeader = request.headers.get("cookie") || "";
     const cookies = parse(cookieHeader);
     const sessionCookie = cookies["session"];
@@ -82,25 +83,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
       ? JSON.parse(decodeURIComponent(sessionCookie))
       : {};
 
-    // Get the user agent to check if the request is from the game client
-    const userAgent = request.headers.get("user-agent") || "";
-    const isGame = userAgent.includes("Valve Client");
+    // Check the user agent (case-insensitive) for Valve/Steam
+    const rawUserAgent = request.headers.get("user-agent") || "";
+    const userAgent = rawUserAgent.toLowerCase();
+    const isGame = userAgent.includes("valve") || userAgent.includes("steam");
 
-    console.log("User Agent in API request:", userAgent);
-    console.log("isGame in API request:", isGame);
+    // console.log("User Agent in API request:", rawUserAgent);
+    // console.log("isGame in API request:", isGame);
 
-    // Verify authentication
-    if (session?.steamID !== steamid && !isGame) {
+    // If it's not from the in-game browser, verify session steamID
+    if (!isGame && session?.steamID !== steamid) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Proceed to save the message in the database
+    // Everything is OK — insert the message
     const timestamp = new Date().toISOString();
     await turso.execute({
-      sql: `INSERT INTO Shoutbox (steamid, player_name, message, timestamp, player_avatar) VALUES (?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO Shoutbox (steamid, player_name, message, timestamp, player_avatar)
+            VALUES (?, ?, ?, ?, ?)`,
       args: [steamid, player_name, message, timestamp, player_avatar],
     });
 
@@ -115,7 +118,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         status: 201,
         headers: { "Content-Type": "application/json" },
-      },
+      }
     );
   } catch (error) {
     console.error("Error saving message:", error);
@@ -129,7 +132,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      },
+      }
     );
   }
 };
