@@ -172,16 +172,16 @@ const pages = [
       pages.map((page) => (
         <a
           href={page.link}
-          class="group flex flex-col items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-200 ~p-2/4 text-center"
+          class="group flex [@media(min-height:32rem)]:flex-col items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-200 ~p-2/4 text-center"
           data-astro-prefetch="load"
         >
-          <div class="~text-lg/4xl text-indigo-400 mb-4 group-hover:text-indigo-300 transition">
+          <div class="~text-lg/4xl text-indigo-400 mb-0 mr-4 [@media(min-height:32rem)]:mb-4 [@media(min-height:32rem)]:br-0 group-hover:text-indigo-300 transition">
             <Icon name={page.icon} />
           </div>
-          <h2 class="~text-sm/xl font-semibold text-white mb-2">
+          <h2 class="~text-sm/xl font-semibold text-white [@media(min-height:32rem)]:mb-2">
             {page.title}
           </h2>
-          <p class="~text-xs/sm text-gray-300">{page.description}</p>
+          <p class="~text-xs/sm hidden [@media(min-height:32rem)]:block text-gray-300">{page.description}</p>
         </a>
       ))
     }
