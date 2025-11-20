@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ locals }) => {
 
     // Fetch last 50 messages
     const { rows } = await turso.execute(
-      "SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC LIMIT 50"
+      "SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC LIMIT 50",
     );
 
     return new Response(JSON.stringify(rows), {
@@ -40,7 +40,7 @@ export const GET: APIRoute = async ({ locals }) => {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 };
@@ -71,7 +71,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -118,7 +118,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         status: 201,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (error) {
     console.error("Error saving message:", error);
@@ -132,7 +132,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 };

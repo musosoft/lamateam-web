@@ -1,6 +1,6 @@
 ---
-import Layout from '../layouts/Layout.astro'
-import { Icon } from 'astro-icon/components'
+import Layout from '../layouts/Layout.astro';
+import { Icon } from 'astro-icon/components';
 
 // 1) SERVER-SIDE LOGIC: gather everything needed before the page renders
 
@@ -8,87 +8,88 @@ import { Icon } from 'astro-icon/components'
 const baseUrl =
   Astro.locals.runtime.env.PUBLIC_SITE_URL ||
   import.meta.env.PUBLIC_SITE_URL ||
-  '/'
+  '/';
 
 const STEAM_API_KEY =
-  Astro.locals.runtime.env.STEAM_API_KEY ||
-  import.meta.env.STEAM_API_KEY
+  Astro.locals.runtime.env.STEAM_API_KEY || import.meta.env.STEAM_API_KEY;
 
 // Read cookies
-const cookies = Astro.cookies
+const cookies = Astro.cookies;
 
 function parseSessionCookie() {
-  const raw = cookies.get('session')?.value
-  if (!raw) return {}
+  const raw = cookies.get('session')?.value;
+  if (!raw) return {};
   try {
-    return JSON.parse(decodeURIComponent(raw))
+    return JSON.parse(decodeURIComponent(raw));
   } catch {
-    return {}
+    return {};
   }
 }
 
 // Check user-agent for in-game
-const userAgent = Astro.request.headers.get('user-agent')?.toLowerCase() || ''
-const isGame = userAgent.includes('valve') || userAgent.includes('steam')
+const userAgent = Astro.request.headers.get('user-agent')?.toLowerCase() || '';
+const isGame = userAgent.includes('valve') || userAgent.includes('steam');
 
 // Possibly set by the in-game environment
-const rawCommunityId = cookies.get('communityid')?.value || ''
-const rawPlayerName = cookies.get('name')?.value || ''
+const rawCommunityId = cookies.get('communityid')?.value || '';
+const rawPlayerName = cookies.get('name')?.value || '';
 
 function convertToSteam64(communityId: string): string {
-  const match = communityId.match(/^\[U:1:(\d+)\]$/)
+  const match = communityId.match(/^\[U:1:(\d+)\]$/);
   if (match) {
-    return (BigInt(match[1]) + BigInt('76561197960265728')).toString()
+    return (BigInt(match[1]) + BigInt('76561197960265728')).toString();
   }
-  return communityId // if already 64-bit
+  return communityId; // if already 64-bit
 }
 
-const session = parseSessionCookie()
+const session = parseSessionCookie();
 
 // Decide final steamID & playerName
-let steamID = ''
-let playerName = 'Guest'
+let steamID = '';
+let playerName = 'Guest';
 
 if (isGame && rawCommunityId) {
   // In-game scenario
-  steamID = convertToSteam64(rawCommunityId)
-  playerName = rawPlayerName || 'Guest'
+  steamID = convertToSteam64(rawCommunityId);
+  playerName = rawPlayerName || 'Guest';
 } else {
   // Normal browser scenario (from session cookie)
-  steamID = session?.steamID || ''
-  playerName = session?.playerName || 'Guest'
+  steamID = session?.steamID || '';
+  playerName = session?.playerName || 'Guest';
 }
 
 // Quick check if authenticated
-const isAuthenticated = !!(steamID && playerName !== 'Guest')
+const isAuthenticated = !!(steamID && playerName !== 'Guest');
 
 // If we have a SteamID, optionally fetch a full avatar from the Steam API
 async function fetchSteamAvatar(steam64: string) {
   if (!STEAM_API_KEY) {
-    console.error('STEAM_API_KEY is not set.')
-    return '/assets/default-avatar.webp'
+    console.error('STEAM_API_KEY is not set.');
+    return '/assets/default-avatar.webp';
   }
   try {
-    const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steam64}`
-    const resp = await fetch(url)
+    const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steam64}`;
+    const resp = await fetch(url);
     if (!resp.ok) {
-      console.error('Steam API error:', resp.status)
-      return '/assets/default-avatar.webp'
+      console.error('Steam API error:', resp.status);
+      return '/assets/default-avatar.webp';
     }
-    const data = await resp.json()
-    return data.response.players[0]?.avatarfull || '/assets/default-avatar.webp'
+    const data = await resp.json();
+    return (
+      data.response.players[0]?.avatarfull || '/assets/default-avatar.webp'
+    );
   } catch (error) {
-    console.error('Error fetching avatar from Steam:', error)
-    return '/assets/default-avatar.webp'
+    console.error('Error fetching avatar from Steam:', error);
+    return '/assets/default-avatar.webp';
   }
 }
 
 // Default if no SteamID
-let playerAvatar = '/assets/default-avatar.webp'
+let playerAvatar = '/assets/default-avatar.webp';
 
 if (steamID) {
   // If we do have a valid SteamID, do an async fetch
-  playerAvatar = await fetchSteamAvatar(steamID)
+  playerAvatar = await fetchSteamAvatar(steamID);
 }
 
 // 2) Page items (remove Shoutbox from the array)
@@ -141,29 +142,27 @@ const pages = [
     link: '/faq',
     icon: 'mdi:frequently-asked-questions',
   },
-]
+];
 ---
 
 <Layout title="Home">
   {
-    isAuthenticated
-      ? (
-        <div class="flex items-center space-x-4 mb-8 justify-center">
-          <img
-            src={playerAvatar}
-            alt="Player Avatar"
-            class="w-14 h-14 rounded-full border-2 border-gray-700"
-          />
-          <h1 class="text-lg font-bold text-white">
-            <strong>{playerName}</strong>, vítej na LaMaTeam!
-          </h1>
-        </div>
-      )
-      : (
-        <h1 class="~text-lg/3xl font-bold text-center text-white mb-8">
-          Vítej na LaMaTeam!
+    isAuthenticated ? (
+      <div class="flex items-center space-x-4 mb-8 justify-center">
+        <img
+          src={playerAvatar}
+          alt="Player Avatar"
+          class="w-14 h-14 rounded-full border-2 border-gray-700"
+        />
+        <h1 class="text-lg font-bold text-white">
+          <strong>{playerName}</strong>, vítej na LaMaTeam!
         </h1>
-      )
+      </div>
+    ) : (
+      <h1 class="~text-lg/3xl font-bold text-center text-white mb-8">
+        Vítej na LaMaTeam!
+      </h1>
+    )
   }
 
   <!-- 4 columns for the 8 items -->
@@ -181,7 +180,9 @@ const pages = [
           <h2 class="~text-sm/xl font-semibold text-white [@media(min-device-height:36rem)]:mb-2">
             {page.title}
           </h2>
-          <p class="~text-xs/sm hidden [@media(min-device-height:36rem)]:block text-gray-300">{page.description}</p>
+          <p class="~text-xs/sm hidden [@media(min-device-height:36rem)]:block text-gray-300">
+            {page.description}
+          </p>
         </a>
       ))
     }
@@ -190,15 +191,15 @@ const pages = [
   <!-- Integrated Shoutbox below -->
   <section class="mx-auto w-full px-2 py-4 bg-gray-900 rounded-md">
     {
-      !isAuthenticated
-        ? (
-          <div class="mb-4">
-            <a href="/api/auth/steam" class="text-blue-500 underline">
-              Přihlaste se přes Steam, abyste mohli psát zprávy do Shoutboxu.
-            </a>
-          </div>
-        )
-        : (<> </>)
+      !isAuthenticated ? (
+        <div class="mb-4">
+          <a href="/api/auth/steam" class="text-blue-500 underline">
+            Přihlaste se přes Steam, abyste mohli psát zprávy do Shoutboxu.
+          </a>
+        </div>
+      ) : (
+        <> </>
+      )
     }
 
     <form
@@ -234,50 +235,54 @@ const pages = [
 
   <!-- 3) Inline script that has access to these server variables: baseUrl, playerName, playerAvatar, steamID -->
   <!--    define:vars automatically JSON-serializes them so you can reference them by name. -->
-  <script is:inline define:vars={{ baseUrl, steamID, playerName, playerAvatar }}>
+  <script is:inline define:vars={{ baseUrl, steamID, playerName, playerAvatar }}
+  >
     // This code runs in the client, after the DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
-      const messageInput = document.getElementById('messageInput')
-      const sendButton = document.getElementById('sendButton')
-      const shoutboxMessages = document.getElementById('shoutboxMessages')
+      const messageInput = document.getElementById('messageInput');
+      const sendButton = document.getElementById('sendButton');
+      const shoutboxMessages = document.getElementById('shoutboxMessages');
 
       // Make sure baseUrl has a trailing slash
-      const normalizedBaseUrl = baseUrl.endsWith('/')
-        ? baseUrl
-        : baseUrl + '/'
+      const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
 
       // Convert a timestamp to "how long ago" string
       function timeSince(timestamp) {
-        const now = Date.now()
-        const diffTime = now - new Date(timestamp).getTime()
-        if (isNaN(diffTime)) return 'Neplatný čas'
+        const now = Date.now();
+        const diffTime = now - new Date(timestamp).getTime();
+        if (isNaN(diffTime)) return 'Neplatný čas';
 
-        const seconds = Math.floor(diffTime / 1000)
-        const minutes = Math.floor(seconds / 60)
-        const hours = Math.floor(minutes / 60)
-        const days = Math.floor(hours / 24)
-        const months = Math.floor(days / 30)
-        const years = Math.floor(days / 365)
+        const seconds = Math.floor(diffTime / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        const months = Math.floor(days / 30);
+        const years = Math.floor(days / 365);
 
-        if (years > 0) return `${years} rok${(years > 1 && years < 5) ? 'y' : (years > 4 ? 'ů' : '')}`
-        if (months > 0) return `${months} měsíc${(months > 1 && months < 5) ? 'e' : (months > 4 ? 'ů' : '')}`
+        if (years > 0)
+          return `${years} rok${years > 1 && years < 5 ? 'y' : years > 4 ? 'ů' : ''}`;
+        if (months > 0)
+          return `${months} měsíc${months > 1 && months < 5 ? 'e' : months > 4 ? 'ů' : ''}`;
         if (days > 0) {
-          if (days === 1) return '1 den'
-          if (days > 1 && days < 5) return `${days} dny`
-          return `${days} dní`
+          if (days === 1) return '1 den';
+          if (days > 1 && days < 5) return `${days} dny`;
+          return `${days} dní`;
         }
-        if (hours > 0) return `${hours} hodin${(hours > 1 && hours < 5) ? 'y' : ''}`
-        if (minutes > 0) return `${minutes} minut${(minutes > 1 && minutes < 5) ? 'y' : ''}`
-        return `${seconds} sekund${(seconds > 1 && seconds < 5) ? 'y' : ''}`
+        if (hours > 0)
+          return `${hours} hodin${hours > 1 && hours < 5 ? 'y' : ''}`;
+        if (minutes > 0)
+          return `${minutes} minut${minutes > 1 && minutes < 5 ? 'y' : ''}`;
+        return `${seconds} sekund${seconds > 1 && seconds < 5 ? 'y' : ''}`;
       }
 
       // Render messages into the DOM
       function renderMessages(messages) {
-        shoutboxMessages.innerHTML = ''
-        messages.forEach(({ player_avatar, player_name, message, timestamp }) => {
-          shoutboxMessages.insertAdjacentHTML(
-            'beforeend',
-            `<div class="flex items-center space-x-4 mb-4">
+        shoutboxMessages.innerHTML = '';
+        messages.forEach(
+          ({ player_avatar, player_name, message, timestamp }) => {
+            shoutboxMessages.insertAdjacentHTML(
+              'beforeend',
+              `<div class="flex items-center space-x-4 mb-4">
                <img
                  src="${player_avatar || '/assets/default-avatar.webp'}"
                  alt="Player Avatar"
@@ -287,29 +292,30 @@ const pages = [
                  <p class="text-white"><strong>${player_name}</strong>: ${message}</p>
                  <p class="text-gray-400 text-sm ml-auto">${timeSince(timestamp)}</p>
                </div>
-             </div>`
-          )
-        })
+             </div>`,
+            );
+          },
+        );
       }
 
       // Load recent messages from /api/shoutbox
       async function fetchMessages() {
         try {
-          const resp = await fetch(`${normalizedBaseUrl}api/shoutbox`)
+          const resp = await fetch(`${normalizedBaseUrl}api/shoutbox`);
           if (!resp.ok) {
-            throw new Error(`HTTP error! status: ${resp.status}`)
+            throw new Error(`HTTP error! status: ${resp.status}`);
           }
-          const messages = await resp.json()
-          renderMessages(messages)
+          const messages = await resp.json();
+          renderMessages(messages);
         } catch (error) {
-          console.error('Error fetching messages:', error)
+          console.error('Error fetching messages:', error);
         }
       }
 
       // Submit a new message to /api/shoutbox
       async function handleSubmit() {
-        const msg = messageInput.value.trim()
-        if (!msg) return
+        const msg = messageInput.value.trim();
+        if (!msg) return;
 
         try {
           const resp = await fetch(`${normalizedBaseUrl}api/shoutbox`, {
@@ -321,21 +327,21 @@ const pages = [
               player_avatar: playerAvatar,
               message: msg,
             }),
-          })
+          });
           if (!resp.ok) {
-            throw new Error(`HTTP error! status: ${resp.status}`)
+            throw new Error(`HTTP error! status: ${resp.status}`);
           }
-          messageInput.value = ''
-          fetchMessages()
+          messageInput.value = '';
+          fetchMessages();
         } catch (err) {
-          console.error('Error submitting message:', err)
+          console.error('Error submitting message:', err);
         }
       }
 
-      sendButton?.addEventListener('click', handleSubmit)
+      sendButton?.addEventListener('click', handleSubmit);
 
       // Initial load of messages
-      fetchMessages()
-    })
+      fetchMessages();
+    });
   </script>
 </Layout>

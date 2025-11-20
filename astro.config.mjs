@@ -7,9 +7,15 @@ import icon from "astro-icon";
 
 export default defineConfig({
   site: import.meta.env.PUBLIC_SITE_URL ?? process.env.PUBLIC_SITE_URL,
-  output: "server", // Enables server-side rendering
-  adapter: cloudflare({ mode: "directory" }),
-  integrations: [tailwind(), icon()],
+  output: "server",
+  adapter: cloudflare({
+    mode: "directory",
+    imageService: "cloudflare"
+  }),
+  integrations: [
+    tailwind(),
+    icon()
+  ],
   prefetch: true,
   redirects: {
     "/contact.php": "/contact",
