@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 // tailwind.config.mjs
-import fluid, { extract, screens, fontSize } from "fluid-tailwind";
+import fluid, { extract, screens, fontSize } from "fluid-tailwindcss";
 
 export default {
   content: {

@@ -1,23 +1,16 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import { Icon } from 'astro-icon/components';
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { env } from "cloudflare:workers";
 
-// 1) SERVER-SIDE LOGIC: gather everything needed before the page renders
+const baseUrl = env.PUBLIC_BASE_URL || "/";
 
-// Possibly from .env or Astro runtime
-const baseUrl =
-  Astro.locals.runtime.env.PUBLIC_SITE_URL ||
-  import.meta.env.PUBLIC_SITE_URL ||
-  '/';
+const STEAM_API_KEY = env.STEAM_API_KEY;
 
-const STEAM_API_KEY =
-  Astro.locals.runtime.env.STEAM_API_KEY || import.meta.env.STEAM_API_KEY;
-
-// Read cookies
 const cookies = Astro.cookies;
 
 function parseSessionCookie() {
-  const raw = cookies.get('session')?.value;
+  const raw = cookies.get("session")?.value;
   if (!raw) return {};
   try {
     return JSON.parse(decodeURIComponent(raw));
@@ -26,73 +19,61 @@ function parseSessionCookie() {
   }
 }
 
-// Check user-agent for in-game
-const userAgent = Astro.request.headers.get('user-agent')?.toLowerCase() || '';
-const isGame = userAgent.includes('valve') || userAgent.includes('steam');
+const userAgent = Astro.request.headers.get("user-agent")?.toLowerCase() || "";
+const isGame = userAgent.includes("valve") || userAgent.includes("steam");
 
-// Possibly set by the in-game environment
-const rawCommunityId = cookies.get('communityid')?.value || '';
-const rawPlayerName = cookies.get('name')?.value || '';
+const rawCommunityId = cookies.get("communityid")?.value || "";
+const rawPlayerName = cookies.get("name")?.value || "";
 
 function convertToSteam64(communityId: string): string {
   const match = communityId.match(/^\[U:1:(\d+)\]$/);
   if (match) {
-    return (BigInt(match[1]) + BigInt('76561197960265728')).toString();
+    return (BigInt(match[1]) + BigInt("76561197960265728")).toString();
   }
-  return communityId; // if already 64-bit
+  return communityId;
 }
 
 const session = parseSessionCookie();
 
-// Decide final steamID & playerName
-let steamID = '';
-let playerName = 'Guest';
+let steamID = "";
+let playerName = "Guest";
 
 if (isGame && rawCommunityId) {
-  // In-game scenario
   steamID = convertToSteam64(rawCommunityId);
-  playerName = rawPlayerName || 'Guest';
+  playerName = rawPlayerName || "Guest";
 } else {
-  // Normal browser scenario (from session cookie)
-  steamID = session?.steamID || '';
-  playerName = session?.playerName || 'Guest';
+  steamID = session?.steamID || "";
+  playerName = session?.playerName || "Guest";
 }
 
-// Quick check if authenticated
-const isAuthenticated = !!(steamID && playerName !== 'Guest');
+const isAuthenticated = !!(steamID && playerName !== "Guest");
 
-// If we have a SteamID, optionally fetch a full avatar from the Steam API
 async function fetchSteamAvatar(steam64: string) {
   if (!STEAM_API_KEY) {
-    console.error('STEAM_API_KEY is not set.');
-    return '/assets/default-avatar.webp';
+    console.error("STEAM_API_KEY is not set.");
+    return "/assets/default-avatar.webp";
   }
   try {
     const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steam64}`;
     const resp = await fetch(url);
     if (!resp.ok) {
-      console.error('Steam API error:', resp.status);
-      return '/assets/default-avatar.webp';
+      console.error("Steam API error:", resp.status);
+      return "/assets/default-avatar.webp";
     }
     const data = await resp.json();
-    return (
-      data.response.players[0]?.avatarfull || '/assets/default-avatar.webp'
-    );
+    return data.response.players[0]?.avatarfull || "/assets/default-avatar.webp";
   } catch (error) {
-    console.error('Error fetching avatar from Steam:', error);
-    return '/assets/default-avatar.webp';
+    console.error("Error fetching avatar from Steam:", error);
+    return "/assets/default-avatar.webp";
   }
 }
 
-// Default if no SteamID
-let playerAvatar = '/assets/default-avatar.webp';
+let playerAvatar = "/assets/default-avatar.webp";
 
 if (steamID) {
-  // If we do have a valid SteamID, do an async fetch
   playerAvatar = await fetchSteamAvatar(steamID);
 }
 
-// 2) Page items (remove Shoutbox from the array)
 const pages = [
   {
     title: 'Seznam banů',
@@ -159,28 +140,28 @@ const pages = [
         </h1>
       </div>
     ) : (
-      <h1 class="~text-lg/3xl font-bold text-center text-white mb-8">
+      <h1 class="fl-text-lg/3xl font-bold text-center text-white mb-8">
         Vítej na LaMaTeam!
       </h1>
     )
   }
 
   <!-- 4 columns for the 8 items -->
-  <div class="grid grid-cols-4 ~gap-2/6 ~mb-0/8">
+  <div class="grid grid-cols-4 fl-gap-2/6 fl-mb-0/8">
     {
       pages.map((page) => (
         <a
           href={page.link}
-          class="group flex [@media(min-device-height:36rem)]:flex-col items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-200 ~p-2/4 text-center"
+          class="group flex [@media(min-device-height:36rem)]:flex-col items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-200 fl-p-2/4 text-center"
           data-astro-prefetch="load"
         >
-          <div class="~text-lg/4xl text-indigo-400 mb-0 mr-4 [@media(min-device-height:36rem)]:mb-4 [@media(min-device-height:36rem)]:br-0 group-hover:text-indigo-300 transition">
+          <div class="fl-text-lg/4xl text-indigo-400 mb-0 mr-4 [@media(min-device-height:36rem)]:mb-4 [@media(min-device-height:36rem)]:br-0 group-hover:text-indigo-300 transition">
             <Icon name={page.icon} />
           </div>
-          <h2 class="~text-sm/xl font-semibold text-white [@media(min-device-height:36rem)]:mb-2">
+          <h2 class="fl-text-sm/xl font-semibold text-white [@media(min-device-height:36rem)]:mb-2">
             {page.title}
           </h2>
-          <p class="~text-xs/sm hidden [@media(min-device-height:36rem)]:block text-gray-300">
+          <p class="fl-text-xs/sm hidden [@media(min-device-height:36rem)]:block text-gray-300">
             {page.description}
           </p>
         </a>
@@ -227,7 +208,7 @@ const pages = [
 
     <div
       id="shoutboxMessages"
-      class="~max-h-64/96 overflow-y-auto ~p-0/4 bg-gray-800 rounded-md"
+      class="fl-max-h-64/96 overflow-y-auto fl-p-0/4 bg-gray-800 rounded-md"
     >
       <!-- Messages will be loaded dynamically -->
     </div>

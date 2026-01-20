@@ -2,24 +2,31 @@
 import type { APIRoute } from "astro";
 import { parse } from "cookie";
 import { createClient } from "@libsql/client/web";
+import { env } from "cloudflare:workers";
 
-export const GET: APIRoute = async ({ locals }) => {
+function getTursoConfig(): { url: string; authToken?: string } {
+  const devUrl = import.meta.env.TURSO_DATABASE_URL;
+  const devToken = import.meta.env.TURSO_AUTH_TOKEN;
+
+  const url = import.meta.env.DEV ? devUrl : env.TURSO_DATABASE_URL;
+  const authToken = import.meta.env.DEV ? devToken : env.TURSO_AUTH_TOKEN;
+
+  if (!url) {
+    throw new Error("TURSO_DATABASE_URL is not set");
+  }
+
+  return { url, authToken };
+}
+
+export const GET: APIRoute = async () => {
   try {
-    const { env } = locals.runtime;
-    const { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } = import.meta.env.DEV
-      ? import.meta.env
-      : env;
-
-    if (!TURSO_DATABASE_URL) {
-      throw new Error("TURSO_DATABASE_URL is not set");
-    }
+    const { url, authToken } = getTursoConfig();
 
     const turso = createClient({
-      url: TURSO_DATABASE_URL,
-      authToken: TURSO_AUTH_TOKEN,
+      url,
+      authToken,
     });
 
-    // Fetch last 50 messages
     const { rows } = await turso.execute(
       "SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC LIMIT 50",
     );
@@ -45,26 +52,18 @@ export const GET: APIRoute = async ({ locals }) => {
   }
 };
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   try {
-    const { env } = locals.runtime;
-    const { TURSO_DATABASE_URL, TURSO_AUTH_TOKEN } = import.meta.env.DEV
-      ? import.meta.env
-      : env;
-
-    if (!TURSO_DATABASE_URL) {
-      throw new Error("TURSO_DATABASE_URL is not set");
-    }
+    const { url, authToken } = getTursoConfig();
 
     const turso = createClient({
-      url: TURSO_DATABASE_URL,
-      authToken: TURSO_AUTH_TOKEN,
+      url,
+      authToken,
     });
 
     const body = await request.json();
     const { steamid, player_name, message, player_avatar } = body;
 
-    // Basic validation
     if (!steamid || !player_name || !message || !player_avatar) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
@@ -75,7 +74,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Read cookies
     const cookieHeader = request.headers.get("cookie") || "";
     const cookies = parse(cookieHeader);
     const sessionCookie = cookies["session"];
@@ -83,15 +81,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       ? JSON.parse(decodeURIComponent(sessionCookie))
       : {};
 
-    // Check the user agent (case-insensitive) for Valve/Steam
     const rawUserAgent = request.headers.get("user-agent") || "";
     const userAgent = rawUserAgent.toLowerCase();
     const isGame = userAgent.includes("valve") || userAgent.includes("steam");
 
-    // console.log("User Agent in API request:", rawUserAgent);
-    // console.log("isGame in API request:", isGame);
-
-    // If it's not from the in-game browser, verify session steamID
     if (!isGame && session?.steamID !== steamid) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -99,7 +92,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Everything is OK — insert the message
     const timestamp = new Date().toISOString();
     await turso.execute({
       sql: `INSERT INTO Shoutbox (steamid, player_name, message, timestamp, player_avatar)
