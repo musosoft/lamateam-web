@@ -1,0 +1,14 @@
+{
+  "name": "lamateam-web",
+  "compatibility_date": "2025-10-08",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "assets": {
+    "directory": "./dist"
+  },
+  "vars": {
+    "PUBLIC_BASE_URL": "http://localhost:4321"
+  },
+  "kv_namespaces": [
+    { "binding": "SESSION", "id": "78ed4236838944ed86f5f0cedbac92c6" }
+  ]
+}

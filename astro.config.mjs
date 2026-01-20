@@ -9,6 +9,9 @@ export default defineConfig({
   site: import.meta.env.PUBLIC_SITE_URL ?? process.env.PUBLIC_SITE_URL,
   output: "server",
   adapter: cloudflare({
+		platformProxy: {
+			enabled: true,
+		},
     mode: "directory",
     imageService: "cloudflare",
   }),

@@ -61,7 +61,13 @@ export const POST: APIRoute = async ({ request }) => {
       authToken,
     });
 
-    const body = await request.json();
+    const body = (await request.json()) as {
+      steamid?: string;
+      player_name?: string;
+      message?: string;
+      player_avatar?: string;
+    };
+
     const { steamid, player_name, message, player_avatar } = body;
 
     if (!steamid || !player_name || !message || !player_avatar) {
