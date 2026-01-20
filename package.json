@@ -11,7 +11,7 @@
     "build": "astro check && astro build",
     "cf-typegen": "wrangler types",
     "check": "astro build && tsc && wrangler deploy --dry-run",
-    "deploy": "wrangler deploy",
+    "deploy": "astro build && tsc && wrangler deploy",
     "preview": "astro build && wrangler dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -1,14 +1,30 @@
 {
   "name": "lamateam-web",
-  "compatibility_date": "2025-10-08",
+  "compatibility_date": "2026-01-20",
   "main": "@astrojs/cloudflare/entrypoints/server",
   "assets": {
-    "directory": "./dist"
+    "directory": "dist/client",
+  },
+  "routes": [
+    {
+      "custom_domain": true,
+      "pattern": "lamateam.eu",
+      "zone_name": "lamateam.eu",
+    },
+  ],
+  "workers_dev": true,
+  "preview_urls": true,
+  "placement": {
+    "mode": "smart",
   },
   "vars": {
-    "PUBLIC_BASE_URL": "http://localhost:4321"
+    "PUBLIC_BASE_URL": "https://lamateam.eu/",
+    "TURSO_DATABASE_URL": "libsql://lama-musosoft.aws-eu-west-1.turso.io",
   },
   "kv_namespaces": [
-    { "binding": "SESSION", "id": "78ed4236838944ed86f5f0cedbac92c6" }
-  ]
+    { "binding": "SESSION", "id": "78ed4236838944ed86f5f0cedbac92c6" },
+  ],
+  "observability": {
+    "logs": { "enabled": true },
+  },
 }
