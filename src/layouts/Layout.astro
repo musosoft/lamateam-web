@@ -54,9 +54,14 @@ const isGame = navigator.userAgent.includes('Valve Client');
         <slot />
         <div
           id="translate-wrapper"
-          class="fixed bottom-2 right-2 z-50 h-5 contain-paint"
+          class="fixed bottom-2 right-2 z-50 flex items-center gap-2 rounded-xl bg-gray-600 hover:bg-blue-700 px-2 py-2 text-white shadow-xl backdrop-blur-md transition-all"
         >
-          <div id="google_translate_element"></div>
+          <span class="text-xl">🌐</span>
+          <div
+            id="google_translate_element"
+            class="[&_.goog-te-combo]:cursor-pointer [&_.goog-te-combo]:appearance-none [&_.goog-te-combo]:bg-transparent [&_.goog-te-combo]:text-sm [&_.goog-te-combo]:font-medium [&_.goog-te-combo]:text-white [&_.goog-te-combo]:outline-none [&_.goog-te-gadget_span]:hidden [&_.goog-te-gadget]:text-[0px]! [&_img]:hidden [&_option]:bg-gray-800 [&_option]:text-white"
+          >
+          </div>
         </div>
       </div>
     </main>

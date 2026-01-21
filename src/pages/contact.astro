@@ -6,7 +6,7 @@ import Layout from '../layouts/Layout.astro';
 <Layout title="Contact">
   <h1 class="text-2xl text-center mb-4">Kontaktuj nás</h1>
   <form
-    class="flex flex-col gap-2 p-2"
+    class="flex flex-col gap-2 p-2 w-full max-w-96 mx-auto"
     action="https://formspree.io/f/xovqnqna"
     method="POST"
   >
@@ -24,7 +24,7 @@ import Layout from '../layouts/Layout.astro';
 
     <!-- Message Textarea -->
     <label class="flex flex-col gap-1 mb-4">
-      <span class="font-medium text-sm text-gray-300">Tvoja Message</span>
+      <span class="font-medium text-sm text-gray-300">Tvoja Zpráva</span>
       <textarea
         name="message"
         required
