@@ -22,11 +22,11 @@
     "postinstall": "astro telemetry disable"
   },
   "dependencies": {
-    "@astrojs/check": "0.9.6-beta.1",
-    "@astrojs/cloudflare": "13.0.0-beta.0",
+    "@astrojs/check": "0.9.7-beta.1",
+    "@astrojs/cloudflare": "13.0.0-beta.2",
     "@iconify-json/mdi": "^1.2.3",
     "@libsql/client": "^0.17.0",
-    "astro": "6.0.0-beta.1",
+    "astro": "6.0.0-beta.5",
     "astro-icon": "^1.1.5",
     "cookie": "^1.1.1",
     "tailwindcss": "^4.1.18",
@@ -35,14 +35,14 @@
   "packageManager": "pnpm@10.6.1+sha512.40ee09af407fa9fbb5fbfb8e1cb40fbb74c0af0c3e10e9224d7b53c7658528615b2c92450e74cfad91e3a2dcafe3ce4050d80bda71d757756d2ce2b66213e9a3",
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
-    "@typescript-eslint/parser": "^8.53.1",
+    "@typescript-eslint/parser": "^8.54.0",
     "eslint": "^9.39.2",
     "eslint-plugin-astro": "^1.5.0",
     "fluid-tailwindcss": "^1.0.5",
-    "prettier": "^3.8.0",
+    "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1",
     "stylelint": "^17.0.0",
     "stylelint-config-html": "^1.1.0",
-    "wrangler": "^4.59.2"
+    "wrangler": "^4.61.1"
   }
 }
