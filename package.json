@@ -35,13 +35,13 @@
   "packageManager": "pnpm@10.6.1+sha512.40ee09af407fa9fbb5fbfb8e1cb40fbb74c0af0c3e10e9224d7b53c7658528615b2c92450e74cfad91e3a2dcafe3ce4050d80bda71d757756d2ce2b66213e9a3",
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
-    "@typescript-eslint/parser": "^8.54.0",
-    "eslint": "^9.39.2",
-    "eslint-plugin-astro": "^1.5.0",
+    "@typescript-eslint/parser": "^8.56.0",
+    "eslint": "^10.0.0",
+    "eslint-plugin-astro": "^1.6.0",
     "fluid-tailwindcss": "^1.0.5",
     "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1",
-    "stylelint": "^17.0.0",
+    "stylelint": "^17.3.0",
     "stylelint-config-html": "^1.1.0",
     "wrangler": "^4.61.1"
   },
