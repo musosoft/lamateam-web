@@ -68,6 +68,11 @@ Required GitHub secrets:
 - `CLOUDFLARE_ACCOUNT_ID`
 - `AUTOMATION_GITHUB_TOKEN` (optional but recommended for security-sweep PRs to trigger normal PR workflows)
 
+pnpm version source:
+
+- Workflows intentionally do not pin a pnpm version in `pnpm/action-setup`.
+- pnpm is taken from `package.json#packageManager` to avoid `ERR_PNPM_BAD_PM_VERSION`.
+
 Required Cloudflare Worker runtime secrets (set in Cloudflare, not in GitHub):
 
 - `STEAM_API_KEY`
