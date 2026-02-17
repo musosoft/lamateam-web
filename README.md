@@ -52,3 +52,29 @@ All commands are run from the root of the project, from a terminal:
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+
+## Automated Dependency Updates and Deploys
+
+This repo is configured to keep dependencies current and deploy automatically:
+
+- `/.github/dependabot.yml`: daily npm updates and daily GitHub Actions updates.
+- `/.github/workflows/dependabot-automerge.yml`: auto-enables merge for Dependabot PRs.
+- `/.github/workflows/ci-deploy.yml`: verifies pull requests (`pnpm audit`, checks, build, typecheck) and runs `pnpm run deploy` on pushes to `main`.
+- `/.github/workflows/security-sweep.yml`: daily dependency sweep (`pnpm update`, `pnpm audit --fix`) with an automated PR.
+
+Required GitHub secrets:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `AUTOMATION_GITHUB_TOKEN` (optional but recommended for security-sweep PRs to trigger normal PR workflows)
+
+Required Cloudflare Worker runtime secrets (set in Cloudflare, not in GitHub):
+
+- `STEAM_API_KEY`
+- `TURSO_AUTH_TOKEN`
+
+Recommended repository settings:
+
+- Enable `Allow auto-merge` in GitHub repository settings.
+- Protect `main` and require the `Verify` job from `CI and Deploy` before merging.
+- Enable Dependabot security updates in repository security settings.

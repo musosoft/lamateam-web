@@ -1,0 +1,63 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    # GitHub Dependabot uses `npm` for npm/yarn/pnpm ecosystems.
+    directory: /
+    schedule:
+      interval: daily
+      time: "05:00"
+      timezone: UTC
+    target-branch: main
+    open-pull-requests-limit: 20
+    labels:
+      - dependencies
+    commit-message:
+      prefix: deps
+    allow:
+      - dependency-type: all
+    versioning-strategy: increase
+    groups:
+      astro:
+        applies-to: version-updates
+        patterns:
+          - astro
+          - "@astrojs/*"
+      cloudflare:
+        applies-to: version-updates
+        patterns:
+          - wrangler
+          - "@cloudflare/*"
+      tailwind:
+        applies-to: version-updates
+        patterns:
+          - tailwindcss
+          - "@tailwindcss/*"
+      tooling:
+        applies-to: version-updates
+        patterns:
+          - eslint*
+          - "@typescript-eslint/*"
+          - prettier*
+          - stylelint*
+      misc:
+        applies-to: version-updates
+        patterns:
+          - "*"
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+      time: "05:30"
+      timezone: UTC
+    target-branch: main
+    allow:
+      - dependency-name: "*"
+    labels:
+      - dependencies
+    commit-message:
+      prefix: ci

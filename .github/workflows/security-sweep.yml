@@ -1,0 +1,87 @@
+name: Dependency Security Sweep
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: dependency-security-sweep
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.1
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Refresh dependencies in lockfile
+        run: pnpm update --recursive
+
+      - name: Apply audit fixes
+        run: pnpm audit --prod --audit-level=moderate --fix || true
+
+      - name: Reinstall after audit fixes
+        run: pnpm install
+
+      - name: Verify build
+        run: pnpm run build
+
+      - name: Verify types
+        run: pnpm run typecheck
+
+      - name: Audit after fixes
+        id: audit
+        continue-on-error: true
+        run: pnpm audit --prod --audit-level=moderate
+
+      - name: Create dependency security PR
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.AUTOMATION_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          commit-message: "chore(security): dependency security sweep"
+          title: "chore(security): dependency security sweep"
+          body: |
+            Automated dependency security sweep:
+            - refreshed dependency resolutions
+            - applied `pnpm audit --fix` overrides when needed
+            - regenerated lockfile
+            - verified build and typecheck
+          branch: chore/dependency-security-sweep
+          delete-branch: true
+          labels: |
+            dependencies
+            security
+
+      - name: Enable auto-merge for sweep PR
+        if: steps.cpr.outputs.pull-request-number
+        run: gh pr merge --auto --squash "${{ steps.cpr.outputs.pull-request-url }}"
+        env:
+          GH_TOKEN: ${{ secrets.AUTOMATION_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Fail if vulnerabilities remain
+        if: steps.audit.outcome == 'failure'
+        run: |
+          echo "Vulnerabilities still present after automated fixes."
+          exit 1
