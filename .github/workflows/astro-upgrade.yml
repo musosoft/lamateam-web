@@ -1,0 +1,95 @@
+name: Astro and Tailwind Upgrade
+
+on:
+  schedule:
+    - cron: "30 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: astro-tailwind-upgrade
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Upgrade Astro beta and official integrations (non-interactive)
+        run: |
+          set +o pipefail
+          yes | pnpm dlx @astrojs/upgrade beta
+
+      - name: Upgrade Tailwind (non-interactive)
+        run: |
+          set +o pipefail
+          yes | pnpm dlx @tailwindcss/upgrade --force
+
+      - name: Install dependencies after upgrade
+        run: pnpm install
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level=moderate
+
+      - name: Run Astro checks
+        run: pnpm astro check
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run TypeScript checks
+        run: pnpm typecheck
+
+      - name: Create framework upgrade PR
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.AUTOMATION_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          commit-message: "chore(framework): upgrade Astro beta and Tailwind"
+          title: "chore(framework): upgrade Astro beta and Tailwind"
+          body: |
+            Automated framework upgrade workflow:
+            - ran `pnpm dlx @astrojs/upgrade beta` non-interactively
+            - ran `pnpm dlx @tailwindcss/upgrade --force` non-interactively
+            - refreshed dependencies and lockfile
+            - validated audit, astro check, build, and typecheck
+          branch: chore/framework-upgrade
+          delete-branch: true
+          labels: |
+            dependencies
+            astro
+            tailwind
+
+      - name: Enable auto-merge for Astro upgrade PR
+        if: steps.cpr.outputs.pull-request-number
+        run: |
+          PR_URL="${{ steps.cpr.outputs.pull-request-url }}"
+          if gh pr merge --auto --squash "$PR_URL"; then
+            echo "Auto-merge enabled for $PR_URL"
+            exit 0
+          fi
+
+          echo "Auto-merge is unavailable for this repository/branch."
+          echo "Enable 'Allow auto-merge' and branch protection rules to queue auto-merge."
+          echo "Skipping failure so this workflow does not error."
+        env:
+          GH_TOKEN: ${{ secrets.AUTOMATION_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}

@@ -15,23 +15,18 @@ updates:
       prefix: deps
     allow:
       - dependency-type: all
+    ignore:
+      - dependency-name: astro
+      - dependency-name: "@astrojs/*"
+      - dependency-name: tailwindcss
+      - dependency-name: "@tailwindcss/*"
     versioning-strategy: increase
     groups:
-      astro:
-        applies-to: version-updates
-        patterns:
-          - astro
-          - "@astrojs/*"
       cloudflare:
         applies-to: version-updates
         patterns:
           - wrangler
           - "@cloudflare/*"
-      tailwind:
-        applies-to: version-updates
-        patterns:
-          - tailwindcss
-          - "@tailwindcss/*"
       tooling:
         applies-to: version-updates
         patterns:

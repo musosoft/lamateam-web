@@ -1,85 +1,81 @@
-# Astro Starter Kit: Basics
+# lamateam.eu Web
+
+Astro site deployed to Cloudflare Workers.
+
+## Quickstart
 
 ```sh
-npm create astro@latest -- --template basics
+pnpm install
+pnpm run dev
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+Key commands:
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+- `pnpm run build`: production build
+- `pnpm run typecheck`: TypeScript check
+- `pnpm run check`: astro check + build + typecheck + wrangler dry-run deploy
+- `pnpm run deploy`: build + typecheck + `wrangler deploy`
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+## Agent Guide
 
-## 🚀 Project Structure
+This section is for agentic LLM/code agents working in this repo.
 
-Inside of your Astro project, you'll see the following folders and files:
+1. Use `pnpm` only. The source of truth is `package.json#packageManager`.
+2. Before proposing merge-ready changes, run:
+   - `pnpm audit --prod --audit-level=moderate`
+   - `pnpm astro check`
+   - `pnpm build`
+   - `pnpm typecheck`
+3. Do not pin a pnpm version in GitHub workflows. `pnpm/action-setup` must read from `packageManager` to avoid `ERR_PNPM_BAD_PM_VERSION`.
+4. `pnpm run build` does not require Cloudflare auth. Deploy (`wrangler deploy`) requires GitHub secrets.
+5. Runtime Worker secrets are managed in Cloudflare, not in GitHub.
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── components/
-│   │   └── Card.astro
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
+## CI/CD and Dependency Automation
+
+Configured automation:
+
+- `.github/dependabot.yml`
+  - Daily dependency updates for npm/pnpm ecosystem and GitHub Actions.
+  - Astro and Tailwind packages are intentionally ignored here to avoid conflicting upgrade strategies.
+- `.github/workflows/dependabot-automerge.yml`
+  - Attempts to enable auto-merge for Dependabot PRs without failing if repo auto-merge settings are unavailable.
+- `.github/workflows/ci-deploy.yml`
+  - PR verification: audit + astro check + build + typecheck.
+  - Main deploy: `pnpm run deploy` to Cloudflare Workers.
+- `.github/workflows/security-sweep.yml`
+  - Daily lockfile refresh + `pnpm audit --fix` + validation + automated PR.
+- `.github/workflows/astro-upgrade.yml`
+  - Weekly framework migration flow with non-interactive:
+    - `pnpm dlx @astrojs/upgrade beta`
+    - `pnpm dlx @tailwindcss/upgrade --force`
+  - Creates a PR only after audit/check/build/typecheck pass.
+
+## Astro Upgrade Policy
+
+Astro beta and official integrations are upgraded together by automation using:
+
+```sh
+yes | pnpm dlx @astrojs/upgrade beta
+yes | pnpm dlx @tailwindcss/upgrade --force
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+`yes |` is required so the workflow never waits for interactive confirmation.
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## Required Secrets
 
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
-## Automated Dependency Updates and Deploys
-
-This repo is configured to keep dependencies current and deploy automatically:
-
-- `/.github/dependabot.yml`: daily npm updates and daily GitHub Actions updates.
-- `/.github/workflows/dependabot-automerge.yml`: auto-enables merge for Dependabot PRs.
-- `/.github/workflows/ci-deploy.yml`: verifies pull requests (`pnpm audit`, checks, build, typecheck) and runs `pnpm run deploy` on pushes to `main`.
-- `/.github/workflows/security-sweep.yml`: daily dependency sweep (`pnpm update`, `pnpm audit --fix`) with an automated PR.
-
-Required GitHub secrets:
+GitHub repository secrets:
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
-- `AUTOMATION_GITHUB_TOKEN` (optional but recommended for security-sweep PRs to trigger normal PR workflows)
+- `AUTOMATION_GITHUB_TOKEN` (recommended for bot PRs that should trigger normal PR workflows)
 
-pnpm version source:
-
-- Workflows intentionally do not pin a pnpm version in `pnpm/action-setup`.
-- pnpm is taken from `package.json#packageManager` to avoid `ERR_PNPM_BAD_PM_VERSION`.
-
-Required Cloudflare Worker runtime secrets (set in Cloudflare, not in GitHub):
+Cloudflare Worker runtime secrets:
 
 - `STEAM_API_KEY`
 - `TURSO_AUTH_TOKEN`
 
-Recommended repository settings:
+## Recommended GitHub Settings
 
-- Enable `Allow auto-merge` in GitHub repository settings.
-- Protect `main` and require the `Verify` job from `CI and Deploy` before merging.
-- Enable Dependabot security updates in repository security settings.
+- Enable `Allow auto-merge`.
+- Protect `main` and require `CI and Deploy / Verify`.
+- Enable Dependabot security updates.
