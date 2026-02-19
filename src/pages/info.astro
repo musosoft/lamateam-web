@@ -1,36 +1,97 @@
 ---
-// src/pages/info.astro
 import Layout from '../layouts/Layout.astro';
+
+const commandGroups = [
+  {
+    title: 'Najpoužívanejšie',
+    items: [
+      { cmd: '!motd', desc: 'Otvorí info/MOTD okno servera.' },
+      { cmd: '!nb', desc: 'Pokúsi sa ťa (alebo cieľ) odblokovať, keď si zaseknutý.' },
+      { cmd: '!rtv', desc: 'Rock The Vote – hlasovanie o zmene mapy (ak je povolené).' },
+      { cmd: '!nominate <mapa>', desc: 'Nominuje mapu do hlasovania.' },
+      { cmd: '!resetscore / !rs / !r', desc: 'Vynuluje tvoje skóre (K/D).' },
+    ],
+  },
+  {
+    title: 'Mapa a server info',
+    items: [
+      { cmd: '!timeleft', desc: 'Zobrazí zostávajúci čas mapy.' },
+      { cmd: '!nextmap', desc: 'Ukáže ďalšiu mapu (alebo pending vote).' },
+      { cmd: '!currentmap', desc: 'Ukáže aktuálnu mapu.' },
+      { cmd: '!ff', desc: 'Vypíše Friendly Fire stav.' },
+      { cmd: '!thetime', desc: 'Vypíše aktuálny serverový čas.' },
+      { cmd: '!motd', desc: 'Otvorí webové/informačné okno servera.' },
+    ],
+  },
+  {
+    title: 'HLstatsX / štatistiky',
+    items: [
+      { cmd: '!rank', desc: 'Tvoje poradie v HLstatsX.' },
+      { cmd: '!session', desc: 'Štatistiky aktuálnej session.' },
+      { cmd: '!kpd / !kdratio', desc: 'K/D štatistiky.' },
+      { cmd: '!top10 / !top20 / !top5', desc: 'Rebríčky hráčov.' },
+      { cmd: '!statsme', desc: 'Rýchly prehľad tvojich statov.' },
+      { cmd: '!hlx_menu', desc: 'HLstatsX menu.' },
+    ],
+  },
+  {
+    title: 'Komunita pluginy',
+    items: [
+      { cmd: 'bet <t|ct> <all|half|third|suma>', desc: 'TeamBets – stávka na víťaza kola.' },
+      { cmd: 'bounty', desc: 'Zobrazí aktuálne bounty odmeny.' },
+      { cmd: '!comms', desc: 'Ukáže status tvojich mute/gag obmedzení.' },
+      { cmd: '!tagslist', desc: 'HexTags – výber dostupného tagu (ak máš právo).' },
+      { cmd: '!trace', desc: 'Spray trace – info o spreji (ak plugin povolený).' },
+    ],
+  },
+  {
+    title: 'Demo / report cheatera',
+    items: [
+      { cmd: 'record <nazov_dema>', desc: 'Spustí nahrávanie dema.' },
+      { cmd: 'stop', desc: 'Zastaví nahrávanie dema.' },
+      { cmd: 'playdemo <nazov_dema>', desc: 'Prehrá uložené demo.' },
+      { cmd: 'status', desc: 'Konzolový výpis hráčov/SteamID pre report.' },
+    ],
+  },
+];
 ---
 
-<Layout title="Info">
-  <h1 class="mb-4 font-bold tracking-tight text-4xl">Užitečné informace:</h1>
-  <span class="text-yellow-500">Pro odstrčení od hráče napiš do chatu </span>
-  <span class="text-green-500">!nb</span>
-  <span class="text-yellow-500"
-    ><br />Pokud chceš ve hře zobrazit tohle okno, napiš
-  </span>
-  <span class="text-green-500">!motd</span>
-  <span class="text-yellow-500"
-    ><br />Pokud máš připomínky, nápady na zlepšení, nebo chceš nahlásit
-    podvádějícího či jinak hru znepříjemňujícího hráče,
-  </span>
-  <a class="text-green-500" href="http://lamateam.eu/contact.php">napiš nám</a>
-  <span class="text-yellow-500"
-    ><br />- - - - - - - - - - -<br />Chceš nahrát demo na cheatera?<br />Otevři
-    konzoli a napiš
-  </span>
-  <span class="text-red-500">record název_dema<br /></span>
-  <span class="text-yellow-500">Když chceš nahrávání ukončit, napiš </span>
-  <span class="text-red-500">stop</span>
-  <span class="text-yellow-500"
-    ><br />Nahrané demo najdeš v hlavním adresáři hry (/cstrike)<br />Pošli ho
-    adminům!<br />- - - - - - - - - - -<br />Majitelem serveru crazy69 | Hosting
-    zabezpečuje FakaHeda.eu<br />Najdeš nás taky na discordu a na facebooku -
-    hledej:
-  </span>
-  <span class="text-red-500"
-    ><a href="https://www.facebook.com/groups/437402000675912">LaMaTeAm.eu</a
-    ></span
-  >
+<Layout title="Info | LaMaTeam">
+  <section class="mx-auto w-full max-w-6xl px-4 py-8 text-left text-gray-100">
+    <div class="mb-8 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="mb-2 text-3xl font-extrabold tracking-tight md:text-4xl">Hráčske príkazy</h1>
+      <p class="text-sm text-gray-300 md:text-base">
+        Kompletný prehľad užitočných príkazov pre náš server. Väčšina funguje ako chat trigger
+        cez <span class="font-semibold text-lime-400">!</span> (napr. <code class="rounded bg-black/30 px-1 py-0.5">!rtv</code>)
+        alebo priamo v konzole.
+      </p>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {
+        commandGroups.map((group) => (
+          <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg transition hover:border-cyan-500/60">
+            <h2 class="mb-4 text-lg font-bold text-cyan-300">{group.title}</h2>
+            <ul class="space-y-3">
+              {group.items.map((item) => (
+                <li class="rounded-xl border border-gray-800 bg-gray-950/70 p-3">
+                  <code class="mb-1 block break-words text-sm font-semibold text-lime-400">{item.cmd}</code>
+                  <p class="text-sm text-gray-300">{item.desc}</p>
+                </li>
+              ))}
+            </ul>
+          </article>
+        ))
+      }
+    </div>
+
+    <div class="mt-8 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-200">
+      <p class="font-semibold">Poznámka:</p>
+      <p>
+        Niektoré príkazy môžu byť podmienené právami, herným stavom (warmup/round), alebo konkrétnym pluginom.
+        Ak príkaz nefunguje, skús ho bez diakritiky, s prefixom <code class="rounded bg-black/30 px-1">!</code>,
+        alebo použi stránku <a href="/faq" class="font-semibold underline decoration-dotted hover:text-amber-100">/faq</a>.
+      </p>
+    </div>
+  </section>
 </Layout>
