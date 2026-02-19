@@ -3,6 +3,7 @@
 import Layout from '../layouts/Layout.astro';
 import Accordion from '../components/Accordion.astro';
 import { Icon } from 'astro-icon/components';
+import { getImage } from 'astro:assets';
 
 let demoFiles: string[] = [];
 let serverMaps: string[] = [];
@@ -14,7 +15,10 @@ const MAP_PLACEHOLDER = '/assets/map-placeholder.svg';
 
 interface MapCard {
   name: string;
-  image: string;
+  sourceImage: string;
+  optimizedImage: string;
+  width: number;
+  height: number;
 }
 
 const mapCards: MapCard[] = [];
@@ -138,10 +142,45 @@ try {
     serverMaps = getCustomMapsFromCsv(csvRaw);
 
     const resolved = await Promise.all(
-      serverMaps.map(async (name) => ({
-        name,
-        image: await resolveMapImage(name),
-      })),
+      serverMaps.map(async (name) => {
+        const sourceImage = await resolveMapImage(name);
+
+        if (sourceImage === MAP_PLACEHOLDER) {
+          return {
+            name,
+            sourceImage,
+            optimizedImage: MAP_PLACEHOLDER,
+            width: 320,
+            height: 180,
+          } satisfies MapCard;
+        }
+
+        try {
+          const optimized = await getImage({
+            src: sourceImage,
+            width: 320,
+            height: 180,
+            format: 'webp',
+            quality: 'mid',
+          });
+
+          return {
+            name,
+            sourceImage,
+            optimizedImage: optimized.src,
+            width: optimized.attributes.width ?? 320,
+            height: optimized.attributes.height ?? 180,
+          } satisfies MapCard;
+        } catch {
+          return {
+            name,
+            sourceImage,
+            optimizedImage: sourceImage,
+            width: 320,
+            height: 180,
+          } satisfies MapCard;
+        }
+      }),
     );
 
     mapCards.push(...resolved);
@@ -430,10 +469,13 @@ try {
                 title={mapCard.name}
               >
                 <img
-                  src={mapCard.image}
+                  src={mapCard.optimizedImage}
                   alt={mapCard.name}
+                  width={mapCard.width}
+                  height={mapCard.height}
                   loading={idx < 8 ? 'eager' : 'lazy'}
                   fetchpriority={idx < 8 ? 'high' : 'auto'}
+                  decoding="async"
                   data-map-image
                   onerror={`this.onerror=null;this.src='${MAP_PLACEHOLDER}';`}
                   class="h-24 w-full object-cover"
