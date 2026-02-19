@@ -1,0 +1,497 @@
+{
+  "generatedAt": "2026-02-19T19:15:36.880Z",
+  "total": 98,
+  "ok": 20,
+  "items": [
+    {
+      "map": "$2000$",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "3mc_training",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "aim_awp-ak-colt",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "aim_deagle_ultra",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "aim_deagle7k",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "aim_map_fixed",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "awp_india_v2",
+      "image": "/assets/map-cache/awp_india_v2.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/awp_india_v2.jpg"
+    },
+    {
+      "map": "awp_rooftops_css",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "cs_assault_lama3",
+      "image": "/assets/map-cache/cs_assault_lama3.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_assault.jpg"
+    },
+    {
+      "map": "cs_compound",
+      "image": "/assets/map-cache/cs_compound.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_compound.jpg"
+    },
+    {
+      "map": "cs_crackhouse_hg_a2",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "cs_estate",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "cs_havana",
+      "image": "/assets/map-cache/cs_havana.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_havana.jpg"
+    },
+    {
+      "map": "cs_italy",
+      "image": "/assets/map-cache/cs_italy.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_italy.jpg"
+    },
+    {
+      "map": "cs_militia",
+      "image": "/assets/map-cache/cs_militia.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_militia.jpg"
+    },
+    {
+      "map": "cs_office",
+      "image": "/assets/map-cache/cs_office.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_office.jpg"
+    },
+    {
+      "map": "de_alexandra2",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_anubis_css",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_apehouse",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_arabic2_lt",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_aztec",
+      "image": "/assets/map-cache/de_aztec.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_aztec.jpg"
+    },
+    {
+      "map": "de_blitz_ukcs",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_boston",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_cache",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_cantina",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_carpediem_arena",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_casablanca_sunbeam",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_cbble",
+      "image": "/assets/map-cache/de_cbble.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_cbble.jpg"
+    },
+    {
+      "map": "de_cefalu",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_cevo_hazard",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_contra",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_cortona",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_cotroceni",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_cpl_fire",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_cpl_mill",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_deltamill2",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_desert_atrocity_v3",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_dust_small_lt2025",
+      "image": "/assets/map-cache/de_dust_small_lt2025.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_dust.jpg"
+    },
+    {
+      "map": "de_dust",
+      "image": "/assets/map-cache/de_dust.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_dust.jpg"
+    },
+    {
+      "map": "de_dust2",
+      "image": "/assets/map-cache/de_dust2.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_dust2.jpg"
+    },
+    {
+      "map": "de_dust3_lt",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_frost",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_grit3",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_hiekka_v3",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_chateau",
+      "image": "/assets/map-cache/de_chateau.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_chateau.jpg"
+    },
+    {
+      "map": "de_inferno",
+      "image": "/assets/map-cache/de_inferno.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_inferno.jpg"
+    },
+    {
+      "map": "de_island_v2",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_kabul3",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_kismayo",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_leika",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_losttemple_pro",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_losttemple2",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_marauder",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_mirage",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_new_sultan",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_nightfever",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_nuke",
+      "image": "/assets/map-cache/de_nuke.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_nuke.jpg"
+    },
+    {
+      "map": "de_orilla_house",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_overpass_lt",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_paris_subway2",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_piranesi",
+      "image": "/assets/map-cache/de_piranesi.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_piranesi.jpg"
+    },
+    {
+      "map": "de_playboydolls_2010_b8",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_port",
+      "image": "/assets/map-cache/de_port.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_port.jpg"
+    },
+    {
+      "map": "de_prodigy",
+      "image": "/assets/map-cache/de_prodigy.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_prodigy.jpg"
+    },
+    {
+      "map": "de_pyramid_css_lt",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_red_roofs",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_riverwalk",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_rose",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_rush_fix",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_russka_lt",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_saw",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_scud_pro",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_season",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_siena",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_slummi",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_snowcapped",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_strata",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_sultan2",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_sunny",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_syksy",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_tides",
+      "image": "/assets/map-cache/de_tides.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_tides.jpg"
+    },
+    {
+      "map": "de_train",
+      "image": "/assets/map-cache/de_train.jpg",
+      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_train.jpg"
+    },
+    {
+      "map": "de_troit",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_tuscan",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_vegas_lite",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_venice",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_villa",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_vostok",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_westwood_rm",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "fun_matrix_trilogie",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "fy_buzzkill_css",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "fy_pool_day_reloaded",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "fy_poolparty_v3",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "fy_ruins_dawn",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "fy_snow",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "fy_twotowers_v2",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "knas_Sandland_CSS",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "min_players",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    }
+  ]
+}

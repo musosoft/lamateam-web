@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/cache-map-images.mjs && astro build",
     "typecheck": "tsc --noEmit",
     "check": "astro check && pnpm build && pnpm typecheck && wrangler deploy --dry-run",
     "deploy": "pnpm build && pnpm typecheck && wrangler deploy",

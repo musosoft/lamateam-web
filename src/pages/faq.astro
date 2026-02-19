@@ -3,18 +3,9 @@
 import Layout from '../layouts/Layout.astro';
 import Accordion from '../components/Accordion.astro';
 import { Icon } from 'astro-icon/components';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import mapsGenerated from '../data/maps.generated.json';
 
 let demoFiles: string[] = [];
-let serverMaps: string[] = [];
-
-const MAPS_CSV_URL =
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTufS4N6N-30qHu47IuYFnR8CqjM9iTTWQLQ9d4w0SxpmdI984EcnbG8D4ZAerbtKzuxtTHAlHrZpHQ/pub?output=csv';
-const MAP_IMAGE_BASE = 'https://stats.lamateam.eu/hlstatsimg/games/css/maps';
-const MAP_PLACEHOLDER = '/assets/map-placeholder.svg';
-const MAP_CACHE_PUBLIC = '/assets/map-cache';
-const MAP_CACHE_DIR = path.join(process.cwd(), 'public', 'assets', 'map-cache');
 
 interface MapCard {
   name: string;
@@ -23,142 +14,12 @@ interface MapCard {
   height: number;
 }
 
-const mapCards: MapCard[] = [];
-
-function parseCsvLine(line: string, delimiter: string): string[] {
-  const out: string[] = [];
-  let cur = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-
-    if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        cur += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-      continue;
-    }
-
-    if (ch === delimiter && !inQuotes) {
-      out.push(cur);
-      cur = '';
-      continue;
-    }
-
-    cur += ch;
-  }
-
-  out.push(cur);
-  return out;
-}
-
-function fallbackMapNames(mapName: string): string[] {
-  const names: string[] = [mapName];
-  let cur = mapName;
-
-  while (cur.includes('_')) {
-    cur = cur.replace(/_[^_]+$/, '');
-    if (cur && !names.includes(cur)) names.push(cur);
-  }
-
-  return names;
-}
-
-async function downloadIfExists(url: string, outPath: string, timeoutMs = 4000): Promise<boolean> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(url, { method: 'GET', signal: ctrl.signal });
-    if (!res.ok) return false;
-
-    const ct = res.headers.get('content-type') || '';
-    if (!ct.includes('image')) return false;
-
-    const ab = await res.arrayBuffer();
-    if (!ab || ab.byteLength < 256) return false;
-
-    await fs.writeFile(outPath, Buffer.from(ab));
-    return true;
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-async function resolveMapImage(mapName: string): Promise<string> {
-  await fs.mkdir(MAP_CACHE_DIR, { recursive: true });
-
-  const localFile = `${mapName}.jpg`;
-  const localPath = path.join(MAP_CACHE_DIR, localFile);
-  const localPublic = `${MAP_CACHE_PUBLIC}/${localFile}`;
-
-  try {
-    await fs.access(localPath);
-    return localPublic;
-  } catch {}
-
-  const allCandidates: string[] = [];
-
-  for (const n of fallbackMapNames(mapName)) {
-    const encoded = encodeURIComponent(n);
-    allCandidates.push(
-      `${MAP_IMAGE_BASE}/${n}.jpg`,
-      `https://images.gamebanana.com/img/ss/maps/${n}_1.jpg`,
-      `https://images.gamebanana.com/img/ss/maps/${n}.jpg`,
-      `https://www.17buddies.rocks/17b2/maps/images/${n}.jpg`,
-      `https://www.17buddies.rocks/17b2/maps/images/${encoded}.jpg`,
-    );
-  }
-
-  for (const url of allCandidates) {
-    if (await downloadIfExists(url, localPath)) {
-      return localPublic;
-    }
-  }
-
-  return MAP_PLACEHOLDER;
-}
-
-function getCustomMapsFromCsv(raw: string): string[] {
-  const delimiter = raw.includes('";"') ? ';' : ',';
-  const lines = raw
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-
-  if (!lines.length) return [];
-
-  const header = parseCsvLine(lines[0], delimiter).map((v) =>
-    v.trim().replace(/^"|"$/g, ''),
-  );
-
-  let mapCol = header.findIndex((h) => h.toUpperCase() === 'MAPA');
-  if (mapCol === -1) mapCol = 1;
-
-  const uniq = new Set<string>();
-  for (let i = 1; i < lines.length; i++) {
-    const row = parseCsvLine(lines[i], delimiter);
-    if (row.length <= mapCol) continue;
-
-    let name = row[mapCol]?.trim().replace(/^"|"$/g, '') ?? '';
-    if (!name) continue;
-
-    if (name.toLowerCase().endsWith('.bsp')) {
-      name = name.slice(0, -4);
-    }
-
-    if (name) uniq.add(name);
-  }
-
-  return Array.from(uniq);
-}
-
+const mapCards: MapCard[] = (mapsGenerated.items ?? []).map((it) => ({
+  name: it.map,
+  sourceImage: it.image,
+  width: 320,
+  height: 180,
+}));
 try {
   const response = await fetch(
     'https://wild-fire-819b.still-fog-235d.workers.dev/list',
@@ -172,32 +33,7 @@ try {
   console.error('Error fetching demo files:', error);
 }
 
-try {
-  const csvResp = await fetch(MAPS_CSV_URL);
-  if (csvResp.ok) {
-    const csvRaw = await csvResp.text();
-    serverMaps = getCustomMapsFromCsv(csvRaw);
-
-    const resolved = await Promise.all(
-      serverMaps.map(async (name) => {
-        const sourceImage = await resolveMapImage(name);
-
-        return {
-          name,
-          sourceImage,
-          width: 320,
-          height: 180,
-        } satisfies MapCard;
-      }),
-    );
-
-    mapCards.push(...resolved);
-  } else {
-    console.error('Failed to fetch map CSV:', csvResp.statusText);
-  }
-} catch (error) {
-  console.error('Error fetching map CSV:', error);
-}
+// map cards are generated at build time by scripts/cache-map-images.mjs
 ---
 
 <Layout title="FAQ">
