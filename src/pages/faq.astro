@@ -5,6 +5,76 @@ import Accordion from '../components/Accordion.astro';
 import { Icon } from 'astro-icon/components';
 
 let demoFiles: string[] = [];
+let serverMaps: string[] = [];
+
+const MAPS_CSV_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTufS4N6N-30qHu47IuYFnR8CqjM9iTTWQLQ9d4w0SxpmdI984EcnbG8D4ZAerbtKzuxtTHAlHrZpHQ/pub?output=csv';
+const MAP_IMAGE_BASE = 'https://stats.lamateam.eu/hlstatsimg/games/css/maps';
+
+function parseCsvLine(line: string, delimiter: string): string[] {
+  const out: string[] = [];
+  let cur = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (ch === delimiter && !inQuotes) {
+      out.push(cur);
+      cur = '';
+      continue;
+    }
+
+    cur += ch;
+  }
+
+  out.push(cur);
+  return out;
+}
+
+function getCustomMapsFromCsv(raw: string): string[] {
+  const delimiter = raw.includes('";"') ? ';' : ',';
+  const lines = raw
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  if (!lines.length) return [];
+
+  const header = parseCsvLine(lines[0], delimiter).map((v) =>
+    v.trim().replace(/^"|"$/g, ''),
+  );
+
+  let mapCol = header.findIndex((h) => h.toUpperCase() === 'MAPA');
+  if (mapCol === -1) mapCol = 1;
+
+  const uniq = new Set<string>();
+  for (let i = 1; i < lines.length; i++) {
+    const row = parseCsvLine(lines[i], delimiter);
+    if (row.length <= mapCol) continue;
+
+    let name = row[mapCol]?.trim().replace(/^"|"$/g, '') ?? '';
+    if (!name) continue;
+
+    if (name.toLowerCase().endsWith('.bsp')) {
+      name = name.slice(0, -4);
+    }
+
+    if (name) uniq.add(name);
+  }
+
+  return Array.from(uniq);
+}
 
 try {
   const response = await fetch(
@@ -17,6 +87,18 @@ try {
   }
 } catch (error) {
   console.error('Error fetching demo files:', error);
+}
+
+try {
+  const csvResp = await fetch(MAPS_CSV_URL);
+  if (csvResp.ok) {
+    const csvRaw = await csvResp.text();
+    serverMaps = getCustomMapsFromCsv(csvRaw);
+  } else {
+    console.error('Failed to fetch map CSV:', csvResp.statusText);
+  }
+} catch (error) {
+  console.error('Error fetching map CSV:', error);
 }
 ---
 
@@ -278,6 +360,38 @@ try {
           >r_drawothermodels 2</code
         > nepoužívej na herním serveru...
       </p>
+    </Accordion>
+
+    <Accordion summary="Aktuální mapy na serveru">
+      <p class="mb-4 text-gray-300">
+        Seznam se načítá při buildu stejnou logikou jako <code>Get-CustomMapsFromCsv</code>
+        v setup skriptu (sloupec <code>MAPA</code>, fallback index 1, deduplikace).
+      </p>
+
+      {
+        serverMaps.length === 0 ? (
+          <p>Mapy se nepodařilo načíst.</p>
+        ) : (
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {serverMaps.map((mapName) => (
+              <div
+                class="group overflow-hidden rounded-xl border border-gray-700 bg-gray-900/70 shadow transition hover:-translate-y-0.5 hover:border-cyan-400/70"
+                title={mapName}
+              >
+                <img
+                  src={`${MAP_IMAGE_BASE}/${mapName}.jpg`}
+                  alt={mapName}
+                  loading="lazy"
+                  class="h-24 w-full object-cover"
+                />
+                <div class="truncate border-t border-gray-800 px-2 py-2 text-center text-xs font-medium text-gray-200 group-hover:text-cyan-300">
+                  {mapName}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      }
     </Accordion>
 
     <Accordion id="sourcetv" summary="Jak stáhnout SourceTV demo?">
