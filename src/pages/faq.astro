@@ -10,6 +10,14 @@ let serverMaps: string[] = [];
 const MAPS_CSV_URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vTufS4N6N-30qHu47IuYFnR8CqjM9iTTWQLQ9d4w0SxpmdI984EcnbG8D4ZAerbtKzuxtTHAlHrZpHQ/pub?output=csv';
 const MAP_IMAGE_BASE = 'https://stats.lamateam.eu/hlstatsimg/games/css/maps';
+const MAP_PLACEHOLDER = '/assets/map-placeholder.svg';
+
+interface MapCard {
+  name: string;
+  image: string;
+}
+
+const mapCards: MapCard[] = [];
 
 function parseCsvLine(line: string, delimiter: string): string[] {
   const out: string[] = [];
@@ -40,6 +48,40 @@ function parseCsvLine(line: string, delimiter: string): string[] {
 
   out.push(cur);
   return out;
+}
+
+async function urlExists(url: string, timeoutMs = 2500): Promise<boolean> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+
+  try {
+    const head = await fetch(url, { method: 'HEAD', signal: ctrl.signal });
+    if (head.ok) return true;
+
+    const get = await fetch(url, { method: 'GET', signal: ctrl.signal });
+    return get.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function resolveMapImage(mapName: string): Promise<string> {
+  const encoded = encodeURIComponent(mapName);
+  const candidates = [
+    `${MAP_IMAGE_BASE}/${mapName}.jpg`,
+    `https://images.gamebanana.com/img/ss/maps/${mapName}_1.jpg`,
+    `https://images.gamebanana.com/img/ss/maps/${mapName}.jpg`,
+    `https://www.17buddies.rocks/17b2/maps/images/${mapName}.jpg`,
+    `https://www.17buddies.rocks/17b2/maps/images/${encoded}.jpg`,
+  ];
+
+  for (const url of candidates) {
+    if (await urlExists(url)) return url;
+  }
+
+  return MAP_PLACEHOLDER;
 }
 
 function getCustomMapsFromCsv(raw: string): string[] {
@@ -94,6 +136,15 @@ try {
   if (csvResp.ok) {
     const csvRaw = await csvResp.text();
     serverMaps = getCustomMapsFromCsv(csvRaw);
+
+    const resolved = await Promise.all(
+      serverMaps.map(async (name) => ({
+        name,
+        image: await resolveMapImage(name),
+      })),
+    );
+
+    mapCards.push(...resolved);
   } else {
     console.error('Failed to fetch map CSV:', csvResp.statusText);
   }
@@ -369,23 +420,26 @@ try {
       </p>
 
       {
-        serverMaps.length === 0 ? (
+        mapCards.length === 0 ? (
           <p>Mapy se nepodařilo načíst.</p>
         ) : (
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {serverMaps.map((mapName) => (
+            {mapCards.map((mapCard, idx) => (
               <div
                 class="group overflow-hidden rounded-xl border border-gray-700 bg-gray-900/70 shadow transition hover:-translate-y-0.5 hover:border-cyan-400/70"
-                title={mapName}
+                title={mapCard.name}
               >
                 <img
-                  src={`${MAP_IMAGE_BASE}/${mapName}.jpg`}
-                  alt={mapName}
-                  loading="lazy"
+                  src={mapCard.image}
+                  alt={mapCard.name}
+                  loading={idx < 8 ? 'eager' : 'lazy'}
+                  fetchpriority={idx < 8 ? 'high' : 'auto'}
+                  data-map-image
+                  onerror={`this.onerror=null;this.src='${MAP_PLACEHOLDER}';`}
                   class="h-24 w-full object-cover"
                 />
                 <div class="truncate border-t border-gray-800 px-2 py-2 text-center text-xs font-medium text-gray-200 group-hover:text-cyan-300">
-                  {mapName}
+                  {mapCard.name}
                 </div>
               </div>
             ))}
@@ -852,6 +906,29 @@ try {
       }
     }
   }
+
+  function precacheMapImages() {
+    const imgs = Array.from(document.querySelectorAll('img[data-map-image]'));
+    const srcs = imgs
+      .map((img) => img.getAttribute('src'))
+      .filter((src) => !!src && !src.includes('map-placeholder.svg'));
+
+    const preloadSome = () => {
+      srcs.slice(0, 24).forEach((src) => {
+        const i = new Image();
+        i.decoding = 'async';
+        i.src = src;
+      });
+    };
+
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(preloadSome, { timeout: 1500 });
+    } else {
+      setTimeout(preloadSome, 200);
+    }
+  }
+
   openTarget();
+  precacheMapImages();
   window.addEventListener('hashchange', openTarget);
 </script>
