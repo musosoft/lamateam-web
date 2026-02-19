@@ -3,7 +3,8 @@
 import Layout from '../layouts/Layout.astro';
 import Accordion from '../components/Accordion.astro';
 import { Icon } from 'astro-icon/components';
-import { getImage } from 'astro:assets';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 let demoFiles: string[] = [];
 let serverMaps: string[] = [];
@@ -12,11 +13,12 @@ const MAPS_CSV_URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vTufS4N6N-30qHu47IuYFnR8CqjM9iTTWQLQ9d4w0SxpmdI984EcnbG8D4ZAerbtKzuxtTHAlHrZpHQ/pub?output=csv';
 const MAP_IMAGE_BASE = 'https://stats.lamateam.eu/hlstatsimg/games/css/maps';
 const MAP_PLACEHOLDER = '/assets/map-placeholder.svg';
+const MAP_CACHE_PUBLIC = '/assets/map-cache';
+const MAP_CACHE_DIR = path.join(process.cwd(), 'public', 'assets', 'map-cache');
 
 interface MapCard {
   name: string;
   sourceImage: string;
-  optimizedImage: string;
   width: number;
   height: number;
 }
@@ -54,16 +56,34 @@ function parseCsvLine(line: string, delimiter: string): string[] {
   return out;
 }
 
-async function urlExists(url: string, timeoutMs = 2500): Promise<boolean> {
+function fallbackMapNames(mapName: string): string[] {
+  const names: string[] = [mapName];
+  let cur = mapName;
+
+  while (cur.includes('_')) {
+    cur = cur.replace(/_[^_]+$/, '');
+    if (cur && !names.includes(cur)) names.push(cur);
+  }
+
+  return names;
+}
+
+async function downloadIfExists(url: string, outPath: string, timeoutMs = 4000): Promise<boolean> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
 
   try {
-    const head = await fetch(url, { method: 'HEAD', signal: ctrl.signal });
-    if (head.ok) return true;
+    const res = await fetch(url, { method: 'GET', signal: ctrl.signal });
+    if (!res.ok) return false;
 
-    const get = await fetch(url, { method: 'GET', signal: ctrl.signal });
-    return get.ok;
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('image')) return false;
+
+    const ab = await res.arrayBuffer();
+    if (!ab || ab.byteLength < 256) return false;
+
+    await fs.writeFile(outPath, Buffer.from(ab));
+    return true;
   } catch {
     return false;
   } finally {
@@ -72,17 +92,34 @@ async function urlExists(url: string, timeoutMs = 2500): Promise<boolean> {
 }
 
 async function resolveMapImage(mapName: string): Promise<string> {
-  const encoded = encodeURIComponent(mapName);
-  const candidates = [
-    `${MAP_IMAGE_BASE}/${mapName}.jpg`,
-    `https://images.gamebanana.com/img/ss/maps/${mapName}_1.jpg`,
-    `https://images.gamebanana.com/img/ss/maps/${mapName}.jpg`,
-    `https://www.17buddies.rocks/17b2/maps/images/${mapName}.jpg`,
-    `https://www.17buddies.rocks/17b2/maps/images/${encoded}.jpg`,
-  ];
+  await fs.mkdir(MAP_CACHE_DIR, { recursive: true });
 
-  for (const url of candidates) {
-    if (await urlExists(url)) return url;
+  const localFile = `${mapName}.jpg`;
+  const localPath = path.join(MAP_CACHE_DIR, localFile);
+  const localPublic = `${MAP_CACHE_PUBLIC}/${localFile}`;
+
+  try {
+    await fs.access(localPath);
+    return localPublic;
+  } catch {}
+
+  const allCandidates: string[] = [];
+
+  for (const n of fallbackMapNames(mapName)) {
+    const encoded = encodeURIComponent(n);
+    allCandidates.push(
+      `${MAP_IMAGE_BASE}/${n}.jpg`,
+      `https://images.gamebanana.com/img/ss/maps/${n}_1.jpg`,
+      `https://images.gamebanana.com/img/ss/maps/${n}.jpg`,
+      `https://www.17buddies.rocks/17b2/maps/images/${n}.jpg`,
+      `https://www.17buddies.rocks/17b2/maps/images/${encoded}.jpg`,
+    );
+  }
+
+  for (const url of allCandidates) {
+    if (await downloadIfExists(url, localPath)) {
+      return localPublic;
+    }
   }
 
   return MAP_PLACEHOLDER;
@@ -145,41 +182,12 @@ try {
       serverMaps.map(async (name) => {
         const sourceImage = await resolveMapImage(name);
 
-        if (sourceImage === MAP_PLACEHOLDER) {
-          return {
-            name,
-            sourceImage,
-            optimizedImage: MAP_PLACEHOLDER,
-            width: 320,
-            height: 180,
-          } satisfies MapCard;
-        }
-
-        try {
-          const optimized = await getImage({
-            src: sourceImage,
-            width: 320,
-            height: 180,
-            format: 'webp',
-            quality: 'mid',
-          });
-
-          return {
-            name,
-            sourceImage,
-            optimizedImage: optimized.src,
-            width: optimized.attributes.width ?? 320,
-            height: optimized.attributes.height ?? 180,
-          } satisfies MapCard;
-        } catch {
-          return {
-            name,
-            sourceImage,
-            optimizedImage: sourceImage,
-            width: 320,
-            height: 180,
-          } satisfies MapCard;
-        }
+        return {
+          name,
+          sourceImage,
+          width: 320,
+          height: 180,
+        } satisfies MapCard;
       }),
     );
 
@@ -469,7 +477,7 @@ try {
                 title={mapCard.name}
               >
                 <img
-                  src={mapCard.optimizedImage}
+                  src={mapCard.sourceImage}
                   alt={mapCard.name}
                   width={mapCard.width}
                   height={mapCard.height}
