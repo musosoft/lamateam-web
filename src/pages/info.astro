@@ -18,9 +18,7 @@ const commandGroups = [
       { cmd: '!timeleft', desc: 'Zobrazí zostávajúci čas mapy.' },
       { cmd: '!nextmap', desc: 'Ukáže ďalšiu mapu (alebo pending vote).' },
       { cmd: '!currentmap', desc: 'Ukáže aktuálnu mapu.' },
-      { cmd: '!ff', desc: 'Vypíše Friendly Fire stav.' },
       { cmd: '!thetime', desc: 'Vypíše aktuálny serverový čas.' },
-      { cmd: '!motd', desc: 'Otvorí webové/informačné okno servera.' },
     ],
   },
   {
@@ -35,7 +33,7 @@ const commandGroups = [
     ],
   },
   {
-    title: 'Komunita pluginy',
+    title: 'Ostatné pluginy',
     items: [
       { cmd: 'bet <t|ct> <all|half|third|suma>', desc: 'TeamBets – stávka na víťaza kola.' },
       { cmd: 'bounty', desc: 'Zobrazí aktuálne bounty odmeny.' },
@@ -61,9 +59,9 @@ const commandGroups = [
     <div class="mb-8 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
       <h1 class="mb-2 text-3xl font-extrabold tracking-tight md:text-4xl">Hráčske príkazy</h1>
       <p class="text-sm text-gray-300 md:text-base">
-        Kompletný prehľad užitočných príkazov pre náš server. Väčšina funguje ako chat trigger
-        cez <span class="font-semibold text-lime-400">!</span> (napr. <code class="rounded bg-black/30 px-1 py-0.5">!rtv</code>)
-        alebo priamo v konzole.
+        Kompletný prehľad užitočných príkazov pre náš server.
+        Použitie: <span class="font-semibold">bez prefixu</span> (konzola)
+        alebo <span class="font-semibold">s prefixom / alebo !</span> (chat).
       </p>
     </div>
 
@@ -89,8 +87,9 @@ const commandGroups = [
       <p class="font-semibold">Poznámka:</p>
       <p>
         Niektoré príkazy môžu byť podmienené právami, herným stavom (warmup/round), alebo konkrétnym pluginom.
-        Ak príkaz nefunguje, skús ho bez diakritiky, s prefixom <code class="rounded bg-black/30 px-1">!</code>,
-        alebo použi stránku <a href="/faq" class="font-semibold underline decoration-dotted hover:text-amber-100">/faq</a>.
+        Ak príkaz nefunguje, skús ho bez prefixu (konzola), alebo s prefixom
+        <code class="rounded bg-black/30 px-1">/</code> či <code class="rounded bg-black/30 px-1">!</code> (chat),
+        prípadne použi stránku <a href="/faq" class="font-semibold underline decoration-dotted hover:text-amber-100">/faq</a>.
       </p>
     </div>
   </section>
