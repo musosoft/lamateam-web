@@ -35,9 +35,9 @@ export default defineConfig({
   redirects: {
     "/contact.php": "/contact",
     "/register.php": "/contact",
-    "/infusions/forum/viewthread.php?thread_id=1": "/faq",
-    "/infusions/forum/index.php": "/faq",
-    "/infusions/faq/faq.php": "/faq",
+    "/infusions/forum/viewthread.php?thread_id=1": "/faq/player",
+    "/infusions/forum/index.php": "/faq/player",
+    "/infusions/faq/faq.php": "/faq/player",
     "/infusions/shoutbox_panel/shoutbox_archive.php": "/shoutbox",
     "/motd/info.html": "/info",
     "/motd/vip.html": "/vip",
@@ -47,8 +47,8 @@ export default defineConfig({
     "/lostpassword.php": "/",
     "/search.php": "/",
     "/home.php": "/",
-    "/tv": "/faq#sourcetv",
-    // "/TV": "/faq#sourcetv",
+    "/tv": "/faq/player#sourcetv",
+    // "/TV": "/faq/player#sourcetv",
     "/stats": "https://stats.lamateam.eu/",
   },
 });

@@ -1,11 +1,24 @@
 ---
 // src/components/CandyBox.astro
 import { Icon } from 'astro-icon/components';
+
+interface Props {
+  href?: string;
+  hidden?: boolean;
+}
+
+const { href = '/', hidden = false } = Astro.props;
 ---
 
-<a
-  href="/"
-  class="absolute top-2 right-2 text-white bg-gray-600 hover:bg-blue-700 p-2 rounded-lg text-4xl z-50"
->
-  <Icon name="mdi:dots-grid" />
-</a>
+{
+  !hidden && (
+    <a
+      href={href}
+      class="fixed right-2 top-2 z-50 rounded-lg bg-gray-600 p-2 text-white shadow-lg transition hover:bg-blue-700"
+      aria-label="Domů"
+      title="Domů"
+    >
+      <Icon name="mdi:home" class="h-7 w-7" />
+    </a>
+  )
+}

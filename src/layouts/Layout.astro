@@ -4,21 +4,27 @@ import CandyBox from '../components/CandyBox.astro';
 import "../assets/tailwind.css";
 
 const cookies = Astro.cookies;
+const userAgent = Astro.request.headers.get('user-agent')?.toLowerCase() || '';
+const isGame = userAgent.includes('valve') || userAgent.includes('steam');
 
-// Retrieve query parameters and cookies
-const queryCommunityId = Astro.url.searchParams.get('communityid');
-const queryPlayerName = Astro.url.searchParams.get('name');
-let communityId = cookies.get('communityid')?.value || '';
-let playerName = cookies.get('name')?.value || '';
+const queryCommunityId = Astro.url.searchParams.get('communityid') || '';
+const queryPlayerName = Astro.url.searchParams.get('name') || '';
+let communityId = queryCommunityId || cookies.get('communityid')?.value || '';
+let playerName = queryPlayerName || cookies.get('name')?.value || '';
 
-// Update cookies if query parameters are present
+const cookieOptions = {
+  path: '/',
+  httpOnly: false,
+  sameSite: 'lax' as const,
+  secure: !import.meta.env.DEV,
+  maxAge: 60 * 60 * 24 * 30,
+};
+
 if (queryCommunityId) {
-  communityId = queryCommunityId;
-  cookies.set('communityid', communityId, { path: '/', httpOnly: false });
+  cookies.set('communityid', communityId, cookieOptions);
 }
 if (queryPlayerName) {
-  playerName = queryPlayerName;
-  cookies.set('name', playerName, { path: '/', httpOnly: false });
+  cookies.set('name', playerName, cookieOptions);
 }
 
 interface Props {
@@ -26,7 +32,12 @@ interface Props {
 }
 
 const { title } = Astro.props;
-const isGame = navigator.userAgent.includes('Valve Client');
+const motdQuery =
+  communityId && playerName
+    ? `?communityid=${encodeURIComponent(communityId)}&name=${encodeURIComponent(playerName)}`
+    : '';
+const homeHref = motdQuery ? `/${motdQuery}` : '/';
+const hideHomeIcon = Astro.url.pathname === '/';
 ---
 
 <!doctype html>
@@ -50,7 +61,7 @@ const isGame = navigator.userAgent.includes('Valve Client');
       <div
         class="relative flex grow flex-col h-full w-full overflow-y-auto rounded-lg z-10 justify-start fl-p-2/8 text-center text-white text-sm"
       >
-        <CandyBox />
+        <CandyBox href={homeHref} hidden={hideHomeIcon} />
         <slot />
         <div
           id="translate-wrapper"
@@ -72,6 +83,86 @@ const isGame = navigator.userAgent.includes('Valve Client');
           'google_translate_element',
         );
       };
+    </script>
+    <script is:inline define:vars={{ isGame, communityId, playerName, motdQuery }}>
+      (() => {
+        if (!isGame) {
+          return;
+        }
+
+        const lastPageKey = 'lmta_motd_last_page';
+        const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+        if (window.location.pathname === '/') {
+          const saved = localStorage.getItem(lastPageKey);
+          if (saved && saved !== '/' && saved !== currentPath) {
+            window.location.replace(saved);
+            return;
+          }
+        } else {
+          localStorage.setItem(lastPageKey, currentPath);
+        }
+
+        if (!communityId || !playerName) {
+          return;
+        }
+
+        const applyMotdQuery = () => {
+          const links = document.querySelectorAll('a[href]');
+          links.forEach((link) => {
+            const rawHref = link.getAttribute('href');
+            if (!rawHref) {
+              return;
+            }
+
+            if (
+              rawHref.startsWith('#') ||
+              rawHref.startsWith('mailto:') ||
+              rawHref.startsWith('tel:') ||
+              rawHref.startsWith('javascript:') ||
+              rawHref.startsWith('steam://')
+            ) {
+              return;
+            }
+
+            let parsed;
+            try {
+              parsed = new URL(rawHref, window.location.origin);
+            } catch {
+              return;
+            }
+
+            if (parsed.origin !== window.location.origin) {
+              return;
+            }
+
+            if (parsed.pathname.startsWith('/api/')) {
+              return;
+            }
+
+            if (!parsed.searchParams.get('communityid')) {
+              parsed.searchParams.set('communityid', communityId);
+            }
+
+            if (!parsed.searchParams.get('name')) {
+              parsed.searchParams.set('name', playerName);
+            }
+
+            const nextHref = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+            if (nextHref !== rawHref) {
+              link.setAttribute('href', nextHref);
+            }
+          });
+        };
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', applyMotdQuery, {
+            once: true,
+          });
+        } else {
+          applyMotdQuery();
+        }
+      })();
     </script>
     <script
       is:inline
