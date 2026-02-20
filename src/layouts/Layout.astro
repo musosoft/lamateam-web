@@ -89,10 +89,10 @@ const isAuthenticated = !!(session?.steamID && session?.playerName && session.pl
         >
           <div
             id="google_translate_element"
-            class="[&_.goog-te-combo]:hidden [&_.goog-te-gadget_span]:hidden [&_.goog-te-gadget]:text-[0px]! [&_img]:hidden"
+            class="absolute inset-0 [&_.goog-te-combo]:absolute [&_.goog-te-combo]:inset-0 [&_.goog-te-combo]:w-full [&_.goog-te-combo]:h-full [&_.goog-te-combo]:opacity-0 [&_.goog-te-combo]:cursor-pointer [&_.goog-te-gadget_span]:hidden [&_.goog-te-gadget]:text-[0px]! [&_img]:hidden"
           >
-            <span class="text-lg pointer-events-none [.goog-te-combo~&]:hidden">🌐</span>
           </div>
+          <Icon name="mdi:earth" class="h-6 w-6 pointer-events-none" />
         </div>
       </div>
     </main>
