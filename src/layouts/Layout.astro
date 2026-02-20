@@ -91,14 +91,21 @@ const hideHomeIcon = Astro.url.pathname === '/';
         }
 
         const lastPageKey = 'lmta_motd_last_page';
-        const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        const restoreGuardKey = 'lmta_motd_restore_once';
+        const currentPath = `${window.location.pathname}${window.location.search}`;
 
         if (window.location.pathname === '/') {
+          const alreadyRestored = sessionStorage.getItem(restoreGuardKey) === '1';
           const saved = localStorage.getItem(lastPageKey);
-          if (saved && saved !== '/' && saved !== currentPath) {
+          const hasHash = window.location.hash && window.location.hash.length > 1;
+          const isValidSaved = !!saved && saved.startsWith('/') && !saved.startsWith('/#');
+
+          if (!alreadyRestored && !hasHash && isValidSaved && saved !== '/' && saved !== currentPath) {
+            sessionStorage.setItem(restoreGuardKey, '1');
             window.location.replace(saved);
             return;
           }
+          sessionStorage.setItem(restoreGuardKey, '1');
         } else {
           localStorage.setItem(lastPageKey, currentPath);
         }

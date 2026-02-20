@@ -3,42 +3,74 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Admin pravidla | LaMaTeam">
-  <section class="mx-auto w-full max-w-5xl px-4 py-8 text-left text-gray-100">
+  <section class="mx-auto w-full max-w-6xl px-4 py-8 text-left text-gray-100">
     <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
       <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Administrátorská pravidla</h1>
-      <p class="mt-2 text-sm text-gray-300 md:text-base">Neznalost pravidel neomlouvá.</p>
+      <p class="mt-2 text-sm text-gray-300 md:text-base"><em>Neznalost pravidel neomlouvá.</em></p>
     </header>
 
     <article class="space-y-6 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg text-gray-200">
       <section>
-        <h2 class="text-xl font-bold">1. Základní povinnosti</h2>
+        <h2 class="text-xl font-bold">1. Základní povinnosti Admina</h2>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li>Drž priateľskú atmosféru a nezneužívaj admin práva.</li>
-          <li>Tresty nedávaj z pomsty ani pre osobný prospech.</li>
-          <li>Buď aktívny a pri dlhšej neaktivite daj vedieť.</li>
+          <li><strong>Atmosféra a chování</strong> — Vytvářejte přátelskou atmosféru, nepovyšujte se nad běžné hráče, nezneužívejte práva.</li>
+          <li><strong>Dodržování pravidel</strong> — Admin musí dodržovat stejná pravidla jako hráči, neměnit mapy/vote bez důvodu.</li>
+          <li><strong>Aktivita a komunikace</strong> — Buďte aktivní, při delší neaktivitě se omluvte předem.</li>
         </ul>
       </section>
+
       <section>
-        <h2 class="text-xl font-bold">2. Postup pri trestaní</h2>
+        <h2 class="text-xl font-bold">2. Postup při trestání</h2>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li>Upozornenie → varovanie → kick/ban podľa závažnosti.</li>
-          <li>Pri cheatoch vždy zbieraj dôkazy (demo/screenshoty).</li>
-          <li>Dôvod trestu musí byť vecný a slušný.</li>
+          <li><strong>Sekvence trestů</strong> — upozornění → varování → kick/kratší ban, delší ban s důkazem.</li>
+          <li><strong>Důkazy</strong> — při cheatech nahrávat demo/screenshoty, uchovat alespoň 14 dní.</li>
+          <li><strong>Odůvodnění</strong> — vždy pravdivý a slušný důvod trestu.</li>
+          <li><strong>Respektování kolegů</strong> — neměnit tresty jiných adminů bez domluvy.</li>
         </ul>
       </section>
+
       <section>
-        <h2 class="text-xl font-bold">3. Cheatri</h2>
+        <h2 class="text-xl font-bold">3. Jak na cheatery</h2>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li>Sleduj hráča diskrétne zo spectatora.</li>
-          <li>Nahrávaj demo a kontroluj SteamID cez <code>status</code>.</li>
-          <li>Pri jasnom cheate udel ban.</li>
+          <li>Diskrétně sledovat podezřelého hráče.</li>
+          <li>Nahrát demo příkazem <code>record &lt;nazev&gt;</code>, ukončit <code>stop</code>.</li>
+          <li>Ověřit STEAMID přes <code>status</code>.</li>
+          <li>Při jasném cheatu udělit ban.</li>
         </ul>
       </section>
+
       <section>
-        <h2 class="text-xl font-bold">4. Komunikácia s hráčmi</h2>
+        <h2 class="text-xl font-bold">4. Chování k hráčům</h2>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li>Pomáhaj, ale nevyhovuj neodôvodneným požiadavkám.</li>
-          <li>Urážky rieš postupne: upozornenie, kick, ban.</li>
+          <li>Pomáhat hráčům, ale nevyhovovat neodůvodněným požadavkům.</li>
+          <li>Urážky/spam řešit postupně (mute/gag, kick, ban).</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold">5. Příkazy a manipulace s týmy</h2>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Používat admin příkazy adekvátně situaci.</li>
+          <li>SwapTeam jen při jasně nevyrovnané hře.</li>
+          <li>Mapy/vote jen při nutnosti (bug, selhání pluginu, hromadný odchod).</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold">6. Sankce pro Adminy</h2>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Hlavní admini mohou kontrolovat logy a důkazy.</li>
+          <li>Opakované nebo závažné porušení může vést k odebrání práv.</li>
+          <li>O navrácení práv rozhodují hlavní admini.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold">7. Závěrem</h2>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Admin je tu pro komunitu a férovou hru.</li>
+          <li>Zachovej chladnou hlavu a slušnou komunikaci.</li>
+          <li>Při nejasnostech kontaktuj hlavní adminy.</li>
         </ul>
       </section>
     </article>
