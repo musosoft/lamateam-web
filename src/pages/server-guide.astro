@@ -319,6 +319,17 @@ const mapCards: MapCard[] = (mapsGenerated.items ?? []).map((it) => ({
     });
   }
 
+  function openTarget() {
+    const section = new URLSearchParams(location.search).get('section');
+    if (section) {
+      const target = document.getElementById(section);
+      if (target) {
+        const detail = target.closest('details');
+        if (detail) detail.open = true;
+      }
+    }
+  }
+
   function precacheMapImages() {
     const imgs = Array.from(document.querySelectorAll('img[data-map-image]'));
     const srcs = imgs
@@ -340,5 +351,6 @@ const mapCards: MapCard[] = (mapsGenerated.items ?? []).map((it) => ({
     }
   }
 
+  openTarget();
   precacheMapImages();
 </script>

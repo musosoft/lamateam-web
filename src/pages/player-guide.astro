@@ -340,9 +340,11 @@ try {
   }
 
   function openTarget() {
+    const section = new URLSearchParams(location.search).get('section');
     const hash = location.hash.substring(1);
-    if (hash) {
-      const target = document.getElementById(hash);
+    const targetId = section || hash;
+    if (targetId) {
+      const target = document.getElementById(targetId);
       if (target) {
         const detail = target.closest('details');
         if (detail) detail.open = true;

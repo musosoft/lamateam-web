@@ -177,4 +177,17 @@ import FaqNav from '../components/FaqNav.astro';
       }
     });
   }
+
+  function openTarget() {
+    const section = new URLSearchParams(location.search).get('section');
+    if (section) {
+      const target = document.getElementById(section);
+      if (target) {
+        const detail = target.closest('details');
+        if (detail) detail.open = true;
+      }
+    }
+  }
+
+  openTarget();
 </script>
