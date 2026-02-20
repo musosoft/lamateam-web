@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-19T19:15:36.880Z",
+  "generatedAt": "2026-02-20T06:27:07.068Z",
   "total": 98,
   "ok": 20,
   "items": [
@@ -36,7 +36,7 @@
     {
       "map": "awp_india_v2",
       "image": "/assets/map-cache/awp_india_v2.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/awp_india_v2.jpg"
+      "source": "cache"
     },
     {
       "map": "awp_rooftops_css",
@@ -46,12 +46,12 @@
     {
       "map": "cs_assault_lama3",
       "image": "/assets/map-cache/cs_assault_lama3.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_assault.jpg"
+      "source": "cache"
     },
     {
       "map": "cs_compound",
       "image": "/assets/map-cache/cs_compound.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_compound.jpg"
+      "source": "cache"
     },
     {
       "map": "cs_crackhouse_hg_a2",
@@ -66,22 +66,22 @@
     {
       "map": "cs_havana",
       "image": "/assets/map-cache/cs_havana.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_havana.jpg"
+      "source": "cache"
     },
     {
       "map": "cs_italy",
       "image": "/assets/map-cache/cs_italy.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_italy.jpg"
+      "source": "cache"
     },
     {
       "map": "cs_militia",
       "image": "/assets/map-cache/cs_militia.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_militia.jpg"
+      "source": "cache"
     },
     {
       "map": "cs_office",
       "image": "/assets/map-cache/cs_office.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_office.jpg"
+      "source": "cache"
     },
     {
       "map": "de_alexandra2",
@@ -106,7 +106,7 @@
     {
       "map": "de_aztec",
       "image": "/assets/map-cache/de_aztec.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_aztec.jpg"
+      "source": "cache"
     },
     {
       "map": "de_blitz_ukcs",
@@ -141,7 +141,7 @@
     {
       "map": "de_cbble",
       "image": "/assets/map-cache/de_cbble.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_cbble.jpg"
+      "source": "cache"
     },
     {
       "map": "de_cefalu",
@@ -191,17 +191,17 @@
     {
       "map": "de_dust_small_lt2025",
       "image": "/assets/map-cache/de_dust_small_lt2025.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_dust.jpg"
+      "source": "cache"
     },
     {
       "map": "de_dust",
       "image": "/assets/map-cache/de_dust.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_dust.jpg"
+      "source": "cache"
     },
     {
       "map": "de_dust2",
       "image": "/assets/map-cache/de_dust2.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_dust2.jpg"
+      "source": "cache"
     },
     {
       "map": "de_dust3_lt",
@@ -226,12 +226,12 @@
     {
       "map": "de_chateau",
       "image": "/assets/map-cache/de_chateau.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_chateau.jpg"
+      "source": "cache"
     },
     {
       "map": "de_inferno",
       "image": "/assets/map-cache/de_inferno.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_inferno.jpg"
+      "source": "cache"
     },
     {
       "map": "de_island_v2",
@@ -286,7 +286,7 @@
     {
       "map": "de_nuke",
       "image": "/assets/map-cache/de_nuke.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_nuke.jpg"
+      "source": "cache"
     },
     {
       "map": "de_orilla_house",
@@ -306,7 +306,7 @@
     {
       "map": "de_piranesi",
       "image": "/assets/map-cache/de_piranesi.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_piranesi.jpg"
+      "source": "cache"
     },
     {
       "map": "de_playboydolls_2010_b8",
@@ -316,12 +316,12 @@
     {
       "map": "de_port",
       "image": "/assets/map-cache/de_port.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_port.jpg"
+      "source": "cache"
     },
     {
       "map": "de_prodigy",
       "image": "/assets/map-cache/de_prodigy.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_prodigy.jpg"
+      "source": "cache"
     },
     {
       "map": "de_pyramid_css_lt",
@@ -406,12 +406,12 @@
     {
       "map": "de_tides",
       "image": "/assets/map-cache/de_tides.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_tides.jpg"
+      "source": "cache"
     },
     {
       "map": "de_train",
       "image": "/assets/map-cache/de_train.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/de_train.jpg"
+      "source": "cache"
     },
     {
       "map": "de_troit",
