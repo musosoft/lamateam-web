@@ -148,6 +148,27 @@ const pages = [
     }
   </div>
 
+  <script is:inline>
+    (() => {
+      const legacy = {
+        maps: '/maps',
+        money: '/money',
+        'movement-speed': '/movement-speed',
+        'hitreg-rates': '/hitreg-rates',
+        'performance-fixes': '/performance-fixes',
+        'demo-recording': '/demo-recording',
+        sourcetv: '/sourcetv-demos',
+        supporters: '/supporters',
+        admins: '/admins',
+        'admin-rules': '/admin-rules',
+      };
+      const key = location.hash.replace(/^#/, '');
+      if (key && legacy[key]) {
+        location.replace(`${legacy[key]}${location.search || ''}`);
+      }
+    })();
+  </script>
+
   <!-- Integrated Shoutbox below -->
   <section class="mx-auto w-full px-2 py-4 bg-gray-900 rounded-md">
     {
