@@ -1,6 +1,7 @@
 ---
 // src/layouts/Layout.astro
 import CandyBox from '../components/CandyBox.astro';
+import { Icon } from 'astro-icon/components';
 import "../assets/tailwind.css";
 
 const cookies = Astro.cookies;
@@ -38,6 +39,14 @@ const motdQuery =
     : '';
 const homeHref = motdQuery ? `/${motdQuery}` : '/';
 const hideHomeIcon = Astro.url.pathname === '/';
+
+function parseSessionCookie() {
+  const raw = cookies.get('session')?.value;
+  if (!raw) return {};
+  try { return JSON.parse(decodeURIComponent(raw)); } catch { return {}; }
+}
+const session = parseSessionCookie();
+const isAuthenticated = !!(session?.steamID && session?.playerName && session.playerName !== 'Guest');
 ---
 
 <!doctype html>
@@ -62,16 +71,27 @@ const hideHomeIcon = Astro.url.pathname === '/';
         class="relative flex grow flex-col h-full w-full overflow-y-auto rounded-lg z-10 justify-start fl-p-2/8 text-center text-white text-sm"
       >
         <CandyBox href={homeHref} hidden={hideHomeIcon} />
+        {
+          !isAuthenticated && (
+            <a
+              href="/api/auth/steam"
+              class="fixed right-2 top-2 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/15 text-blue-400 shadow-md transition-all duration-200 hover:bg-blue-500/30 hover:text-white hover:scale-110 hover:shadow-blue-500/20 hover:shadow-lg"
+              aria-label="Přihlásit přes Steam"
+            >
+              <Icon name="mdi:login" class="h-6 w-6" />
+            </a>
+          )
+        }
         <slot />
         <div
           id="translate-wrapper"
-          class="fixed bottom-2 right-2 z-50 flex items-center gap-2 rounded-xl bg-gray-600 hover:bg-blue-700 px-2 py-2 text-white shadow-xl backdrop-blur-md transition-all"
+          class="fixed bottom-2 right-2 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/15 text-blue-400 shadow-md transition-all duration-200 hover:bg-blue-500/30 hover:text-white hover:scale-110 hover:shadow-blue-500/20 hover:shadow-lg"
         >
-          <span class="text-xl">🌐</span>
           <div
             id="google_translate_element"
-            class="[&_.goog-te-combo]:cursor-pointer [&_.goog-te-combo]:appearance-none [&_.goog-te-combo]:bg-transparent [&_.goog-te-combo]:text-sm [&_.goog-te-combo]:font-medium [&_.goog-te-combo]:text-white [&_.goog-te-combo]:outline-none [&_.goog-te-gadget_span]:hidden [&_.goog-te-gadget]:text-[0px]! [&_img]:hidden [&_option]:bg-gray-800 [&_option]:text-white"
+            class="[&_.goog-te-combo]:hidden [&_.goog-te-gadget_span]:hidden [&_.goog-te-gadget]:text-[0px]! [&_img]:hidden"
           >
+            <span class="text-lg pointer-events-none [.goog-te-combo~&]:hidden">🌐</span>
           </div>
         </div>
       </div>

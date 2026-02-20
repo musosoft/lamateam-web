@@ -3,43 +3,47 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Contact">
-  <h1 class="text-2xl text-center mb-4">Kontaktuj nás</h1>
-  <form
-    class="flex flex-col gap-2 p-2 w-full max-w-96 mx-auto"
-    action="https://formspree.io/f/xovqnqna"
-    method="POST"
-  >
-    <!-- Email Input -->
-    <label class="flex flex-col gap-1 mb-4">
-      <span class="font-medium text-sm text-gray-300">Tvůj Email</span>
-      <input
-        type="email"
-        name="email"
-        required
-        placeholder="no@brainer.cz"
-        class="p-3 rounded-md bg-gray-900 text-gray-100 border border-gray-600 focus:ring focus:ring-blue-500 focus:outline-none"
-      />
-    </label>
+<Layout title="Kontakt | LaMaTeam">
+  <section class="mx-auto w-full max-w-4xl px-4 py-8 text-left text-gray-100">
+    <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Kontaktuj nás</h1>
+    </header>
 
-    <!-- Message Textarea -->
-    <label class="flex flex-col gap-1 mb-4">
-      <span class="font-medium text-sm text-gray-300">Tvoja Zpráva</span>
-      <textarea
-        name="message"
-        required
-        rows="5"
-        placeholder="Ahoj, ..."
-        class="p-3 rounded-md bg-gray-900 text-gray-100 border border-gray-600 focus:ring focus:ring-blue-500 focus:outline-none resize-none"
-      ></textarea>
-    </label>
+    <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
+      <form
+        class="flex flex-col gap-4 w-full max-w-md mx-auto"
+        action="https://formspree.io/f/xovqnqna"
+        method="POST"
+      >
+        <label class="flex flex-col gap-1">
+          <span class="font-medium text-sm text-gray-300">Tvůj Email</span>
+          <input
+            type="email"
+            name="email"
+            required
+            placeholder="no@brainer.cz"
+            class="p-3 rounded-lg bg-gray-950/70 text-gray-100 border border-gray-700 focus:ring focus:ring-blue-500 focus:outline-none"
+          />
+        </label>
 
-    <!-- Submit Button -->
-    <button
-      type="submit"
-      class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium shadow-md transition duration-200 ease-in-out"
-    >
-      Odeslat
-    </button>
-  </form>
+        <label class="flex flex-col gap-1">
+          <span class="font-medium text-sm text-gray-300">Tvoja Zpráva</span>
+          <textarea
+            name="message"
+            required
+            rows="5"
+            placeholder="Ahoj, ..."
+            class="p-3 rounded-lg bg-gray-950/70 text-gray-100 border border-gray-700 focus:ring focus:ring-blue-500 focus:outline-none resize-none"
+          ></textarea>
+        </label>
+
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium shadow-md transition"
+        >
+          Odeslat
+        </button>
+      </form>
+    </article>
+  </section>
 </Layout>

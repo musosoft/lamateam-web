@@ -5,64 +5,74 @@ const serverIP = '82.208.17.101:27516';
 const redirectURL = `steam://connect/${serverIP}`;
 ---
 
-<Layout title="Připojení k serveru">
-  <head>
-    <!-- Meta tag for automatic redirect -->
-    <meta http-equiv="refresh" content=`0; url=${redirectURL}` />
-  </head>
+<Layout title="Připojení | LaMaTeam">
+  <section class="mx-auto w-full max-w-4xl px-4 py-8 text-left text-gray-100">
+    <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Připojení k serveru</h1>
+      <p class="mt-2 text-sm text-gray-300 md:text-base">Automaticky tě přesměrujeme do hry.</p>
+    </header>
 
-  <div class="mb-2">
-    <h1 class="text-xl mb-2">Připojuji se k serveru Lamateam...</h1>
-    <p>
-      Pokud nejste automaticky přesměrováni, klikněte
-      <a href={redirectURL} class="text-blue-500 underline">zde</a>
-      pro přímé připojení.
-    </p>
+    <article class="space-y-4 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
+      <p>
+        Pokud nejste automaticky přesměrováni, klikněte
+        <a href={redirectURL} class="text-cyan-300 underline">zde</a>
+        pro přímé připojení.
+      </p>
 
-    <!-- Display IP with a Copy button if redirect fails -->
-    <p>Pokud odkaz nefunguje, zkopírujte IP serveru níže:</p>
-  </div>
-  <div class="flex items-center justify-center mb-2">
-    <input
-      type="text"
-      id="server-ip"
-      value={serverIP}
-      readonly
-      class="bg-gray-700 text-white p-2 rounded-md w-full max-w-xs text-center"
-    />
-    <button
-      onclick="copyToClipboard()"
-      class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md"
-    >
-      Zkopírovat IP
-    </button>
-  </div>
-  <img
-    class="object-contain max-w-[550px] mx-auto mb-2"
-    src="http://query.fakaheda.eu/82.208.17.101:27516.jpg?size=550x100"
-    alt="[CZ/SK] LaMaTeAm [FAST DL]"
-  />
-  <div class="flex flex-1 gap-2 mx-auto">
-    <iframe
-      src="https://discord.com/widget?id=817862677886926900&theme=dark"
-      width="300"
-      height="500"
-      allow="fullscreen; clipboard-write; encrypted-media; picture-in-picture"
-      sandbox="allow-popups allow-same-origin allow-scripts"
-      class="w-full h-full rounded-lg"></iframe>
-    <iframe
-      src="https://cache.gametracker.com/components/html0/?host=82.208.17.101:27516&bgColor=1e1f22&fontColor=ffffff&titleBgColor=1e1f22&titleColor=58a605&borderColor=1e1f22&linkColor=8a8e94&borderLinkColor=8a8e94&showMap=1&currPlayersHeight=100&showCurrPlayers=1&topPlayersHeight=100&showTopPlayers=1&showBlogs=0&width=300"
-      class="w-full h-full rounded-lg"></iframe>
-  </div>
-  <script is:inline>
-    async function copyToClipboard() {
-      const copyText = document.getElementById('server-ip').value;
-      try {
-        await navigator.clipboard.writeText(copyText);
-        alert('IP zkopírována do schránky: ' + copyText);
-      } catch (err) {
-        console.error('Failed to copy text: ', err);
-      }
-    }
-  </script>
+      <div class="flex items-center justify-center gap-2">
+        <input
+          type="text"
+          id="server-ip"
+          value={serverIP}
+          readonly
+          class="rounded-lg bg-gray-950/70 text-white p-2 border border-gray-700 w-full max-w-xs text-center"
+        />
+        <button
+          onclick="copyToClipboard()"
+          class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition"
+        >
+          Zkopírovat IP
+        </button>
+      </div>
+
+      <img
+        class="object-contain max-w-[550px] mx-auto rounded-lg"
+        src="http://query.fakaheda.eu/82.208.17.101:27516.jpg?size=550x100"
+        alt="[CZ/SK] LaMaTeAm [FAST DL]"
+      />
+
+      <div class="flex flex-1 gap-2 mx-auto">
+        <iframe
+          src="https://discord.com/widget?id=817862677886926900&theme=dark"
+          width="300"
+          height="500"
+          allow="fullscreen; clipboard-write; encrypted-media; picture-in-picture"
+          sandbox="allow-popups allow-same-origin allow-scripts"
+          class="w-full h-full rounded-lg"
+          title="Discord widget"></iframe>
+        <iframe
+          src="https://cache.gametracker.com/components/html0/?host=82.208.17.101:27516&bgColor=1e1f22&fontColor=ffffff&titleBgColor=1e1f22&titleColor=58a605&borderColor=1e1f22&linkColor=8a8e94&borderLinkColor=8a8e94&showMap=1&currPlayersHeight=100&showCurrPlayers=1&topPlayersHeight=100&showTopPlayers=1&showBlogs=0&width=300"
+          class="w-full h-full rounded-lg"
+          title="GameTracker widget"></iframe>
+      </div>
+    </article>
+  </section>
 </Layout>
+
+<script is:inline>
+  // Auto-redirect to steam://
+  (function() {
+    var url = document.querySelector('a[href^="steam://"]');
+    if (url) window.location.href = url.href;
+  })();
+
+  async function copyToClipboard() {
+    const copyText = document.getElementById('server-ip').value;
+    try {
+      await navigator.clipboard.writeText(copyText);
+      alert('IP zkopírována do schránky: ' + copyText);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  }
+</script>

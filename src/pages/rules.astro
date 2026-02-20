@@ -3,140 +3,44 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Pravidla">
-  <h1
-    class="mb-6 text-4xl font-extrabold tracking-tight text-center text-gray-900"
-  >
-    Pravidla Serveru
-  </h1>
+<Layout title="Pravidla | LaMaTeam">
+  <section class="mx-auto w-full max-w-6xl px-4 py-8 text-left text-gray-100">
+    <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Pravidla Serveru</h1>
+    </header>
 
-  <div class="overflow-x-auto">
-    <table
-      class="w-full table-auto border-collapse border border-gray-600 rounded-lg contain-paint max-w-fit mx-auto"
-    >
-      <thead class="bg-gray-800">
-        <tr>
-          <th
-            class="px-4 py-2 text-left font-semibold text-gray-200 border border-gray-700 uppercase"
-            >Zákaz</th
-          >
-          <th
-            class="px-4 py-2 text-left font-semibold text-gray-200 border border-gray-700 uppercase"
-            >Postih</th
-          >
-        </tr>
-      </thead>
-      <tbody class="bg-gray-800 text-gray-200 text-left">
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ cheaty, scripty, externí programy a nastavení zvýhodňující hráče
-            oproti ostatním</td
-          >
-          <td class="px-4 py-2 border border-gray-700">⛔</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ nadávky, rasismus, vyhrožování, politizování či ponižování
-            jiných hráčů a menšin, jazyk jiný než CZ/SK/EN</td
-          >
-          <td class="px-4 py-2 border border-gray-700">🔇⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ úmyslný team attack, kill, flash, blokování spoluhráčů, bránění
-            ve výhledu</td
-          >
-          <td class="px-4 py-2 border border-gray-700">⚡🦵⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ kempení na spawnu: plant mapy - T po 1:30 / hostage mapy - CT po
-            1:45</td
-          >
-          <td class="px-4 py-2 border border-gray-700">⚡</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ používání nevhodného spraye nebo nicku, reklama</td
-          >
-          <td class="px-4 py-2 border border-gray-700">🦵⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ bugování map/serveru, defus přes stěnu, zneužívání herních chyb</td
-          >
-          <td class="px-4 py-2 border border-gray-700">🦵⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ nakupování více než 1×HE/Smoke a 2×Flash</td
-          >
-          <td class="px-4 py-2 border border-gray-700">🦵⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ vydávání se za admina, kradení nicků atp.</td
-          >
-          <td class="px-4 py-2 border border-gray-700">⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ macro (BHOP / Strafe Jumping, Auto Jump / Shoot apod.)</td
-          >
-          <td class="px-4 py-2 border border-gray-700">⚡🦵⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ spamování příkazů, chatu, voice a neustálé navádění hráčů na
-            rtv, votemap/ban/kick/mute</td
-          >
-          <td class="px-4 py-2 border border-gray-700">🔇🦵⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ obcházení banu, opakované porušování pravidel nebo útoky na
-            server</td
-          >
-          <td class="px-4 py-2 border border-gray-700">⛔</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ napomáhání a radění hráčům z nepřátelského týmu a radění po
-            smrti či ze spectu</td
-          >
-          <td class="px-4 py-2 border border-gray-700">🔇🦵⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ ignorování úloh týmu (hostage, bomba) - hráč, který zabije
-            posledního žijícího teroristu má právo na defuse, pokud to stíhá</td
-          >
-          <td class="px-4 py-2 border border-gray-700">⚡🦵⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ opakované hraní za silnější tým (balance abuse)</td
-          >
-          <td class="px-4 py-2 border border-gray-700">🦵⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700"
-            >❌ házení bomby na nedostupná místa, házení bomby na zem místo
-            předání spoluhráči, zdržování hry</td
-          >
-          <td class="px-4 py-2 border border-gray-700">🦵⏳</td>
-        </tr>
-        <tr class="hover:bg-gray-600">
-          <td class="px-4 py-2 border border-gray-700">❌ hraní s lagy</td>
-          <td class="px-4 py-2 border border-gray-700">🦵</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg overflow-x-auto">
+      <table class="w-full table-auto border-collapse border border-gray-600 rounded-lg contain-paint">
+        <thead class="bg-gray-800">
+          <tr>
+            <th class="px-4 py-2 text-left font-semibold text-gray-200 border border-gray-700 uppercase">Zákaz</th>
+            <th class="px-4 py-2 text-left font-semibold text-gray-200 border border-gray-700 uppercase">Postih</th>
+          </tr>
+        </thead>
+        <tbody class="bg-gray-800 text-gray-200 text-left">
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ cheaty, scripty, externí programy a nastavení zvýhodňující hráče oproti ostatním</td><td class="px-4 py-2 border border-gray-700">⛔</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ nadávky, rasismus, vyhrožování, politizování či ponižování jiných hráčů a menšin, jazyk jiný než CZ/SK/EN</td><td class="px-4 py-2 border border-gray-700">🔇⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ úmyslný team attack, kill, flash, blokování spoluhráčů, bránění ve výhledu</td><td class="px-4 py-2 border border-gray-700">⚡🦵⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ kempení na spawnu: plant mapy - T po 1:30 / hostage mapy - CT po 1:45</td><td class="px-4 py-2 border border-gray-700">⚡</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ používání nevhodného spraye nebo nicku, reklama</td><td class="px-4 py-2 border border-gray-700">🦵⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ bugování map/serveru, defus přes stěnu, zneužívání herních chyb</td><td class="px-4 py-2 border border-gray-700">🦵⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ nakupování více než 1×HE/Smoke a 2×Flash</td><td class="px-4 py-2 border border-gray-700">🦵⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ vydávání se za admina, kradení nicků atp.</td><td class="px-4 py-2 border border-gray-700">⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ macro (BHOP / Strafe Jumping, Auto Jump / Shoot apod.)</td><td class="px-4 py-2 border border-gray-700">⚡🦵⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ spamování příkazů, chatu, voice a neustálé navádění hráčů na rtv, votemap/ban/kick/mute</td><td class="px-4 py-2 border border-gray-700">🔇🦵⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ obcházení banu, opakované porušování pravidel nebo útoky na server</td><td class="px-4 py-2 border border-gray-700">⛔</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ napomáhání a radění hráčům z nepřátelského týmu a radění po smrti či ze spectu</td><td class="px-4 py-2 border border-gray-700">🔇🦵⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ ignorování úloh týmu (hostage, bomba) - hráč, který zabije posledního žijícího teroristu má právo na defuse, pokud to stíhá</td><td class="px-4 py-2 border border-gray-700">⚡🦵⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ opakované hraní za silnější tým (balance abuse)</td><td class="px-4 py-2 border border-gray-700">🦵⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ házení bomby na nedostupná místa, házení bomby na zem místo předání spoluhráči, zdržování hry</td><td class="px-4 py-2 border border-gray-700">🦵⏳</td></tr>
+          <tr class="hover:bg-gray-600"><td class="px-4 py-2 border border-gray-700">❌ hraní s lagy</td><td class="px-4 py-2 border border-gray-700">🦵</td></tr>
+        </tbody>
+      </table>
+    </article>
 
-  <p class="mt-6 text-center text-red-600 font-semibold">
-    NEZNALOST PRAVIDEL NEOMLOUVÁ! Hráči mají právo podat protest prostřednictvím
-    formuláře. Nepište stížnosti přímo majiteli serveru. LamAteAm je soukromý
-    server, pravidla platí pro všechny. Nesouhlasíš? Jdi hrát jinam.
-  </p>
+    <div class="mt-6 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
+      <p class="font-semibold">NEZNALOST PRAVIDEL NEOMLOUVÁ!</p>
+      <p>Hráči mají právo podat protest prostřednictvím formuláře. Nepište stížnosti přímo majiteli serveru. LamAteAm je soukromý server, pravidla platí pro všechny. Nesouhlasíš? Jdi hrát jinam.</p>
+    </div>
+  </section>
 </Layout>

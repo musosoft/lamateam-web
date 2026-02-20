@@ -3,13 +3,18 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Banlist">
-  <!-- Modal for Banlist -->
-  <div class="fixed inset-0">
-    <div class="relative bg-gray-900 rounded-lg mx-auto h-full">
+<Layout title="Banlist | LaMaTeam">
+  <section class="mx-auto w-full max-w-6xl px-4 py-8 text-left text-gray-100">
+    <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Banlist</h1>
+    </header>
+
+    <article class="rounded-2xl border border-gray-700 bg-gray-900/80 shadow-lg overflow-hidden" style="height:70vh">
       <iframe
         src="https://sourcebans.fakaheda.eu/sbans_336496/"
-        class="w-full h-full rounded-lg"></iframe>
-    </div>
-  </div>
+        class="w-full h-full"
+        title="SourceBans banlist"
+      ></iframe>
+    </article>
+  </section>
 </Layout>

@@ -1,28 +1,41 @@
 ---
 // src/pages/vip.astro
 import Layout from '../layouts/Layout.astro';
+
+const supporters = ['(CZ)Kropi "exploited victim"','.:Urv@neC:.','.@xel','.C','b ^ PaTrOn','Bassik','Belly Savalas','Bobik189','BOT - Luc@sonE™','c۸Mp€Я$_K!ŁŁ','crazy69','CTHULHU','Dark','Deadman','Diesel','Domča','DonJuanDeag','HantenPuardon','HLAVOMLAT TEQUILA JOE','HoR','hovnove kolace CSSR','InhumaN ErectioN','Ipos','Jacoooob','Jerzi!','Jezis','K@det','Karko ︻芫 一','KissAngel - Mliko','Kubajs♥L','KuCHaŘ - čtvrtá cenová','LamaQa4','majk25','Majuško ™','MarekQX','Mirec','Mozeczek','Mr. Perniczech ヅ','Mr.SV','muso.sk','NEJSEMPANNA','Nohit','Old Supik','Paty','Pese','Qatro-SPS','Rainer','Sobo','štefan','Tony','vladko','Volavka','Voody312','Zuzule'];
 ---
 
-<Layout title="Vip">
-  <h1 class="mb-4 font-bold tracking-tight text-4xl">Chceš se stát VIP?</h1>
-  <span class="text-yellow-500"
-    >Chceš nás sponzorovat a vždy se připojit, když je plný server? Podpoř nás:</span
-  ><br />
-  <span class="text-yellow-500">1 měsíc = 100 Kč</span><br />
-  <span class="text-yellow-500">6 měsíců = 300 Kč</span><br />
-  <span class="text-yellow-500">12 mesíců = 500 Kč</span><br /><br />
-  <span class="text-yellow-500"
-    >Peníze můžete zasílat na číslo účtu: 1939775153/0800</span
-  ><br />
-  <span class="text-yellow-500">(IBAN CZ88 0800 0000 0019 3977 5153)</span><br
-  />
-  <span class="text-yellow-500"
-    >Do informace pro příjemce uveď svůj nick, ať víme kdo poslal příspěvek.</span
-  ><br />
-  <span class="text-yellow-500"
-    >Podpořit provoz serveru můžeš i zcela nezjištně i libovolnou částkou. Napiš
-    nám a určitě se dohodneme</span
-  ><br /><br />
-  <span class="text-yellow-500">PŘIPOJIT DO VIP SLOTU LZE V KONZOLE: </span>
-  <span class="text-red-500">connect 82.208.17.101:27516</span>
+<Layout title="VIP | LaMaTeam">
+  <section class="mx-auto w-full max-w-4xl px-4 py-8 text-left text-gray-100">
+    <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Chceš se stát VIP?</h1>
+    </header>
+
+    <article class="space-y-3 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg text-gray-200">
+      <p class="text-yellow-400">Chceš nás sponzorovat a vždy se připojit, když je plný server? Podpoř nás:</p>
+      <ul class="space-y-1 text-yellow-400 list-disc pl-5">
+        <li>1 měsíc = 100 Kč</li>
+        <li>6 měsíců = 300 Kč</li>
+        <li>12 mesíců = 500 Kč</li>
+      </ul>
+      <p class="text-yellow-400">Peníze můžete zasílat na číslo účtu: <strong>1939775153/0800</strong></p>
+      <p class="text-sm text-gray-400">IBAN CZ88 0800 0000 0019 3977 5153</p>
+      <p>Do informace pro příjemce uveď svůj nick, ať víme kdo poslal příspěvek.</p>
+      <p>Podpořit provoz serveru můžeš i zcela nezjištně i libovolnou částkou. Napiš nám a určitě se dohodneme.</p>
+      <div class="mt-4 rounded-xl border border-gray-800 bg-gray-950/70 p-3">
+        <p class="font-semibold">PŘIPOJIT DO VIP SLOTU LZE V KONZOLE:</p>
+        <code class="text-red-400">connect 82.208.17.101:27516</code>
+      </div>
+    </article>
+
+    <header class="mt-8 mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h2 class="text-2xl font-extrabold tracking-tight md:text-3xl">Kdo podpořil server</h2>
+      <p class="mt-2 text-sm text-gray-300 md:text-base">Veľké thanks všetkým, čo podporili chod servera.</p>
+    </header>
+    <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
+      <ul class="flex flex-wrap items-center justify-center gap-2 text-sm text-gray-200">
+        {supporters.map((name) => <li class="rounded-lg border border-gray-700 bg-gray-950/70 px-2 py-1">{name}</li>)}
+      </ul>
+    </article>
+  </section>
 </Layout>

@@ -5,14 +5,86 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
 ---
 
 <Layout title="Admini | LaMaTeam">
-  <section class="mx-auto w-full max-w-4xl px-4 py-8 text-left text-gray-100">
+  <section class="mx-auto w-full max-w-6xl px-4 py-8 text-left text-gray-100">
     <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Kdo je admin</h1>
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Admini</h1>
     </header>
+
     <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
-      <ul class="space-y-2">
-        {admins.map((name) => <li class="rounded-xl border border-gray-800 bg-gray-950/70 px-3 py-2">{name}</li>)}
+      <ul class="flex flex-wrap items-center gap-2 text-sm text-gray-200">
+        {admins.map((name) => <li class="rounded-lg border border-gray-700 bg-gray-950/70 px-3 py-2 font-semibold">{name}</li>)}
       </ul>
+    </article>
+
+    <header class="mt-8 mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h2 class="text-2xl font-extrabold tracking-tight md:text-3xl">Administrátorská pravidla</h2>
+      <p class="mt-2 text-sm text-gray-300 md:text-base"><em>Neznalost pravidel neomlouvá.</em></p>
+    </header>
+
+    <article class="space-y-6 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg text-gray-200">
+      <section>
+        <h3 class="text-xl font-bold">1. Základní povinnosti Admina</h3>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li><strong>Atmosféra a chování</strong> — Vytvářejte přátelskou atmosféru, nepovyšujte se nad běžné hráče, nezneužívejte práva.</li>
+          <li><strong>Dodržování pravidel</strong> — Admin musí dodržovat stejná pravidla jako hráči, neměnit mapy/vote bez důvodu.</li>
+          <li><strong>Aktivita a komunikace</strong> — Buďte aktivní, při delší neaktivitě se omluvte předem.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 class="text-xl font-bold">2. Postup při trestání</h3>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li><strong>Sekvence trestů</strong> — upozornění → varování → kick/kratší ban, delší ban s důkazem.</li>
+          <li><strong>Důkazy</strong> — při cheatech nahrávat demo/screenshoty, uchovat alespoň 14 dní.</li>
+          <li><strong>Odůvodnění</strong> — vždy pravdivý a slušný důvod trestu.</li>
+          <li><strong>Respektování kolegů</strong> — neměnit tresty jiných adminů bez domluvy.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 class="text-xl font-bold">3. Jak na cheatery</h3>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Diskrétně sledovat podezřelého hráče.</li>
+          <li>Nahrát demo příkazem <code>record &lt;nazev&gt;</code>, ukončit <code>stop</code>.</li>
+          <li>Ověřit STEAMID přes <code>status</code>.</li>
+          <li>Při jasném cheatu udělit ban.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 class="text-xl font-bold">4. Chování k hráčům</h3>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Pomáhat hráčům, ale nevyhovovat neodůvodněným požadavkům.</li>
+          <li>Urážky/spam řešit postupně (mute/gag, kick, ban).</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 class="text-xl font-bold">5. Příkazy a manipulace s týmy</h3>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Používat admin příkazy adekvátně situaci.</li>
+          <li>SwapTeam jen při jasně nevyrovnané hře.</li>
+          <li>Mapy/vote jen při nutnosti (bug, selhání pluginu, hromadný odchod).</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 class="text-xl font-bold">6. Sankce pro Adminy</h3>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Hlavní admini mohou kontrolovat logy a důkazy.</li>
+          <li>Opakované nebo závažné porušení může vést k odebrání práv.</li>
+          <li>O navrácení práv rozhodují hlavní admini.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3 class="text-xl font-bold">7. Závěrem</h3>
+        <ul class="mt-2 list-disc space-y-2 pl-5">
+          <li>Admin je tu pro komunitu a férovou hru.</li>
+          <li>Zachovej chladnou hlavu a slušnou komunikaci.</li>
+          <li>Při nejasnostech kontaktuj hlavní adminy.</li>
+        </ul>
+      </section>
     </article>
   </section>
 </Layout>

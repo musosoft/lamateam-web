@@ -83,19 +83,20 @@ if (steamID) {
 }
 
 const pages = [
-  { title: 'Info', description: 'Dôležité základné informácie pre hráčov.', link: '/useful-info', icon: 'mdi:information' },
+  { title: 'Pravidla', description: 'Pravidla serveru.', link: '/rules', icon: 'mdi:gavel' },
   { title: 'Mapy', description: 'Aktuální mapy na serveru.', link: '/maps', icon: 'mdi:map' },
-  { title: 'Peníze', description: 'Kompletní money systém CS:S.', link: '/money', icon: 'mdi:cash-multiple' },
-  { title: 'Hitreg', description: 'Hitboxy, rates a netgraph vysvětlení.', link: '/hitreg-rates', icon: 'mdi:crosshairs-gps' },
-  { title: 'Fixy FPS', description: 'Rychlé fixy pro FPS/radar/zvuk.', link: '/performance-fixes', icon: 'mdi:wrench-cog' },
-  { title: 'Demo', description: 'Jak nahrát vlastní demo.', link: '/demo-recording', icon: 'mdi:record-rec' },
-  { title: 'SourceTV', description: 'Stažení SourceTV dem souborů.', link: '/sourcetv-demos', icon: 'mdi:download-network' },
-  { title: 'Rychlost', description: 'Rychlosti pohybu podle zbraně.', link: '/movement-speed', icon: 'mdi:run-fast' },
-  { title: 'Supporters', description: 'Kdo podpořil server.', link: '/supporters', icon: 'mdi:heart' },
-  { title: 'Admini', description: 'Seznam adminů.', link: '/admins', icon: 'mdi:shield-account' },
-  { title: 'Admin pravidla', description: 'Administrátorská pravidla.', link: '/admin-rules', icon: 'mdi:scale-balance' },
-  { title: 'Banlist', description: 'Seznam banů hráčů.', link: '/banlist', icon: 'mdi:ban' },
-  { title: 'Kontakt', description: 'Kontakt a podpora.', link: '/contact', icon: 'mdi:card-account-mail' },
+  { title: 'Peníze', description: 'Money systém CS:S.', link: '/money', icon: 'mdi:cash-multiple' },
+  { title: 'Hitreg', description: 'Hitboxy, rates a netgraph.', link: '/hitreg', icon: 'mdi:crosshairs-gps' },
+  { title: 'Fixy', description: 'FPS / radar / zvuk fixy.', link: '/fixes', icon: 'mdi:wrench-cog' },
+  { title: 'Příkazy', description: 'Hráčské příkazy a demo.', link: '/commands', icon: 'mdi:console' },
+  { title: 'SourceTV', description: 'Stažení SourceTV dem.', link: '/sourcetv', icon: 'mdi:download-network' },
+  { title: 'Rychlost', description: 'Pohyb podle zbraně.', link: '/speed', icon: 'mdi:run-fast' },
+  { title: 'Admini', description: 'Admini a jejich pravidla.', link: '/admins', icon: 'mdi:shield-account' },
+  { title: 'Banlist', description: 'Seznam banů.', link: '/banlist', icon: 'mdi:ban' },
+  { title: 'VIP', description: 'Podpora serveru.', link: '/vip', icon: 'mdi:star' },
+  { title: 'Kontakt', description: 'Napište nám.', link: '/contact', icon: 'mdi:card-account-mail' },
+  { title: 'Připojit', description: 'Připojte se k serveru.', link: '/connect', icon: 'mdi:play-network' },
+  { title: 'Statistiky', description: 'HLstatsX statistiky.', link: 'https://stats.lamateam.eu/', icon: 'mdi:chart-bar' },
 ].map((page) => ({
   ...page,
   link:
@@ -125,24 +126,20 @@ const pages = [
     )
   }
 
-  <div class="grid grid-cols-6 gap-2 fl-mb-0/8">
+  <div class="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 fl-mb-0/8">
     {
       pages.map((page) => (
         <a
           href={page.link}
-          class="group relative flex min-h-20 flex-col items-center justify-center rounded-lg bg-gray-800 p-2 text-center shadow-lg transition hover:-translate-y-0.5 hover:bg-gray-700"
+          class="group/card relative flex flex-col items-center"
           data-astro-prefetch="load"
-          title={page.description}
           aria-label={`${page.title} — ${page.description}`}
         >
-          <div class="peer/icon text-2xl text-indigo-400 transition group-hover:text-indigo-300">
-            <Icon name={page.icon} />
+          <div class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500/15 text-blue-400 shadow-md transition-all duration-200 group-hover/card:bg-blue-500/30 group-hover/card:text-white group-hover/card:scale-110 group-hover/card:shadow-blue-500/20 group-hover/card:shadow-lg">
+            <Icon name={page.icon} class="h-7 w-7" />
           </div>
-          <h2 class="mt-1 text-[11px] font-semibold leading-tight text-white sm:text-xs">
+          <span class="pointer-events-none absolute top-full left-1/2 z-20 mt-2 hidden w-max max-w-44 -translate-x-1/2 rounded-lg bg-black/90 px-3 py-1.5 text-xs font-medium text-gray-100 shadow-xl group-hover/card:block text-center">
             {page.title}
-          </h2>
-          <span class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-40 -translate-x-1/2 rounded-md bg-black/85 px-2 py-1 text-[10px] text-gray-100 shadow-lg peer-hover/icon:block peer-focus-visible/icon:block">
-            {page.description}
           </span>
         </a>
       ))
@@ -154,35 +151,44 @@ const pages = [
       const legacy = {
         maps: '/maps',
         money: '/money',
-        'movement-speed': '/movement-speed',
-        'hitreg-rates': '/hitreg-rates',
-        'performance-fixes': '/performance-fixes',
-        'demo-recording': '/demo-recording',
-        sourcetv: '/sourcetv-demos',
-        supporters: '/supporters',
+        'movement-speed': '/speed',
+        speed: '/speed',
+        'hitreg-rates': '/hitreg',
+        hitreg: '/hitreg',
+        'performance-fixes': '/fixes',
+        fixes: '/fixes',
+        'demo-recording': '/commands',
+        demo: '/commands',
+        sourcetv: '/sourcetv',
+        'sourcetv-demos': '/sourcetv',
+        supporters: '/vip',
         admins: '/admins',
-        'admin-rules': '/admin-rules',
+        'admin-rules': '/admins',
+        adminrules: '/admins',
+        info: '/commands',
+        commands: '/commands',
+        rules: '/rules',
+        vip: '/vip',
+        contact: '/contact',
+        banlist: '/banlist',
+        connect: '/connect',
+        stats: 'https://stats.lamateam.eu/',
+        statistics: 'https://stats.lamateam.eu/',
       };
       const key = location.hash.replace(/^#/, '');
       if (key && legacy[key]) {
-        location.replace(`${legacy[key]}${location.search || ''}`);
+        const target = legacy[key];
+        if (target.startsWith('http')) {
+          location.replace(target);
+        } else {
+          location.replace(`${target}${location.search || ''}`);
+        }
       }
     })();
   </script>
 
   <!-- Integrated Shoutbox below -->
   <section class="mx-auto w-full px-2 py-4 bg-gray-900 rounded-md">
-    {
-      !isAuthenticated ? (
-        <div class="mb-4">
-          <a href="/api/auth/steam" class="text-blue-500 underline">
-            Přihlaste se přes Steam, abyste mohli psát zprávy do Shoutboxu.
-          </a>
-        </div>
-      ) : (
-        <> </>
-      )
-    }
 
     <form
       id="shoutboxForm"
