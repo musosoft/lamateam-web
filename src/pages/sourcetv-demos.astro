@@ -1,4 +1,39 @@
 ---
-return Astro.redirect('/player-guide?section=sourcetv', 308);
+import Layout from '../layouts/Layout.astro';
+
+let demoFiles: string[] = [];
+
+try {
+  const response = await fetch('https://wild-fire-819b.still-fog-235d.workers.dev/list');
+  if (response.ok) {
+    demoFiles = (await response.json()) as string[];
+  }
+} catch (error) {
+  console.error('Error fetching demo files:', error);
+}
 ---
 
+<Layout title="SourceTV demá | LaMaTeam">
+  <section class="mx-auto w-full max-w-5xl px-4 py-8 text-left text-gray-100">
+    <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Jak stáhnout SourceTV demo</h1>
+    </header>
+    <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
+      {
+        demoFiles.length === 0 ? (
+          <p>Načítání dostupných dem...</p>
+        ) : (
+          <ul class="space-y-2">
+            {demoFiles.map((file) => (
+              <li>
+                <a href={`https://wild-fire-819b.still-fog-235d.workers.dev/download?file=${encodeURIComponent(file)}`} class="text-blue-400 hover:underline" download>
+                  {file.split('/').pop()}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </article>
+  </section>
+</Layout>

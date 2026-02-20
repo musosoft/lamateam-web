@@ -1,4 +1,87 @@
 ---
-return Astro.redirect('/server-guide?section=maps', 308);
+import Layout from '../layouts/Layout.astro';
+import mapsGenerated from '../data/maps.generated.json';
+
+const MAP_PLACEHOLDER = '/assets/map-placeholder.svg';
+
+interface MapCard {
+  name: string;
+  sourceImage: string;
+  width: number;
+  height: number;
+}
+
+const mapCards: MapCard[] = (mapsGenerated.items ?? []).map((it) => ({
+  name: it.map,
+  sourceImage: it.image,
+  width: 320,
+  height: 180,
+}));
 ---
 
+<Layout title="Mapy | LaMaTeam">
+  <section class="mx-auto w-full max-w-6xl px-4 py-8 text-left text-gray-100">
+    <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Aktuální mapy na serveru</h1>
+      <p class="mt-2 text-sm text-gray-300 md:text-base">Prehľad všetkých máp dostupných na LaMaTeam serveri.</p>
+    </header>
+
+    <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
+      {
+        mapCards.length === 0 ? (
+          <p>Mapy se nepodařilo načíst.</p>
+        ) : (
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {mapCards.map((mapCard, idx) => (
+              <div
+                class="group overflow-hidden rounded-xl border border-gray-700 bg-gray-900/70 shadow transition hover:-translate-y-0.5 hover:border-cyan-400/70"
+                title={mapCard.name}
+              >
+                <img
+                  src={mapCard.sourceImage}
+                  alt={mapCard.name}
+                  width={mapCard.width}
+                  height={mapCard.height}
+                  loading={idx < 8 ? 'eager' : 'lazy'}
+                  fetchpriority={idx < 8 ? 'high' : 'auto'}
+                  decoding="async"
+                  data-map-image
+                  onerror={`this.onerror=null;this.src='${MAP_PLACEHOLDER}';`}
+                  class="h-24 w-full object-cover"
+                />
+                <div class="truncate border-t border-gray-800 px-2 py-2 text-center text-xs font-medium text-gray-200 group-hover:text-cyan-300">
+                  {mapCard.name}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </article>
+  </section>
+</Layout>
+
+<script is:inline>
+  function precacheMapImages() {
+    const imgs = Array.from(document.querySelectorAll('img[data-map-image]'));
+    const srcs = imgs
+      .map((img) => img.getAttribute('src'))
+      .filter((src) => !!src && !src.includes('map-placeholder.svg'));
+
+    const preloadSome = () => {
+      srcs.slice(0, 24).forEach((src) => {
+        const i = new Image();
+        i.decoding = 'async';
+        i.src = src;
+      });
+    };
+
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(preloadSome, { timeout: 1500 });
+    } else {
+      setTimeout(preloadSome, 200);
+    }
+  }
+
+  precacheMapImages();
+</script>

@@ -1,4 +1,45 @@
 ---
-return Astro.redirect('/player-guide?section=performance-fixes', 308);
+import Layout from '../layouts/Layout.astro';
+import { Icon } from 'astro-icon/components';
 ---
 
+<Layout title="Fixy FPS | LaMaTeam">
+  <section class="mx-auto w-full max-w-5xl px-4 py-8 text-left text-gray-100">
+    <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Málo FPS / blbnú zvuky / radar</h1>
+      <p class="mt-2 text-sm text-gray-300 md:text-base">Skús postupne tieto fixy.</p>
+    </header>
+
+    <article class="space-y-4 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
+      <div>
+        <p class="mb-2 text-lg font-semibold">1) Magický fix</p>
+        <div class="inline-flex items-center gap-3 rounded-lg bg-gray-950/70 p-3 text-sm">
+          <span class="copy-content">exec config;exec autoexec;record null;stop;soundscape_flush;snd_restart;hud_reloadscheme;overview_mode 1</span>
+          <button onclick="copyToClipboard(this)" class="text-gray-400 hover:text-white"><Icon name="mdi:content-copy" class="h-5 w-5"/></button>
+        </div>
+      </div>
+      <div>
+        <p class="mb-2 text-lg font-semibold">2) Retry</p>
+        <div class="inline-flex items-center gap-3 rounded-lg bg-gray-950/70 p-3 text-sm">
+          <span class="copy-content">retry</span>
+          <button onclick="copyToClipboard(this)" class="text-gray-400 hover:text-white"><Icon name="mdi:content-copy" class="h-5 w-5"/></button>
+        </div>
+      </div>
+      <div>
+        <p class="mb-2 text-lg font-semibold">3) CFG fix</p>
+        <div class="inline-flex items-center gap-3 rounded-lg bg-gray-950/70 p-3 text-sm">
+          <span class="copy-content">powershell iwr 'https://raw.githack.com/musosoft/css-cfg/main/autoexec.cfg' -OutFile '%PROGRAMFILES(x86)%\Steam\SteamApps\common\counter-strike source\cstrike\cfg\autoexec.cfg'</span>
+          <button onclick="copyToClipboard(this)" class="text-gray-400 hover:text-white"><Icon name="mdi:content-copy" class="h-5 w-5"/></button>
+        </div>
+      </div>
+    </article>
+  </section>
+</Layout>
+
+<script is:inline>
+  async function copyToClipboard(button) {
+    const content = button.parentElement.querySelector('.copy-content')?.innerText?.trim();
+    if (!content) return;
+    await navigator.clipboard.writeText(content);
+  }
+</script>

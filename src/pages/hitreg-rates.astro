@@ -1,4 +1,42 @@
 ---
-return Astro.redirect('/player-guide?section=hitreg-rates', 308);
+import Layout from '../layouts/Layout.astro';
 ---
 
+<Layout title="Hitreg | LaMaTeam">
+  <section class="mx-auto w-full max-w-5xl px-4 py-8 text-left text-gray-100">
+    <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Hitbox, hitreg, rates</h1>
+      <p class="mt-2 text-sm text-gray-300 md:text-base">Keď niekto povie „nehituje to“, pošli mu túto stránku.</p>
+    </header>
+
+    <article class="space-y-4 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
+      <ul class="list-disc space-y-2 pl-5 text-gray-200">
+        <li><strong>Hitbox</strong> = serverová kolízia hráča, nie iba model.</li>
+        <li><strong>Hitreg</strong> kontroluje zásah na serveri, nie na tvojom monitore.</li>
+        <li><strong>Tickrate 100</strong> = server spracúva hru 100× za sekundu.</li>
+        <li><strong>Updaterate/Cmdrate 100</strong> sú na serveri vynútené.</li>
+        <li><strong>Rate 196000</strong> je vynútený limit dát.</li>
+        <li><strong>Interp 0–0.031</strong> je vynútený rozsah.</li>
+        <li><strong>Blood bez damage</strong> je normálne: klient ukáže krv, server rozhodne hit.</li>
+        <li><strong>Net_graph 4</strong>: sleduj hlavne loss a choke.</li>
+      </ul>
+
+      <h2 class="text-xl font-bold mt-6">Checklist keď to „nehituje“</h2>
+      <ol class="list-decimal space-y-2 pl-5 text-gray-200">
+        <li>Loss musí byť 0%.</li>
+        <li>Ping drž čo najnižšie.</li>
+        <li>Choke drž na 0%.</li>
+        <li>Sleduj net_graph medzery v linkách.</li>
+      </ol>
+
+      <h2 class="text-xl font-bold mt-6">Server vynucuje</h2>
+      <ul class="list-disc space-y-2 pl-5 text-gray-200">
+        <li>rate 196000</li>
+        <li>cmdrate 100</li>
+        <li>updaterate 100</li>
+        <li>interp 0–0.031</li>
+        <li>interp_ratio 1</li>
+      </ul>
+    </article>
+  </section>
+</Layout>

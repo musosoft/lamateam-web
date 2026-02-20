@@ -35,9 +35,9 @@ export default defineConfig({
   redirects: {
     "/contact.php": "/contact",
     "/register.php": "/contact",
-    "/infusions/forum/viewthread.php?thread_id=1": "/player-guide",
-    "/infusions/forum/index.php": "/player-guide",
-    "/infusions/faq/faq.php": "/player-guide",
+    "/infusions/forum/viewthread.php?thread_id=1": "/maps",
+    "/infusions/forum/index.php": "/maps",
+    "/infusions/faq/faq.php": "/maps",
     "/faq": "/",
     "/faq/player": "/",
     "/faq/server": "/",

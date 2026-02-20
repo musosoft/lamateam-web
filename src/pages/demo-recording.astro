@@ -1,4 +1,19 @@
 ---
-return Astro.redirect('/player-guide?section=demo-recording', 308);
+import Layout from '../layouts/Layout.astro';
 ---
 
+<Layout title="Demo nahrávání | LaMaTeam">
+  <section class="mx-auto w-full max-w-4xl px-4 py-8 text-left text-gray-100">
+    <header class="mb-6 rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
+      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Jak nahrát demo</h1>
+    </header>
+    <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
+      <ol class="list-decimal space-y-2 pl-5 text-gray-200">
+        <li>Spusť nahrávanie: <code>record nazev_dema</code></li>
+        <li>Ukonči nahrávanie: <code>stop</code></li>
+        <li>Prehraj demo: <code>playdemo nazev_dema</code></li>
+      </ol>
+      <p class="mt-4 text-sm text-gray-300">Hint: na hernom serveri nepoužívaj <code>sv_cheats 1</code> ani <code>r_drawothermodels 2</code>.</p>
+    </article>
+  </section>
+</Layout>
