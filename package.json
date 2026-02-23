@@ -26,7 +26,7 @@
     "@astrojs/cloudflare": "13.0.0-beta.8",
     "@iconify-json/mdi": "^1.2.3",
     "@libsql/client": "^0.17.0",
-    "astro": "6.0.0-beta.13",
+    "astro": "6.0.0-beta.14",
     "astro-icon": "^1.1.5",
     "cookie": "^1.1.1",
     "tailwindcss": "^4.2.0",
