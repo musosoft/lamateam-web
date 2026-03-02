@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-20T15:57:49.848Z",
-  "total": 98,
+  "generatedAt": "2026-03-02T06:27:43.046Z",
+  "total": 97,
   "ok": 20,
   "items": [
     {
@@ -287,11 +287,6 @@
       "map": "de_nuke",
       "image": "/assets/map-cache/de_nuke.jpg",
       "source": "cache"
-    },
-    {
-      "map": "de_orilla_house",
-      "image": "/assets/map-placeholder.svg",
-      "source": "placeholder"
     },
     {
       "map": "de_overpass_lt",
