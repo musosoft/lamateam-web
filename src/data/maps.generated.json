@@ -289,11 +289,6 @@
       "source": "cache"
     },
     {
-      "map": "de_orilla_house",
-      "image": "/assets/map-placeholder.svg",
-      "source": "placeholder"
-    },
-    {
       "map": "de_overpass_lt",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
