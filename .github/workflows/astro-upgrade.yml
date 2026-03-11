@@ -34,10 +34,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Upgrade Astro beta and official integrations (non-interactive)
+      - name: Upgrade Astro and official integrations to latest stable (non-interactive)
         run: |
           set +o pipefail
-          yes | pnpm dlx @astrojs/upgrade beta
+          yes | pnpm dlx @astrojs/upgrade
 
       - name: Upgrade Tailwind (non-interactive)
         run: |
@@ -64,11 +64,11 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.AUTOMATION_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-          commit-message: "chore(framework): upgrade Astro beta and Tailwind"
-          title: "chore(framework): upgrade Astro beta and Tailwind"
+          commit-message: "chore(framework): upgrade Astro stable and Tailwind"
+          title: "chore(framework): upgrade Astro stable and Tailwind"
           body: |
             Automated framework upgrade workflow:
-            - ran `pnpm dlx @astrojs/upgrade beta` non-interactively
+            - ran `pnpm dlx @astrojs/upgrade` non-interactively
             - ran `pnpm dlx @tailwindcss/upgrade --force` non-interactively
             - refreshed dependencies and lockfile
             - validated audit, astro check, build, and typecheck

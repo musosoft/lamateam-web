@@ -10,9 +10,9 @@
     "start": "astro dev",
     "build": "node scripts/cache-map-images.mjs && astro build",
     "typecheck": "tsc --noEmit",
-    "check": "astro check && pnpm build && pnpm typecheck && wrangler deploy --dry-run",
-    "deploy": "pnpm build && pnpm typecheck && wrangler deploy",
-    "preview": "pnpm build && wrangler dev",
+    "check": "astro check && pnpm build && pnpm typecheck && wrangler deploy --dry-run --config dist/server/wrangler.json",
+    "deploy": "pnpm build && pnpm typecheck && wrangler deploy --config dist/server/wrangler.json",
+    "preview": "pnpm build && wrangler dev --config dist/server/wrangler.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:style": "stylelint \"**/*.{css,astro}\"",
@@ -22,11 +22,11 @@
     "postinstall": "astro telemetry disable"
   },
   "dependencies": {
-    "@astrojs/check": "0.9.7-beta.1",
-    "@astrojs/cloudflare": "13.0.0-beta.8",
+    "@astrojs/check": "0.9.7",
+    "@astrojs/cloudflare": "13.1.0",
     "@iconify-json/mdi": "^1.2.3",
     "@libsql/client": "^0.17.0",
-    "astro": "6.0.0-beta.14",
+    "astro": "6.0.3",
     "astro-icon": "^1.1.5",
     "cookie": "^1.1.1",
     "tailwindcss": "^4.2.1",
@@ -43,12 +43,13 @@
     "prettier-plugin-astro": "^0.14.1",
     "stylelint": "^17.4.0",
     "stylelint-config-html": "^1.1.0",
-    "wrangler": "^4.69.0"
+    "wrangler": "^4.72.0"
   },
   "pnpm": {
     "overrides": {
       "lodash@>=4.0.0 <=4.17.22": ">=4.17.23",
-      "tar@<7.5.7": ">=7.5.7",
+      "tar@<7.5.11": ">=7.5.11",
+      "svgo@<3.3.3": ">=3.3.3",
       "ajv@<8.18.0": ">=8.18.0"
     }
   }
