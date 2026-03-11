@@ -94,8 +94,28 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Deploy
-        run: pnpm run deploy
+      - name: Build deployment bundle
+        run: pnpm build
+
+      - name: Run TypeScript checks
+        run: pnpm typecheck
+
+      - name: Deploy with retry
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            echo "Wrangler deploy attempt ${attempt}/3"
+            if pnpm exec wrangler deploy --config dist/server/wrangler.json; then
+              exit 0
+            fi
+            if [ "${attempt}" -eq 3 ]; then
+              echo "Wrangler deploy failed after 3 attempts"
+              exit 1
+            fi
+            sleep_seconds=$((attempt * 20))
+            echo "Retrying Cloudflare deploy in ${sleep_seconds}s"
+            sleep "${sleep_seconds}"
+          done
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
