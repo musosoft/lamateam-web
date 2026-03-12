@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-23T06:53:05.898Z",
+  "generatedAt": "2026-03-12T08:16:47.126Z",
   "total": 98,
   "ok": 20,
   "items": [
@@ -37,6 +37,11 @@
       "map": "awp_india_v2",
       "image": "/assets/map-cache/awp_india_v2.jpg",
       "source": "cache"
+    },
+    {
+      "map": "awp_lego_2b",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
     },
     {
       "map": "awp_rooftops_css",
