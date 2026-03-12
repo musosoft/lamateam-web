@@ -10,6 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -78,6 +79,12 @@ jobs:
             dependencies
             astro
             tailwind
+
+      - name: Trigger CI for upgrade PR
+        if: steps.cpr.outputs.pull-request-number
+        run: gh workflow run "CI and Deploy" --ref chore/framework-upgrade
+        env:
+          GH_TOKEN: ${{ secrets.AUTOMATION_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Enable auto-merge for Astro upgrade PR
         if: steps.cpr.outputs.pull-request-number

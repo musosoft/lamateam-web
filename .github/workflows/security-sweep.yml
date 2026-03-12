@@ -10,6 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -73,6 +74,12 @@ jobs:
             dependencies
             security
 
+      - name: Trigger CI for sweep PR
+        if: steps.cpr.outputs.pull-request-number
+        run: gh workflow run "CI and Deploy" --ref chore/dependency-security-sweep
+        env:
+          GH_TOKEN: ${{ secrets.AUTOMATION_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+
       - name: Enable auto-merge for sweep PR
         if: steps.cpr.outputs.pull-request-number
         run: |
@@ -82,8 +89,9 @@ jobs:
             exit 0
           fi
 
-          echo "Auto-merge is unavailable (likely branch protection/repo setting). Trying direct squash merge."
-          gh pr merge --squash "$PR_URL"
+          echo "Auto-merge is unavailable for this repository/branch."
+          echo "Enable 'Allow auto-merge' and branch protection rules to queue auto-merge."
+          echo "Skipping failure so this workflow does not error."
         env:
           GH_TOKEN: ${{ secrets.AUTOMATION_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
 

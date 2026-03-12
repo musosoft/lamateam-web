@@ -24,8 +24,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable auto-merge
-        if: steps.metadata.outputs.package-ecosystem == 'npm' || steps.metadata.outputs.package-ecosystem == 'github_actions'
         run: |
+          PACKAGE_ECOSYSTEM="${{ steps.metadata.outputs.package-ecosystem }}"
+          case "${PACKAGE_ECOSYSTEM}" in
+            npm|npm_and_yarn|github_actions|github-actions)
+              ;;
+            *)
+              echo "Skipping auto-merge for unsupported ecosystem: ${PACKAGE_ECOSYSTEM}"
+              exit 0
+              ;;
+          esac
+
           PR_URL="${{ github.event.pull_request.html_url }}"
           if gh pr merge --auto --squash "$PR_URL"; then
             echo "Auto-merge enabled for $PR_URL"
