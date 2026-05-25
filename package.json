@@ -43,7 +43,7 @@
     "prettier-plugin-astro": "^0.14.1",
     "stylelint": "^17.5.0",
     "stylelint-config-html": "^1.1.0",
-    "wrangler": "^4.77.0"
+    "wrangler": "^4.94.0"
   },
   "pnpm": {
     "overrides": {
