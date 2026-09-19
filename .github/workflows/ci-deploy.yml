@@ -62,7 +62,7 @@ jobs:
               sleep $((attempt * 30))
             fi
           done
-          exit 1
+          echo "::warning::npm audit unavailable after 3 transient registry failures; continuing without an audit result"
 
       - name: Run Astro checks
         run: pnpm astro check
