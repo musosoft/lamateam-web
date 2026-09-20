@@ -25,24 +25,24 @@
     "@astrojs/check": "0.9.10",
     "@astrojs/cloudflare": "14.3.2",
     "@iconify-json/mdi": "^1.2.3",
-    "@libsql/client": "^0.17.2",
+    "@libsql/client": "^0.17.4",
     "astro": "^7.3.3",
     "astro-icon": "^1.2.0",
     "cookie": "^1.1.1",
-    "tailwindcss": "^4.2.2",
-    "typescript": "^6.0.2"
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3"
   },
   "packageManager": "pnpm@11.27.0",
   "devDependencies": {
-    "@tailwindcss/vite": "^4.2.2",
-    "@typescript-eslint/parser": "^8.57.2",
-    "eslint": "^10.1.0",
-    "eslint-plugin-astro": "^1.6.0",
-    "fluid-tailwindcss": "^1.0.9",
-    "prettier": "^3.8.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@typescript-eslint/parser": "^8.70.0",
+    "eslint": "^10.11.0",
+    "eslint-plugin-astro": "^1.7.0",
+    "fluid-tailwindcss": "^1.1.7",
+    "prettier": "^3.9.8",
     "prettier-plugin-astro": "^0.14.1",
-    "stylelint": "^17.5.0",
+    "stylelint": "^17.15.0",
     "stylelint-config-html": "^1.1.0",
-    "wrangler": "^4.134.0"
+    "wrangler": "^4.135.0"
   }
 }
