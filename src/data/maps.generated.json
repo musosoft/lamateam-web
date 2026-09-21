@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T10:49:39.109Z",
+  "generatedAt": "2026-09-21T12:14:14.076Z",
   "total": 80,
   "ok": 17,
   "items": [
@@ -46,7 +46,7 @@
     {
       "map": "cs_assault",
       "image": "/assets/map-cache/cs_assault.jpg",
-      "source": "https://stats.lamateam.eu/hlstatsimg/games/css/maps/cs_assault.jpg"
+      "source": "cache"
     },
     {
       "map": "cs_estate",
