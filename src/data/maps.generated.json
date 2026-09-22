@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-21T13:08:24.105Z",
-  "total": 80,
-  "ok": 17,
+  "generatedAt": "2026-09-22T11:08:55.857Z",
+  "total": 98,
+  "ok": 20,
   "items": [
     {
       "map": "$2000$",
@@ -10,11 +10,6 @@
     },
     {
       "map": "3mc_training",
-      "image": "/assets/map-placeholder.svg",
-      "source": "placeholder"
-    },
-    {
-      "map": "aim_$2011$_lt",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
     },
@@ -44,9 +39,29 @@
       "source": "cache"
     },
     {
-      "map": "cs_assault",
-      "image": "/assets/map-cache/cs_assault.jpg",
+      "map": "awp_lego_2b",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "awp_rooftops_css",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "cs_assault_lama3",
+      "image": "/assets/map-cache/cs_assault_lama3.jpg",
       "source": "cache"
+    },
+    {
+      "map": "cs_compound",
+      "image": "/assets/map-cache/cs_compound.jpg",
+      "source": "cache"
+    },
+    {
+      "map": "cs_crackhouse_hg_a2",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
     },
     {
       "map": "cs_estate",
@@ -79,6 +94,16 @@
       "source": "placeholder"
     },
     {
+      "map": "de_anubis_css",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_apehouse",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
       "map": "de_arabic2_lt",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
@@ -89,12 +114,32 @@
       "source": "cache"
     },
     {
+      "map": "de_blitz_ukcs",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
       "map": "de_boston",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
     },
     {
       "map": "de_cache",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_cantina",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_carpediem_arena",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_casablanca_sunbeam",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
     },
@@ -129,14 +174,29 @@
       "source": "placeholder"
     },
     {
+      "map": "de_cpl_fire",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
       "map": "de_cpl_mill",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
     },
     {
-      "map": "de_dolls_2008_fixed",
+      "map": "de_deltamill2",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
+    },
+    {
+      "map": "de_desert_atrocity_v3",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_dust_small_lt2025",
+      "image": "/assets/map-cache/de_dust_small_lt2025.jpg",
+      "source": "cache"
     },
     {
       "map": "de_dust",
@@ -155,6 +215,11 @@
     },
     {
       "map": "de_frost",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_grit3",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
     },
@@ -180,6 +245,11 @@
     },
     {
       "map": "de_kabul3",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_kismayo",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
     },
@@ -239,8 +309,18 @@
       "source": "cache"
     },
     {
+      "map": "de_playboydolls_2010_b8",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
       "map": "de_port",
       "image": "/assets/map-cache/de_port.jpg",
+      "source": "cache"
+    },
+    {
+      "map": "de_prodigy",
+      "image": "/assets/map-cache/de_prodigy.jpg",
       "source": "cache"
     },
     {
@@ -274,7 +354,7 @@
       "source": "placeholder"
     },
     {
-      "map": "de_safehouse",
+      "map": "de_saw",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
     },
@@ -319,6 +399,11 @@
       "source": "placeholder"
     },
     {
+      "map": "de_syksy",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
       "map": "de_tides",
       "image": "/assets/map-cache/de_tides.jpg",
       "source": "cache"
@@ -340,6 +425,11 @@
     },
     {
       "map": "de_vegas_lite",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
+      "map": "de_venice",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
     },
