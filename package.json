@@ -35,7 +35,7 @@
   "packageManager": "pnpm@11.27.0",
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@typescript-eslint/parser": "^8.70.0",
+    "@typescript-eslint/parser": "^8.70.1",
     "eslint": "^10.11.0",
     "eslint-plugin-astro": "^3.2.1",
     "fluid-tailwindcss": "^1.1.7",
@@ -43,6 +43,6 @@
     "prettier-plugin-astro": "^1.0.1",
     "stylelint": "^17.15.0",
     "stylelint-config-html": "^2.0.0",
-    "wrangler": "^4.135.0"
+    "wrangler": "^4.136.2"
   }
 }
