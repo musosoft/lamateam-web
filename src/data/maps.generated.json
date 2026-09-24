@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-23T10:58:47.393Z",
-  "total": 98,
+  "generatedAt": "2026-09-24T11:18:35.000Z",
+  "total": 99,
   "ok": 20,
   "items": [
     {
@@ -459,6 +459,11 @@
       "source": "placeholder"
     },
     {
+      "map": "fy_iceworld_cssource",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
+    },
+    {
       "map": "fy_pool_day_reloaded",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
@@ -474,7 +479,7 @@
       "source": "placeholder"
     },
     {
-      "map": "fy_snow",
+      "map": "fy_iceworld_arena",
       "image": "/assets/map-placeholder.svg",
       "source": "placeholder"
     },
