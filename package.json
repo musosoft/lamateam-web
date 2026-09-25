@@ -26,7 +26,7 @@
     "@astrojs/cloudflare": "14.3.2",
     "@iconify-json/mdi": "^1.2.3",
     "@libsql/client": "^0.17.4",
-    "astro": "^7.3.4",
+    "astro": "^7.3.5",
     "astro-icon": "^1.2.0",
     "cookie": "^1.1.1",
     "tailwindcss": "^4.3.3",
@@ -43,6 +43,6 @@
     "prettier-plugin-astro": "^1.0.1",
     "stylelint": "^17.15.0",
     "stylelint-config-html": "^2.0.0",
-    "wrangler": "^4.136.3"
+    "wrangler": "^4.138.0"
   }
 }
