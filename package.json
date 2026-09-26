@@ -40,9 +40,9 @@
     "eslint-plugin-astro": "^3.2.1",
     "fluid-tailwindcss": "^1.1.7",
     "prettier": "^3.9.9",
-    "prettier-plugin-astro": "^1.0.1",
+    "prettier-plugin-astro": "^1.1.0",
     "stylelint": "^17.15.0",
     "stylelint-config-html": "^2.0.0",
-    "wrangler": "^4.138.0"
+    "wrangler": "^4.140.0"
   }
 }
