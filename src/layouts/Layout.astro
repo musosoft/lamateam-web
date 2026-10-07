@@ -1,8 +1,23 @@
 ---
 // src/layouts/Layout.astro
-import CandyBox from '../components/CandyBox.astro';
+import CommunityNav from '../components/CommunityNav.astro';
+import LiveChat from '../components/LiveChat.astro';
 import { Icon } from 'astro-icon/components';
-import "../assets/tailwind.css";
+import LanguageSelector from '../components/LanguageSelector.astro';
+import LocalizedMarkup from '../components/LocalizedMarkup.astro';
+import { translator } from '../lib/page-copy';
+import { guideDescriptions } from '../lib/page-metadata';
+import { routeSeo, openGraphLocales } from '../lib/locale-seo';
+import { ClientRouter } from 'astro:transitions';
+import {
+  content,
+  equivalentPage,
+  isLocale,
+  localePath,
+  localeFromPath,
+  siteUrl as resolveSiteUrl,
+} from '../lib/localized-content';
+import '../assets/tailwind.css';
 
 const cookies = Astro.cookies;
 const userAgent = Astro.request.headers.get('user-agent')?.toLowerCase() || '';
@@ -30,170 +45,283 @@ if (queryPlayerName) {
 
 interface Props {
   title: string;
+  description?: string;
+  canonicalPath?: string;
+  lang?: string;
 }
 
-const { title } = Astro.props;
-const motdQuery =
-  communityId && playerName
-    ? `?communityid=${encodeURIComponent(communityId)}&name=${encodeURIComponent(playerName)}`
-    : '';
-const homeHref = motdQuery ? `/${motdQuery}` : '/';
-const hideHomeIcon = Astro.url.pathname === '/';
+const {
+  title: pageTitle,
+  description: pageDescription,
+  canonicalPath,
+  lang = localeFromPath(Astro.url.pathname),
+} = Astro.props;
+const title =
+  equivalentPage(Astro.url.pathname) === 'home' && isLocale(lang)
+    ? translator(lang)('LaMaTeAm — Counter-Strike: Source Community')
+    : pageTitle.replaceAll('LaMaTeam', 'LaMaTeAm');
+const description = pageDescription?.replaceAll('LaMaTeam', 'LaMaTeAm');
+const locale = isLocale(lang) ? lang : 'en';
+const t = translator(locale);
+
+const defaultDescription =
+  'LaMaTeAm is a fair EU Counter-Strike: Source (CS:S) community server with a classic rotation and respectful, quiet-hours-friendly bots so you can play comfortably.';
+
+const currentPath = Astro.url.pathname || '/';
+const communityLinks = [
+  ['Discord', 'https://discord.com/invite/2tvWZhuSaG', 'mdi:discord'],
+  ['Steam Group', 'https://steamcommunity.com/groups/LMTA', 'mdi:steam'],
+  ['SourceBans', '/bans', 'mdi:ban'],
+  ['HLstatsX', '/stats', 'mdi:chart-bar'],
+];
+const canonical =
+  canonicalPath ||
+  (equivalentPage(currentPath)
+    ? localePath(isLocale(lang) ? lang : 'en', equivalentPage(currentPath)!)
+    : currentPath);
+
+const pageKind = equivalentPage(currentPath);
+const resolvedDescription =
+  pageKind && pageKind in guideDescriptions
+    ? t(guideDescriptions[pageKind as keyof typeof guideDescriptions])
+    : pageKind === 'home' && locale !== 'en'
+      ? t(
+          'Join LaMaTeAm CS:S — a fair EU classic rotation server with quiet-hours-friendly bots.',
+        )
+      : pageKind === 'home' && lang === 'en'
+        ? 'LaMaTeAm is a European Counter-Strike: Source community server. Find the server address, joining instructions and community Discord.'
+        : description ||
+          (isLocale(lang) ? content[lang].homeDescription : defaultDescription);
+
+const siteUrl = resolveSiteUrl();
+const canonicalUrl = new URL(canonical, siteUrl).toString();
+const ogTitle = title;
+const ogDescription = resolvedDescription;
+const ogUrl = canonicalUrl;
+const socialImageUrl = new URL('/assets/social-preview.png', siteUrl).href;
+const socialImageAlt = t('LaMaTeAm — Counter-Strike: Source community');
+const seo = routeSeo(currentPath, siteUrl);
+const alternates = seo.alternates;
+const homeUrl = new URL(
+  localePath(isLocale(lang) ? lang : 'en', 'home'),
+  siteUrl,
+).href;
+const structuredData = pageKind
+  ? {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          '@id': new URL('/#website', siteUrl).href,
+          name: 'LaMaTeAm',
+          url: new URL('/', siteUrl).href,
+          description: isLocale(lang)
+            ? content[lang].homeDescription
+            : defaultDescription,
+          inLanguage: lang,
+        },
+        {
+          '@type': 'WebPage',
+          name: title,
+          description: resolvedDescription,
+          url: canonicalUrl,
+          inLanguage: lang,
+          isPartOf: { '@id': new URL('/#website', siteUrl).href },
+        },
+        ...(pageKind === 'connect'
+          ? [
+              {
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                  {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: isLocale(lang) ? content[lang].home : 'Home',
+                    item: homeUrl,
+                  },
+                  {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: isLocale(lang)
+                      ? content[lang].join.replaceAll('LaMaTeam', 'LaMaTeAm')
+                      : 'Connect',
+                    item: canonicalUrl,
+                  },
+                ],
+              },
+            ]
+          : []),
+      ],
+    }
+  : undefined;
 
 function parseSessionCookie() {
   const raw = cookies.get('session')?.value;
   if (!raw) return {};
-  try { return JSON.parse(decodeURIComponent(raw)); } catch { return {}; }
+  try {
+    return JSON.parse(decodeURIComponent(raw));
+  } catch {
+    return {};
+  }
 }
 const session = parseSessionCookie();
-const isAuthenticated = !!(session?.steamID && session?.playerName && session.playerName !== 'Guest');
+const isAuthenticated = !!(
+  (isGame && communityId && playerName && playerName !== 'Guest') ||
+  (session?.steamID && session?.playerName && session.playerName !== 'Guest')
+);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang}>
   <head>
+    <ClientRouter />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="LaMaTeam - Game Community" />
+    <meta name="description" content={resolvedDescription} />
+    <link rel="canonical" href={canonicalUrl} />
+    {alternates.map(({ locale, url }) => (
+      <link rel="alternate" hreflang={locale} href={url} />
+    ))}
+    {pageKind && (
+      <link rel="alternate" hreflang="x-default" href={seo.xDefault} />
+    )}
+    {structuredData && (
+      <script
+        type="application/ld+json"
+        set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')}
+      />
+    )}
     <title>{title}</title>
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={ogTitle} />
+    <meta property="og:description" content={ogDescription} />
+    <meta property="og:url" content={ogUrl} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={openGraphLocales[locale]} />
+    {alternates
+      .filter((item) => item.locale !== locale)
+      .map((item) => (
+        <meta
+          property="og:locale:alternate"
+          content={openGraphLocales[item.locale]}
+        />
+      ))}
+    <meta property="og:image" content={socialImageUrl} />
+    <meta property="og:image:alt" content={socialImageAlt} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={ogTitle} />
+    <meta name="twitter:description" content={ogDescription} />
+    <meta name="twitter:url" content={ogUrl} />
+    <meta name="twitter:image" content={socialImageUrl} />
+    <meta name="twitter:image:alt" content={socialImageAlt} />
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
   </head>
-  <body>
-    <main
-      id="main-content"
-      class=`group fixed inset-0 flex items-center justify-center bg-gray-900 backdrop-blur-sm ${isGame ? 'bg-opacity-0' : ''}`
-    >
-      <div
-        class=`absolute inset-0 opacity-100 block ${isGame ? 'group-hover:hidden animate-pointer' : ''}`
-      >
-      </div>
-      <div
-        class="relative flex grow flex-col h-full w-full overflow-y-auto rounded-lg z-10 justify-start fl-p-2/8 text-center text-white text-sm"
-      >
-        <CandyBox href={homeHref} hidden={hideHomeIcon} />
-        {
-          !isAuthenticated && (
-            <a
-              href="/api/auth/steam"
-              class="fixed right-2 top-2 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/15 text-blue-400 shadow-md transition-all duration-200 hover:bg-blue-500/30 hover:text-white hover:scale-110 hover:shadow-blue-500/20 hover:shadow-lg"
-              aria-label="Přihlásit přes Steam"
-            >
-              <Icon name="mdi:login" class="h-6 w-6" />
-            </a>
-          )
-        }
+  <body
+    class:list={['fl-text-sm/lg', { 'is-game': isGame }]}
+    data-community-id={isGame ? communityId : undefined}
+    data-player-name={isGame ? playerName : undefined}
+  >
+    <a href="#main-content" class="skip-link">
+      {t('Skip to content')}
+    </a>
+    <LocalizedMarkup locale={locale}>
+      <CommunityNav
+        currentPath={pageKind ? localePath('en', pageKind) : currentPath}
+        isAuthenticated={isAuthenticated}
+        currentLanguage={lang}
+        pageKind={pageKind}
+      />
+    </LocalizedMarkup>
+    <main id="main-content" tabindex="-1" class="fl-p-3/10">
+      {pageKind === 'home' && locale !== 'en' ? (
+        <LocalizedMarkup locale={locale}>
+          <slot />
+        </LocalizedMarkup>
+      ) : (
         <slot />
-        <div
-          id="translate-wrapper"
-          class="fixed bottom-2 right-2 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/15 text-blue-400 shadow-md transition-all duration-200 hover:bg-blue-500/30 hover:text-white hover:scale-110 hover:shadow-blue-500/20 hover:shadow-lg"
-        >
-          <div
-            id="google_translate_element"
-            class="absolute inset-0 [&_.goog-te-combo]:absolute [&_.goog-te-combo]:inset-0 [&_.goog-te-combo]:w-full [&_.goog-te-combo]:h-full [&_.goog-te-combo]:opacity-0 [&_.goog-te-combo]:cursor-pointer [&_.goog-te-gadget_span]:hidden [&_.goog-te-gadget]:text-[0px]! [&_img]:hidden"
-          >
-          </div>
-          <Icon name="mdi:earth" class="h-6 w-6 pointer-events-none" />
-        </div>
-      </div>
+      )}
     </main>
-    <script is:inline>
-      window.googleTranslateElementInit = () => {
-        new google.translate.TranslateElement(
-          { pageLanguage: 'cs' },
-          'google_translate_element',
-        );
-      };
-    </script>
-    <script is:inline define:vars={{ isGame, communityId, playerName, motdQuery }}>
-      (() => {
-        if (!isGame) {
-          return;
-        }
-
-        const lastPageKey = 'lmta_motd_last_page';
-        const restoreGuardKey = 'lmta_motd_restore_once';
-        const currentPath = `${window.location.pathname}${window.location.search}`;
-
-        if (window.location.pathname === '/') {
-          const alreadyRestored = sessionStorage.getItem(restoreGuardKey) === '1';
-          const saved = localStorage.getItem(lastPageKey);
-          const hasHash = window.location.hash && window.location.hash.length > 1;
-          const isValidSaved = !!saved && saved.startsWith('/') && !saved.startsWith('/#');
-
-          if (!alreadyRestored && !hasHash && isValidSaved && saved !== '/' && saved !== currentPath) {
-            sessionStorage.setItem(restoreGuardKey, '1');
-            window.location.replace(saved);
+    <footer class="community-footer fl-px-3/10 fl-py-3/6">
+      <LocalizedMarkup locale={locale} languageControl>
+        <LanguageSelector currentLanguage={lang} pageKind={pageKind} />
+      </LocalizedMarkup>
+      <nav aria-label={t('Community links')} class="footer-links fl-gap-2/4">
+        {communityLinks.map(([label, href, icon]) => (
+          <a
+            href={href}
+            aria-current={currentPath === href ? 'page' : undefined}
+            class="nav-link fl-p-2/3 fl-text-xs/sm"
+          >
+            <Icon name={icon} class="h-4 w-4" />
+            <span>{label === 'Steam Group' ? t('Steam Group') : label}</span>
+          </a>
+        ))}
+      </nav>
+      <p class="footer-copy fl-text-xs/sm">
+        {t('© LaMaTeAm • web & server by muso.sk')}
+      </p>
+    </footer>
+    <LiveChat />
+    <script>
+      const applyMotdQuery = () => {
+        const { communityId, playerName } = document.body.dataset;
+        const links = document.querySelectorAll<HTMLAnchorElement>('a[href]');
+        links.forEach((link) => {
+          const rawHref = link.getAttribute('href');
+          if (!rawHref) {
             return;
           }
-          sessionStorage.setItem(restoreGuardKey, '1');
-        } else {
-          localStorage.setItem(lastPageKey, currentPath);
-        }
 
-        if (!communityId || !playerName) {
-          return;
-        }
+          if (
+            rawHref.startsWith('#') ||
+            rawHref.startsWith('mailto:') ||
+            rawHref.startsWith('tel:') ||
+            rawHref.startsWith('javascript:') ||
+            rawHref.startsWith('steam://')
+          ) {
+            return;
+          }
 
-        const applyMotdQuery = () => {
-          const links = document.querySelectorAll('a[href]');
-          links.forEach((link) => {
-            const rawHref = link.getAttribute('href');
-            if (!rawHref) {
-              return;
-            }
+          let parsed;
+          try {
+            parsed = new URL(rawHref, window.location.origin);
+          } catch {
+            return;
+          }
 
-            if (
-              rawHref.startsWith('#') ||
-              rawHref.startsWith('mailto:') ||
-              rawHref.startsWith('tel:') ||
-              rawHref.startsWith('javascript:') ||
-              rawHref.startsWith('steam://')
-            ) {
-              return;
-            }
+          if (parsed.origin !== window.location.origin) {
+            return;
+          }
 
-            let parsed;
-            try {
-              parsed = new URL(rawHref, window.location.origin);
-            } catch {
-              return;
-            }
+          if (parsed.pathname.startsWith('/api/')) {
+            // Authentication endpoints must use full document navigation.
+            link.setAttribute('data-astro-reload', '');
+            return;
+          }
 
-            if (parsed.origin !== window.location.origin) {
-              return;
-            }
+          if (!communityId || !playerName) return;
 
-            if (parsed.pathname.startsWith('/api/')) {
-              return;
-            }
+          if (!parsed.searchParams.get('communityid')) {
+            parsed.searchParams.set('communityid', communityId);
+          }
 
-            if (!parsed.searchParams.get('communityid')) {
-              parsed.searchParams.set('communityid', communityId);
-            }
+          if (!parsed.searchParams.get('name')) {
+            parsed.searchParams.set('name', playerName);
+          }
 
-            if (!parsed.searchParams.get('name')) {
-              parsed.searchParams.set('name', playerName);
-            }
+          const nextHref = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+          if (nextHref !== rawHref) {
+            link.setAttribute('href', nextHref);
+          }
+        });
+      };
 
-            const nextHref = `${parsed.pathname}${parsed.search}${parsed.hash}`;
-            if (nextHref !== rawHref) {
-              link.setAttribute('href', nextHref);
-            }
-          });
-        };
-
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', applyMotdQuery, {
-            once: true,
-          });
-        } else {
-          applyMotdQuery();
-        }
-      })();
+      document.addEventListener('astro:page-load', applyMotdQuery);
     </script>
-    <script
-      is:inline
-      src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
-    ></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 // src/pages/api/shoutbox.ts
 import type { APIRoute } from "astro";
-import { parse } from "cookie";
+import { parseCookie } from "cookie";
 import { createClient } from "@libsql/client/web";
 import { env } from "cloudflare:workers";
 
@@ -81,11 +81,9 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const cookieHeader = request.headers.get("cookie") || "";
-    const cookies = parse(cookieHeader);
+    const cookies = parseCookie(cookieHeader);
     const sessionCookie = cookies["session"];
-    const session = sessionCookie
-      ? JSON.parse(decodeURIComponent(sessionCookie))
-      : {};
+    const session = sessionCookie ? JSON.parse(sessionCookie) : {};
 
     const rawUserAgent = request.headers.get("user-agent") || "";
     const userAgent = rawUserAgent.toLowerCase();

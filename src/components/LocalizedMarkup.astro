@@ -1,0 +1,103 @@
+---
+import { localizeShell } from '../lib/localized-markup';
+import type { SiteLocale } from '../lib/localized-content';
+import { translator } from '../lib/page-copy';
+interface Props {
+  locale: SiteLocale;
+  languageControl?: boolean;
+}
+const { locale, languageControl = false } = Astro.props;
+const t = translator(locale);
+const html = localizeShell(
+  await Astro.slots.render('default'),
+  locale,
+  languageControl,
+);
+---
+
+<Fragment set:html={html} />
+{!languageControl && (
+  <span
+    hidden
+    data-monitor-copy
+    data-success={t('Server address copied.')}
+    data-failure={t('Address selected. Use your device’s copy command.')}
+  />
+)}
+<script>
+  import { navigate } from 'astro:transitions/client';
+  let cleanup: (() => void) | undefined;
+  function initializeLocaleRoutes() {
+    cleanup?.();
+    const bindings = new AbortController();
+    cleanup = () => bindings.abort();
+    // The shared homepage remains designer-owned. Supply localized interaction
+    // copy here, retaining selection, clipboard and accessible status behavior.
+    const input =
+      document.querySelector<HTMLInputElement>('#monitor-server-ip');
+    const messages = document.querySelector<HTMLElement>('[data-monitor-copy]');
+    if (input && messages) {
+      input.addEventListener(
+        'click',
+        async (event) => {
+          event.stopImmediatePropagation();
+          input.select();
+          const status = document.getElementById('monitor-copy-status');
+          try {
+            await navigator.clipboard.writeText(input.value);
+            if (status) status.textContent = messages.dataset.success!;
+          } catch {
+            if (status) status.textContent = messages.dataset.failure!;
+          }
+        },
+        { capture: true, signal: bindings.signal },
+      );
+    }
+    // Worker HTMLRewriter's global Element overlaps lib.dom's Element in the
+    // Astro checker; the runtime result is still an HTML select element.
+    const selector = document.querySelector(
+      '#language',
+    ) as unknown as HTMLSelectElement | null;
+    if (!selector) return;
+    const route = (language: string) => {
+      const option = selector.querySelector(
+        `option[value="${language}"]`,
+      ) as unknown as HTMLOptionElement | null;
+      if (!option) return;
+      const target = new URL(
+        option.dataset.path ||
+          (language === 'EN' ? '/' : `/${language.toLowerCase()}/`),
+        location.origin,
+      );
+      target.search = location.search;
+      target.hash = location.hash;
+      // Explicit choice only: stored preferences never redirect crawlers/users.
+      void navigate(target.pathname + target.search + target.hash);
+    };
+    selector.addEventListener('change', () => route(selector.value), {
+      signal: bindings.signal,
+    });
+    document
+      .querySelectorAll<HTMLAnchorElement>('[data-language-shortcut]')
+      .forEach((link) => {
+        link.addEventListener(
+          'click',
+          (event) => {
+            if (
+              event.ctrlKey ||
+              event.metaKey ||
+              event.shiftKey ||
+              event.altKey ||
+              event.button !== 0
+            )
+              return;
+            event.preventDefault();
+            route(link.dataset.languageShortcut || 'EN');
+          },
+          { signal: bindings.signal },
+        );
+      });
+  }
+  document.addEventListener('astro:page-load', initializeLocaleRoutes);
+  document.addEventListener('astro:before-swap', () => cleanup?.());
+</script>

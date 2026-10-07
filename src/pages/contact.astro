@@ -1,49 +1,188 @@
 ---
 // src/pages/contact.astro
 import Layout from '../layouts/Layout.astro';
+import { translator } from '../lib/page-copy';
+import { localeFromPath, type SiteLocale } from '../lib/localized-content';
+interface Props {
+  locale?: SiteLocale;
+}
+const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
+const t = translator(locale);
+import { Icon } from 'astro-icon/components';
 ---
 
-<Layout title="Kontakt | LaMaTeam">
-  <section class="mx-auto w-full max-w-4xl px-4 py-8 text-left text-gray-100">
-    <header class="mb-6 rounded-2xl border border-gray-700 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Kontaktuj nás</h1>
+<Layout title={t('Contact | LaMaTeAm')} lang={locale}>
+  <section class="w-full fl-py-2/5 text-left text-gray-100">
+    <header class="fl-mb-4/6 page-heading">
+      <h1 class="fl-text-2xl/4xl font-bold tracking-tight">
+        {t('Contact Us')}
+      </h1>
     </header>
-
-    <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
-      <form
-        class="flex flex-col gap-4 w-full max-w-md mx-auto"
-        action="https://formspree.io/f/xovqnqna"
-        method="POST"
+    <div class="contact-grid fl-gap-3/6">
+      <section class="contact-content panel fl-p-3/6">
+        <aside class="contact-info" aria-label={t('Contact the LaMaTeAm team')}>
+          <div class="contact-brand">
+            <img
+              src="/assets/favicon.svg"
+              alt={t('LaMaTeAm community logo')}
+              width="56"
+              height="88"
+            />
+            <div>
+              <h2 translate="no">LaMaTeAm</h2>
+              <p translate="no">Counter-Strike: Source</p>
+            </div>
+          </div>
+          <p class="contact-location">
+            <Icon name="mdi:map-marker-outline" class="h-5 w-5" />{' '}
+            {t('Czech Republic')}
+          </p>
+          <h3 class="font-bold fl-mt-3/5">{t('Need help in-game?')}</h3>
+          <p class="fl-mt-2/3">
+            {t('Start your message with')} <code translate="no">@</code>{' '}
+            {t('in chat to contact the admins and report an issue.')}
+          </p>
+          <p class="fl-mt-3/5 text-gray-300">
+            {t('Outside the game, reach us on Discord or use the form.')}
+          </p>
+          <p class="fl-mt-2/3">
+            <a
+              href="https://discord.com/invite/2tvWZhuSaG"
+              class="text-cyan-300 underline"
+            >
+              {t('Open LaMaTeAm Discord ↗')}
+            </a>
+          </p>
+        </aside>
+        <article class="contact-form">
+          <h2 class="fl-text-lg/2xl font-bold fl-mb-3/5">
+            {t('Send us a message')}
+          </h2>
+          <form
+            class="flex flex-col fl-gap-3/6 w-full"
+            action="https://formspree.io/f/xovqnqna"
+            method="POST"
+          >
+            <label class="flex flex-col gap-1">
+              <span class="font-medium fl-text-sm/base text-gray-300">
+                {t('Your Email')}
+              </span>
+              <input
+                type="email"
+                name="email"
+                required
+                placeholder="no@brainer.cz"
+                class="fl-p-2/4 rounded bg-gray-950/70 text-gray-100 border border-gray-700 focus:ring focus:ring-blue-500 focus:outline-none"
+              />
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="font-medium fl-text-sm/base text-gray-300">
+                {t('Your Message')}
+              </span>
+              <textarea
+                name="message"
+                required
+                rows="5"
+                placeholder={t('Hello, ...')}
+                class="fl-p-2/4 rounded bg-gray-950/70 text-gray-100 border border-gray-700 focus:ring focus:ring-blue-500 focus:outline-none resize-y"
+              ></textarea>
+            </label>
+            <button
+              type="submit"
+              class="connect-button fl-py-2/4 fl-px-4/8 font-medium"
+            >
+              {t('Send')}
+            </button>
+          </form>
+        </article>
+      </section>
+      <aside
+        class="contact-discord panel"
+        aria-label={t('LaMaTeAm Discord community')}
       >
-        <label class="flex flex-col gap-1">
-          <span class="font-medium text-sm text-gray-300">Tvůj Email</span>
-          <input
-            type="email"
-            name="email"
-            required
-            placeholder="no@brainer.cz"
-            class="p-3 rounded-lg bg-gray-950/70 text-gray-100 border border-gray-700 focus:ring focus:ring-blue-500 focus:outline-none"
-          />
-        </label>
-
-        <label class="flex flex-col gap-1">
-          <span class="font-medium text-sm text-gray-300">Tvoja Zpráva</span>
-          <textarea
-            name="message"
-            required
-            rows="5"
-            placeholder="Ahoj, ..."
-            class="p-3 rounded-lg bg-gray-950/70 text-gray-100 border border-gray-700 focus:ring focus:ring-blue-500 focus:outline-none resize-none"
-          ></textarea>
-        </label>
-
-        <button
-          type="submit"
-          class="bg-blue-500 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium shadow-md transition"
-        >
-          Odeslat
-        </button>
-      </form>
-    </article>
+        <iframe
+          src="https://discord.com/widget?id=817862677886926900&theme=dark"
+          title={t('LaMaTeAm Discord community')}
+          class="community-widget"
+          loading="lazy"
+          sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+        />
+      </aside>
+    </div>
   </section>
+  <style>
+    .contact-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      width: 100%;
+      align-items: stretch;
+    }
+    .contact-content {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.5rem;
+      min-width: 0;
+    }
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+    }
+    .contact-form form {
+      flex: 1;
+    }
+    .contact-form form label:last-of-type {
+      flex: 1;
+    }
+    .contact-form textarea {
+      flex: 1;
+      min-height: 10rem;
+    }
+    .contact-brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .contact-brand img {
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+    .contact-brand h2 {
+      font-size: clamp(1.25rem, 1rem + 0.6vw, 1.75rem);
+      font-weight: 800;
+    }
+    .contact-brand p {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .contact-location {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1rem;
+      color: var(--muted);
+    }
+    .contact-discord .community-widget {
+      height: 100%;
+      min-height: 460px;
+    }
+    .contact-grid article,
+    .contact-grid aside {
+      min-width: 0;
+    }
+    @media (min-width: 800px) {
+      .contact-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+      }
+    }
+    @media (min-width: 1200px) {
+      .contact-content {
+        grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.15fr);
+        align-items: stretch;
+      }
+      .contact-info {
+        border-right: 1px solid var(--edge);
+        padding-right: 1.5rem;
+      }
+    }
+  </style>
 </Layout>

@@ -1,0 +1,923 @@
+---
+import { translator, clientCopy } from '../lib/page-copy';
+import { localeFromPath, type SiteLocale } from '../lib/localized-content';
+interface Props {
+  locale?: SiteLocale;
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
+const t = translator(locale);
+const thanks = {
+  en: 'Thanks for rating!',
+  cs: 'Díky za hodnocení!',
+  sk: 'Vďaka za hodnotenie!',
+  pl: 'Dzięki za ocenę!',
+  hu: 'Köszönjük az értékelést!',
+  de: 'Danke für deine Bewertung!',
+  uk: 'Дякуємо за оцінку!',
+  fr: 'Merci pour votre note !',
+}[locale];
+import { Image } from 'astro:assets';
+import mapsGenerated from '../data/maps.generated.json';
+
+const MAP_PLACEHOLDER = '/assets/map-placeholder.svg';
+// Measured local cache dimensions. Public images remain unprocessed; never
+// stretch the small HLstatsX thumbnails or infer sizes by fetching remotely.
+const mediumMaps = new Set([
+  'awp_india_v2',
+  'cs_assault_lama3',
+  'cs_compound',
+  'cs_havana',
+  'cs_italy',
+  'cs_militia',
+  'cs_office',
+  'de_aztec',
+  'de_cbble',
+  'de_dust_small_lt2025',
+  'de_dust',
+  'de_dust2',
+  'de_chateau',
+  'de_inferno',
+  'de_nuke',
+  'de_piranesi',
+  'de_port',
+  'de_prodigy',
+  'de_tides',
+  'de_train',
+]);
+const largerMaps: Record<string, [number, number]> = {
+  de_arabic2_lt: [1280, 1084],
+  de_paris_subway2: [1440, 900],
+  knas_Sandland_CSS: [640, 480],
+};
+const mapCards = (mapsGenerated.items ?? [])
+  .filter((item) => item.map !== 'min_players')
+  .map((item) => {
+    const sourceImage = item.image.startsWith('/assets/map-cache/')
+      ? item.image
+      : MAP_PLACEHOLDER;
+    const [width, height] =
+      sourceImage === MAP_PLACEHOLDER
+        ? [640, 360]
+        : (largerMaps[item.map] ??
+          (mediumMaps.has(item.map) ? [218, 164] : [160, 120]));
+    return {
+      name: item.map,
+      sourceImage,
+      width,
+      height,
+    };
+  });
+---
+
+<section
+  id="map-ratings-root"
+  class:list={[
+    'map-ratings-panel',
+    { 'panel fl-p-3/6': !compact, 'map-ratings-compact': compact },
+  ]}
+  aria-label={t('Available maps and ratings')}
+  data-locale={locale}
+  data-copy={JSON.stringify({
+    ...clientCopy(locale),
+    Rate: t('Rate'),
+    'Thanks for rating!': thanks,
+  })}
+>
+  <div class="map-ratings-intro" hidden={compact}>
+    <p class="fl-mb-2/4 fl-text-sm/base text-gray-300">
+      {t('All maps currently available on the LaMaTeAm server.')}
+    </p>
+    <p class="fl-mb-3/5 fl-text-sm/base text-gray-400">
+      {t(
+        'Community ratings are anonymous. Sign in with Steam to set or update your own rating.',
+      )}
+    </p>
+  </div>
+  <div class="ratings-notice fl-mb-3/5 sr-only">
+    <p id="map-ratings-status" role="status" aria-live="polite">
+      {mapCards.length
+        ? t('Loading map ratings…')
+        : t('No map list available to rate.')}
+    </p>
+    <button type="button" id="map-ratings-retry" class="ratings-retry" hidden>
+      {t('Retry loading ratings')}
+    </button>
+  </div>
+  <noscript>
+    <p class="fl-mb-3/5">
+      {t('Enable JavaScript to view and submit map ratings.')}
+    </p>
+  </noscript>
+  <section
+    class="random-map-widget"
+    aria-labelledby="random-map-title"
+    hidden={!compact || mapCards.length === 0}
+  >
+    <div class="random-map-prompt">
+      <h2 id="random-map-title">{t('Know this map? Rate it.')}</h2>
+      <p
+        id="random-map-announcement"
+        role="status"
+        aria-live="polite"
+        data-no-translate
+        class="sr-only"
+      ></p>
+    </div>
+    <div id="random-map-preview">
+      <p>{t('Loading a map…')}</p>
+    </div>
+    <div class="random-map-actions">
+      <button type="button" id="random-map-skip" class="ratings-retry">
+        {t('Never played')}
+      </button>
+    </div>
+  </section>
+  {mapCards.length === 0 ? (
+    <p role="status">{t('Could not load the maps.')}</p>
+  ) : (
+    <div class="rated-map-grid fl-gap-2/5" id="rated-map-grid" hidden={compact}>
+      {mapCards.map((map, index) => (
+        <article class="rated-map-card" data-map-rating={map.name}>
+          <div class="map-thumbnail">
+            <Image
+              src={map.sourceImage}
+              alt={
+                map.sourceImage === MAP_PLACEHOLDER
+                  ? t('Preview unavailable for {map}').replace(
+                      '{map}',
+                      map.name,
+                    )
+                  : t('{map} map preview').replace('{map}', map.name)
+              }
+              width={map.width}
+              height={map.height}
+              loading={!compact && index < 4 ? 'eager' : 'lazy'}
+              fetchpriority={!compact && index === 0 ? 'high' : 'auto'}
+              decoding="async"
+              data-map-image
+              translate="no"
+              style="max-width: 100%;"
+              onerror={`this.onerror=null;this.removeAttribute('srcset');this.src='${MAP_PLACEHOLDER}';this.alt=${JSON.stringify(t('Preview unavailable for {map}'))}.replace('{map}',this.closest('[data-map-rating]').dataset.mapRating);`}
+            />
+          </div>
+          <div class="map-card-content">
+            <h2 class="map-name" translate="no" data-no-translate>
+              {map.name}
+            </h2>
+            <p class="rating-summary" data-rating-summary data-no-translate>
+              {t('Ratings not loaded.')}
+            </p>
+            <form class="map-rating-form" data-rating-form>
+              <fieldset disabled>
+                <legend>
+                  {t('Rate')}{' '}
+                  <span translate="no" data-no-translate>
+                    {map.name}
+                  </span>
+                </legend>
+                <div class="rating-stars" data-stars="0">
+                  {[1, 2, 3, 4, 5].map((stars) => (
+                    <label
+                      class="rating-star"
+                      data-star={stars}
+                      title={t('{count} stars').replace(
+                        '{count}',
+                        String(stars),
+                      )}
+                    >
+                      <input type="radio" name="stars" value={stars} required />
+                      <span class="star-symbol" aria-hidden="true">
+                        ★
+                      </span>
+                      <span class="sr-only">
+                        {t('{count} stars').replace('{count}', String(stars))}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <div class="rating-actions">
+                <a
+                  href="/api/auth/steam"
+                  data-astro-reload
+                  class="rating-sign-in"
+                  data-rating-sign-in
+                  hidden
+                >
+                  {t('Sign in with Steam')}
+                </a>
+              </div>
+              <p
+                class="rating-feedback"
+                data-rating-feedback
+                role="status"
+                aria-live="polite"
+              ></p>
+            </form>
+          </div>
+        </article>
+      ))}
+    </div>
+  )}
+</section>
+<style>
+  .map-ratings-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem 1.5rem;
+    align-items: start;
+  }
+  .map-ratings-intro {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .ratings-notice {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .random-map-widget {
+    grid-column: 2;
+    grid-row: 1 / 4;
+  }
+  .rated-map-grid {
+    grid-column: 1 / -1;
+  }
+  .map-ratings-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0;
+  }
+  .map-ratings-compact .random-map-widget {
+    width: 100%;
+  }
+  .map-ratings-compact .ratings-notice {
+    order: 1;
+    margin: 0;
+  }
+  @media (max-width: 850px) {
+    .map-ratings-panel {
+      display: flex;
+      flex-direction: column;
+    }
+    .map-ratings-panel > :not(.sr-only) {
+      width: 100%;
+    }
+  }
+  [hidden] {
+    display: none !important;
+  }
+  .random-map-widget[hidden] {
+    display: none;
+  }
+  .random-map-widget {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 0;
+    padding: 0.5rem 0;
+    border: 0;
+    background: none;
+    align-items: center;
+  }
+  .random-map-widget :global(.rated-map-card) {
+    border: 0;
+    background: none;
+  }
+  .random-map-widget :global(.map-card-content) {
+    border-top: 0;
+  }
+  .random-map-widget :global(.rating-thanks) {
+    color: var(--accent);
+    animation: rating-thanks 0.45s ease-out both;
+  }
+  @keyframes rating-thanks {
+    from {
+      opacity: 0;
+      transform: translateY(0.4rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .random-map-widget :global(.rating-thanks) {
+      animation: none;
+    }
+  }
+  .random-map-widget :global(.map-thumbnail) {
+    min-height: 0;
+    height: auto;
+    padding: 0.35rem;
+    background: none;
+  }
+  .random-map-widget :global(.map-thumbnail img) {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    max-height: none;
+    object-fit: contain;
+  }
+  .random-map-widget :global(.map-card-content) {
+    padding: 0.5rem;
+  }
+  .random-map-widget :global(.map-rating-form fieldset) {
+    margin-top: 0.25rem;
+  }
+  .random-map-prompt h2 {
+    font-size: clamp(1rem, 0.85rem + 0.4vw, 1.3rem);
+    font-weight: 700;
+  }
+  .random-map-prompt p {
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    max-width: 48ch;
+  }
+  .random-map-caveat,
+  #random-map-announcement {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .random-map-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .random-map-widget :global(.map-rating-form) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 0.5rem;
+  }
+  .random-map-widget :global(fieldset) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .random-map-widget :global(#random-map-skip) {
+    grid-column: 2;
+    grid-row: 1;
+    max-width: 10ch;
+    padding-inline: 0.5rem;
+    background: transparent;
+    border: 0;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    line-height: 1.25;
+  }
+  .random-map-widget :global(#random-map-skip:hover) {
+    background: none;
+    color: var(--link);
+  }
+  .random-map-widget :global(#random-map-skip:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .random-map-widget :global(.rating-actions),
+  .random-map-widget :global(.rating-feedback) {
+    grid-column: 1 / -1;
+  }
+  .random-map-widget :global(.rating-stars) {
+    gap: 0;
+  }
+  .random-map-widget :global(.rating-star) {
+    min-width: 0;
+    flex: 1;
+  }
+  @media (max-width: 750px) {
+    .random-map-widget {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    #random-map-preview {
+      width: 100%;
+      margin-inline: auto;
+    }
+  }
+  .rated-map-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  }
+  .rated-map-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--edge);
+    border-radius: 10px;
+    background: #131f32;
+    transition: border-color 0.16s ease;
+  }
+  .rated-map-card:hover {
+    border-color: #60a5fa90;
+  }
+  .map-thumbnail {
+    min-height: 190px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+    background: radial-gradient(ellipse, #233853, #0c1422);
+  }
+  .map-thumbnail :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 4px;
+  }
+  .map-card-content {
+    padding: 0.75rem;
+    border-top: 1px solid var(--edge);
+  }
+  .map-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .rating-summary {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .map-rating-form fieldset {
+    border: 0;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    min-width: 0;
+  }
+  .map-rating-form legend {
+    font-size: 0.75rem;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .rating-stars {
+    display: flex;
+    gap: 0.125rem;
+  }
+  .rating-star {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .rating-star input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  .star-symbol {
+    font-size: 1.8rem;
+    color: #879ab6;
+  }
+  .rating-star:has(input:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .rating-star:hover .star-symbol,
+  .rating-star input:checked + .star-symbol {
+    color: #ffb41e;
+  }
+  .rating-stars[data-stars='1'] [data-star='1'] .star-symbol,
+  .rating-stars[data-stars='2'] [data-star='1'] .star-symbol,
+  .rating-stars[data-stars='2'] [data-star='2'] .star-symbol,
+  .rating-stars[data-stars='3'] [data-star='1'] .star-symbol,
+  .rating-stars[data-stars='3'] [data-star='2'] .star-symbol,
+  .rating-stars[data-stars='3'] [data-star='3'] .star-symbol,
+  .rating-stars[data-stars='4'] .rating-star:not([data-star='5']) .star-symbol,
+  .rating-stars[data-stars='5'] .star-symbol {
+    color: #ffb41e;
+  }
+  fieldset:disabled .rating-star {
+    cursor: default;
+    opacity: 0.65;
+  }
+  .rating-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+  .rating-save,
+  .ratings-retry {
+    min-height: 44px;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid #4772ab;
+    border-radius: 5px;
+    background: #203453;
+    color: #e7eef3;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .rating-save:not(:disabled):hover,
+  .ratings-retry:hover {
+    background: #294974;
+  }
+  .rating-sign-in {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--link);
+    font-size: 0.8rem;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .rating-sign-in[hidden],
+  .ratings-retry[hidden] {
+    display: none;
+  }
+  .rating-feedback {
+    min-height: 1.5em;
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .ratings-notice {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+</style>
+<script>
+  import { clientTranslator } from '../lib/client-copy';
+  type Rating = {
+    map: string;
+    average: number | null;
+    count: number;
+    userRating: number | null;
+    authenticated?: boolean;
+  };
+  let cleanupRatings: (() => void) | undefined;
+  function initializeMapRatings() {
+    cleanupRatings?.();
+    const grid = document.querySelector<HTMLElement>('#rated-map-grid');
+    const root = document.querySelector<HTMLElement>('#map-ratings-root');
+    const tc = clientTranslator(root);
+    const randomPreview = document.querySelector<HTMLElement>(
+      '#random-map-preview',
+    );
+    const randomSkip =
+      document.querySelector<HTMLButtonElement>('#random-map-skip');
+    const randomAnnouncement = document.querySelector<HTMLElement>(
+      '#random-map-announcement',
+    );
+    const status = document.querySelector<HTMLElement>('#map-ratings-status');
+    const retry =
+      document.querySelector<HTMLButtonElement>('#map-ratings-retry');
+    if (!grid || !status || !retry) return;
+    const bindings = new AbortController();
+    const requests = new Set<AbortController>();
+    const states = new Map<string, Rating>();
+    const busy = new Set<string>();
+    let advanceTimer: number | undefined;
+    let thankingMap: string | undefined;
+    const cards = Array.from(
+      grid.querySelectorAll<HTMLElement>('[data-map-rating]'),
+    );
+    const allCards = () => [
+      ...cards,
+      ...Array.from(
+        randomPreview?.querySelectorAll<HTMLElement>('[data-map-rating]') ?? [],
+      ),
+    ];
+    const matchingCards = (map: string) =>
+      allCards().filter((card) => card.dataset.mapRating === map);
+    const validRating = (value: unknown): value is Rating => {
+      if (!value || typeof value !== 'object') return false;
+      const r = value as Rating;
+      return (
+        typeof r.map === 'string' &&
+        Number.isSafeInteger(r.count) &&
+        r.count >= 0 &&
+        (r.average === null
+          ? r.count === 0
+          : typeof r.average === 'number' &&
+            Number.isFinite(r.average) &&
+            r.average >= 1 &&
+            r.average <= 5 &&
+            r.count > 0) &&
+        (r.userRating === null ||
+          (Number.isInteger(r.userRating) &&
+            r.userRating >= 1 &&
+            r.userRating <= 5)) &&
+        (r.authenticated === undefined || typeof r.authenticated === 'boolean')
+      );
+    };
+    const request = async (options?: RequestInit) => {
+      const controller = new AbortController();
+      requests.add(controller);
+      const timeout = window.setTimeout(() => controller.abort(), 12_000);
+      try {
+        const response = await fetch('/api/map-ratings', {
+          credentials: 'same-origin',
+          cache: 'no-store',
+          ...options,
+          signal: controller.signal,
+        });
+        const data: unknown = response.ok ? await response.json() : null;
+        return { ok: response.ok, status: response.status, data };
+      } finally {
+        window.clearTimeout(timeout);
+        requests.delete(controller);
+      }
+    };
+    const controls = (card: HTMLElement, rating?: Rating) => {
+      const fieldset = card.querySelector<HTMLFieldSetElement>('fieldset')!;
+      const signIn = card.querySelector<HTMLAnchorElement>(
+        '[data-rating-sign-in]',
+      )!;
+      const saving = busy.has(card.dataset.mapRating!);
+      card
+        .querySelector<HTMLFormElement>('form')
+        ?.setAttribute('aria-busy', String(saving));
+      fieldset.disabled =
+        !rating ||
+        rating.authenticated === false ||
+        saving ||
+        thankingMap === card.dataset.mapRating;
+      signIn.hidden =
+        !rating ||
+        (rating.authenticated !== false &&
+          (rating.authenticated === true || rating.userRating !== null));
+      const randomMap =
+        randomPreview?.querySelector<HTMLElement>('[data-map-rating]')?.dataset
+          .mapRating;
+      if (randomSkip)
+        randomSkip.disabled =
+          !!randomMap && (busy.has(randomMap) || thankingMap === randomMap);
+    };
+    const render = (card: HTMLElement, rating: Rating) => {
+      const summary = card.querySelector<HTMLElement>('[data-rating-summary]')!;
+      summary.hidden = false;
+      summary.textContent =
+        rating.count === 0
+          ? tc('No ratings yet.')
+          : tc('{average} / 5 · {count} ratings', {
+              average: rating.average!.toFixed(1),
+              count: rating.count,
+            });
+      card
+        .querySelectorAll<HTMLInputElement>('input[name="stars"]')
+        .forEach(
+          (input) =>
+            (input.checked = Number(input.value) === rating.userRating),
+        );
+      card.querySelector<HTMLElement>('.rating-stars')!.dataset.stars = String(
+        rating.userRating ?? 0,
+      );
+      controls(card, rating);
+    };
+    let loading = false;
+    let pool: HTMLElement[] = [];
+    let previousMap: string | undefined;
+    const chooseRandomMap = () => {
+      if (
+        !randomPreview ||
+        !randomAnnouncement ||
+        busy.has(previousMap ?? '') ||
+        thankingMap !== undefined ||
+        !cards.length
+      )
+        return;
+      if (!pool.length) {
+        pool = [...cards];
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        if (pool.length > 1 && pool.at(-1)?.dataset.mapRating === previousMap)
+          [pool[0], pool[pool.length - 1]] = [pool[pool.length - 1], pool[0]];
+      }
+      const card = pool.pop()!.cloneNode(true) as HTMLElement;
+      // A sibling of the disabled rating fieldset, never a submit control.
+      // Keep the same button and listener when replacing the preview.
+      if (randomSkip)
+        (card.querySelector('form')! as ParentNode).append(randomSkip);
+      // Keep the accessible fieldset name, not a duplicate visible heading.
+      card.querySelector('legend')?.classList.add('sr-only');
+      const map = card.dataset.mapRating!;
+      previousMap = map;
+      card.querySelector<HTMLElement>('[data-rating-feedback]')!.textContent =
+        '';
+      const image = card.querySelector<HTMLImageElement>('img');
+      if (image) {
+        image.loading = 'lazy';
+        image.fetchPriority = 'auto';
+      }
+      randomPreview.replaceChildren(card);
+      const rating = states.get(map);
+      card.querySelector<HTMLElement>('[data-rating-summary]')!.hidden =
+        !rating;
+      if (rating && !loading) render(card, rating);
+      else controls(card);
+      randomAnnouncement.textContent = map;
+    };
+    randomSkip?.addEventListener('click', chooseRandomMap, {
+      signal: bindings.signal,
+    });
+    chooseRandomMap();
+    const load = async () => {
+      if (loading || busy.size) return;
+      loading = true;
+      retry.disabled = true;
+      status.textContent = tc('Loading map ratings…');
+      allCards().forEach((card) => controls(card));
+      try {
+        const response = await request({
+          headers: { Accept: 'application/json' },
+        });
+        if (!response.ok) throw new Error('Unavailable');
+        const data = response.data as {
+          authenticated?: unknown;
+          ratings?: unknown;
+        } | null;
+        if (
+          !data ||
+          typeof data.authenticated !== 'boolean' ||
+          !Array.isArray(data.ratings) ||
+          !data.ratings.every(validRating)
+        )
+          throw new Error('Invalid ratings');
+        const authenticated = data.authenticated;
+        const ratings = new Map<string, Rating>(
+          data.ratings.map((rating) => [
+            rating.map,
+            { ...rating, authenticated },
+          ]),
+        );
+        if (
+          ratings.size !== data.ratings.length ||
+          cards.some((card) => !ratings.has(card.dataset.mapRating!))
+        )
+          throw new Error('Incomplete ratings');
+        if (bindings.signal.aborted) return;
+        states.clear();
+        ratings.forEach((rating, map) => states.set(map, rating));
+        allCards().forEach((card) =>
+          render(card, states.get(card.dataset.mapRating!)!),
+        );
+        status.textContent = `${tc('Rate')} · 1–5 ★`;
+        retry.hidden = true;
+      } catch {
+        if (bindings.signal.aborted) return;
+        states.clear();
+        status.textContent = tc('Ratings unavailable.');
+        retry.hidden = true;
+        allCards().forEach((card) => {
+          card.querySelector<HTMLElement>(
+            '[data-rating-summary]',
+          )!.textContent = tc('Ratings unavailable.');
+          if (randomPreview?.contains(card))
+            card.querySelector<HTMLElement>('[data-rating-summary]')!.hidden =
+              true;
+          controls(card);
+        });
+      } finally {
+        loading = false;
+        retry.disabled = false;
+      }
+    };
+    (root ?? grid).addEventListener(
+      'change',
+      (event) => {
+        if (!(event.target instanceof HTMLInputElement)) return;
+        const card = event.target.closest<HTMLElement>('[data-map-rating]');
+        if (!card) return;
+        card.querySelector<HTMLElement>('.rating-stars')!.dataset.stars =
+          event.target.value;
+        const form = event.target.closest<HTMLFormElement>('form');
+        if (form) void saveRating({ target: form, preventDefault() {} });
+      },
+      { signal: bindings.signal },
+    );
+    const saveRating = async (event: {
+      target: EventTarget | null;
+      preventDefault(): void;
+    }) => {
+      event.preventDefault();
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      const card = form.closest<HTMLElement>('[data-map-rating]')!;
+      const map = card.dataset.mapRating!;
+      const rating = states.get(map);
+      const selected = form.querySelector<HTMLInputElement>('input:checked');
+      if (
+        !rating ||
+        rating.authenticated === false ||
+        !selected ||
+        busy.has(map) ||
+        thankingMap === map ||
+        loading
+      )
+        return;
+      const stars = Number(selected.value);
+      if (stars === rating.userRating) return;
+      if (!Number.isInteger(stars) || stars < 1 || stars > 5) return;
+      const feedback = form.querySelector<HTMLElement>(
+        '[data-rating-feedback]',
+      )!;
+      busy.add(map);
+      matchingCards(map).forEach((item) => controls(item, rating));
+      feedback.textContent = tc('Saving your rating…');
+      try {
+        const response = await request({
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({ map, stars }),
+        });
+        if (bindings.signal.aborted) return;
+        if (response.status === 401) {
+          // Authentication is session-wide, not a separate identity per map.
+          allCards().forEach((other) => {
+            const previous = states.get(other.dataset.mapRating!);
+            if (previous) {
+              previous.authenticated = false;
+              render(other, previous);
+            }
+          });
+          feedback.textContent = tc('Sign in with Steam to save your rating.');
+          return;
+        }
+        if (!response.ok) throw new Error('Unavailable');
+        const updated = response.data;
+        if (
+          !validRating(updated) ||
+          updated.map !== map ||
+          updated.userRating !== stars
+        )
+          throw new Error('Invalid rating');
+        if (bindings.signal.aborted) return;
+        const saved = { ...updated, authenticated: true };
+        states.set(map, saved);
+        matchingCards(map).forEach((item) => render(item, saved));
+        feedback.textContent = tc(
+          'Your rating is saved. You can change it anytime.',
+        );
+        if (randomPreview?.contains(card)) {
+          thankingMap = map;
+          feedback.textContent = `🎉 ${tc('Thanks for rating!')}`;
+          feedback.classList.add('rating-thanks');
+          advanceTimer = window.setTimeout(() => {
+            advanceTimer = undefined;
+            thankingMap = undefined;
+            if (bindings.signal.aborted) return;
+            matchingCards(map).forEach((item) =>
+              controls(item, states.get(map)),
+            );
+            const restoreFocus = card.contains(document.activeElement);
+            chooseRandomMap();
+            if (restoreFocus)
+              randomPreview
+                .querySelector<HTMLInputElement>('input[name="stars"]')
+                ?.focus();
+          }, 1100);
+        }
+      } catch {
+        if (!bindings.signal.aborted) {
+          // Roll back optimistic radio selection so the same star can retry.
+          matchingCards(map).forEach((item) => render(item, rating));
+          feedback.textContent = tc(
+            'Could not confirm your rating. Check your connection and try again.',
+          );
+        }
+      } finally {
+        busy.delete(map);
+        if (!bindings.signal.aborted)
+          matchingCards(map).forEach((item) => controls(item, states.get(map)));
+      }
+    };
+    (root ?? grid).addEventListener('submit', saveRating, {
+      signal: bindings.signal,
+    });
+    retry.addEventListener('click', () => void load(), {
+      signal: bindings.signal,
+    });
+    window.addEventListener('online', () => void load(), {
+      signal: bindings.signal,
+    });
+    cleanupRatings = () => {
+      bindings.abort();
+      window.clearTimeout(advanceTimer);
+      requests.forEach((controller) => controller.abort());
+      requests.clear();
+    };
+    void load();
+  }
+  initializeMapRatings();
+  document.addEventListener('astro:page-load', initializeMapRatings);
+  document.addEventListener('astro:before-swap', () => cleanupRatings?.());
+</script>

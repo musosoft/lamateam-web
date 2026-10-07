@@ -1,44 +1,99 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { translator } from '../lib/page-copy';
+import { localeFromPath, type SiteLocale } from '../lib/localized-content';
+interface Props {
+  locale?: SiteLocale;
+}
+const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
+const t = translator(locale);
 import { Icon } from 'astro-icon/components';
 ---
 
-<Layout title="Fixy FPS | LaMaTeam">
-  <section class="mx-auto w-full max-w-5xl px-4 py-8 text-left text-gray-100">
-    <header class="mb-6 rounded-2xl border border-gray-700 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Málo FPS / blbnú zvuky / radar</h1>
-      <p class="mt-2 text-sm text-gray-300 md:text-base">Skús postupne tieto fixy.</p>
+<Layout title={t('FPS Fixes | LaMaTeAm')} lang={locale}>
+  <section class="w-full fl-py-2/5 text-left text-gray-100">
+    <header class="fl-mb-4/6 page-heading">
+      <h1 class="fl-text-2xl/4xl font-bold tracking-tight">
+        {t('FPS, Sound & Radar Fixes')}
+      </h1>
     </header>
-
-    <article class="space-y-4 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
+    <article class="space-y-4 panel fl-p-3/6 text-gray-200">
+      <p class="fl-text-sm/base text-gray-300">
+        {t('Try these fixes in order.')}
+      </p>
       <div>
-        <p class="mb-2 text-lg font-semibold">1) Magický fix</p>
-        <div class="inline-flex items-center gap-3 rounded-lg bg-gray-950/70 p-3 text-sm">
-          <span class="copy-content">exec config;exec autoexec;record null;stop;soundscape_flush;snd_restart;hud_reloadscheme;overview_mode 1</span>
-          <button onclick="copyToClipboard(this)" class="text-gray-400 hover:text-white"><Icon name="mdi:content-copy" class="h-5 w-5"/></button>
+        <p class="fl-mb-2/4 fl-text-lg/2xl font-semibold">
+          {t('1) Quick Fix')}
+        </p>
+        <div class="inline-flex flex-wrap items-center fl-gap-2/4 rounded bg-gray-950/70 fl-p-2/4 fl-text-sm/base">
+          <span class="copy-content" translate="no">
+            exec config;exec autoexec;record
+            null;stop;soundscape_flush;snd_restart;hud_reloadscheme;overview_mode
+            1
+          </span>
+          <button
+            onclick="copyToClipboard(this)"
+            aria-label={t('Copy quick fix command')}
+            class="text-gray-400 hover:text-white"
+          >
+            <Icon name="mdi:content-copy" class="h-5 w-5" />
+          </button>
         </div>
       </div>
       <div>
-        <p class="mb-2 text-lg font-semibold">2) Retry</p>
-        <div class="inline-flex items-center gap-3 rounded-lg bg-gray-950/70 p-3 text-sm">
-          <span class="copy-content">retry</span>
-          <button onclick="copyToClipboard(this)" class="text-gray-400 hover:text-white"><Icon name="mdi:content-copy" class="h-5 w-5"/></button>
+        <p class="fl-mb-2/4 fl-text-lg/2xl font-semibold">{t('2) Retry')}</p>
+        <div class="inline-flex flex-wrap items-center fl-gap-2/4 rounded bg-gray-950/70 fl-p-2/4 fl-text-sm/base">
+          <span class="copy-content" translate="no">
+            retry
+          </span>
+          <button
+            onclick="copyToClipboard(this)"
+            aria-label={t('Copy retry command')}
+            class="text-gray-400 hover:text-white"
+          >
+            <Icon name="mdi:content-copy" class="h-5 w-5" />
+          </button>
         </div>
       </div>
       <div>
-        <p class="mb-2 text-lg font-semibold">3) CFG fix: <kbd class="px-2 py-1 text-xs font-semibold text-gray-100 bg-gray-700 border border-gray-200 rounded-lg shadow-sm">Win</kbd> + <kbd class="px-2 py-1 text-xs font-semibold text-gray-100 bg-gray-700 border border-gray-200 rounded-lg shadow-sm">X</kbd> → <small>Terminal/PowerShell (Admin)</small></p>
-        <div class="inline-flex items-center gap-3 rounded-lg bg-gray-950/70 p-3 text-sm">
-          <span class="copy-content">irm lamateam.eu/setup | iex</span>
-          <button onclick="copyToClipboard(this)" class="text-gray-400 hover:text-white"><Icon name="mdi:content-copy" class="h-5 w-5"/></button>
+        <p class="fl-mb-2/4 fl-text-lg/2xl font-semibold">
+          {t('3) CFG fix:')}{' '}
+          <kbd
+            class="fl-px-2/3 py-1 fl-text-xs/sm font-semibold text-gray-100 bg-gray-700 border border-gray-200 rounded"
+            translate="no"
+          >
+            Win
+          </kbd>{' '}
+          +{' '}
+          <kbd
+            class="fl-px-2/3 py-1 fl-text-xs/sm font-semibold text-gray-100 bg-gray-700 border border-gray-200 rounded"
+            translate="no"
+          >
+            X
+          </kbd>{' '}
+          → <small>{t('Terminal/PowerShell (Admin)')}</small>
+        </p>
+        <div class="inline-flex flex-wrap items-center fl-gap-2/4 rounded bg-gray-950/70 fl-p-2/4 fl-text-sm/base">
+          <span class="copy-content" translate="no">
+            irm lamateam.eu/setup | iex
+          </span>
+          <button
+            onclick="copyToClipboard(this)"
+            aria-label={t('Copy setup command')}
+            class="text-gray-400 hover:text-white"
+          >
+            <Icon name="mdi:content-copy" class="h-5 w-5" />
+          </button>
         </div>
       </div>
     </article>
   </section>
 </Layout>
-
 <script is:inline>
   async function copyToClipboard(button) {
-    const content = button.parentElement.querySelector('.copy-content')?.innerText?.trim();
+    const content = button.parentElement
+      .querySelector('.copy-content')
+      ?.innerText?.trim();
     if (!content) return;
     await navigator.clipboard.writeText(content);
   }

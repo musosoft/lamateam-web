@@ -1,23 +1,13 @@
-// src/pages/api/auth/steam.ts
 import type { APIRoute } from "astro";
+import { env } from "cloudflare:workers";
+import { createSteamOpenIdHandlers } from "../../../lib/steam-openid";
 
-export const GET: APIRoute = async ({ url }) => {
-  const returnTo = `${url.origin}/api/auth/steam/callback`;
-  const realm = url.origin;
+const handlers = createSteamOpenIdHandlers({
+  site: import.meta.env.SITE || undefined,
+  secret: () =>
+    import.meta.env.DEV ? import.meta.env.STEAM_API_KEY : env.STEAM_API_KEY,
+  fetch,
+});
 
-  const params = new URLSearchParams({
-    "openid.ns": "http://specs.openid.net/auth/2.0",
-    "openid.mode": "checkid_setup",
-    "openid.return_to": returnTo,
-    "openid.realm": realm,
-    "openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
-    "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
-  });
-
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: `https://steamcommunity.com/openid/login?${params.toString()}`,
-    },
-  });
-};
+export const GET: APIRoute = ({ request, cookies }) =>
+  handlers.start(request, cookies);

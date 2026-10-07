@@ -1,0 +1,303 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { loadHlstatsPlayers } from '../lib/hlstats';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+// Worker secret binding only: never read visitor headers or expose it in markup.
+const statsEnv = env as typeof env & { HLSTATS_WAF_BYPASS_TOKEN?: string };
+const { players, fetchedAt, stale, error } = await loadHlstatsPlayers(
+  statsEnv.HLSTATS_WAF_BYPASS_TOKEN,
+);
+Astro.response.headers.set('Cache-Control', 'no-store');
+if (error && players.length === 0) Astro.response.status = 503;
+const updated = fetchedAt !== null ? new Date(fetchedAt).toISOString() : null;
+const numberFormat = new Intl.NumberFormat('en');
+const formatNumber = (value: number | null) =>
+  value === null ? 'Not available' : numberFormat.format(value);
+---
+
+<Layout
+  title="Player Rankings | LaMaTeAm"
+  description="LaMaTeAm Counter-Strike: Source player rankings and match statistics from HLstatsX."
+>
+  <section class="stats-page w-full fl-py-2/5 text-left">
+    <header class="page-heading fl-mb-4/6">
+      <p class="eyebrow mb-2">Counter-Strike: Source · HLstatsX</p>
+      <h1 class="fl-text-2xl/4xl font-bold tracking-tight">Player Rankings</h1>
+      <p class="stats-intro mt-3">
+        Public player rankings from HLstatsX. This page shows the first page of
+        players, not the full player list.
+      </p>
+    </header>
+    <section class="panel fl-p-3/6 stats-content">
+      <div class="stats-summary" id="stats-summary">
+        <p>
+          <strong>{numberFormat.format(players.length)}</strong>
+          {players.length === 1 ? ' player shown' : ' players shown'}
+        </p>
+        <p>
+          {updated ? (
+            <>
+              Last updated{' '}
+              <time datetime={updated}>
+                {updated.replace('T', ' ').replace(/\.\d+Z$/, ' UTC')}
+              </time>
+            </>
+          ) : (
+            'No update available yet.'
+          )}
+        </p>
+      </div>
+
+      {players.length === 0 ? (
+        <div class="stats-state" role="status">
+          <h2>
+            {error ? 'Rankings temporarily unavailable' : 'No players found'}
+          </h2>
+          <p>
+            {error
+              ? 'HLstatsX could not be loaded. Please try again later.'
+              : 'HLstatsX returned an empty player list. Check back later for rankings.'}
+          </p>
+          {stale && <p>The last available player list was empty.</p>}
+        </div>
+      ) : (
+        <>
+          {(stale || error) && (
+            <div class="stats-notice" role="status">
+              <strong>Showing the last available rankings.</strong> HLstatsX
+              could not be refreshed. These statistics may be out of date.
+            </div>
+          )}
+          <p id="stats-scroll-help" class="stats-scroll-help">
+            On smaller screens, scroll the table sideways to see all statistics.
+          </p>
+          <div
+            class="stats-table-scroll panel"
+            role="region"
+            aria-label="Player rankings"
+            aria-describedby="stats-scroll-help"
+            tabindex="0"
+          >
+            <table aria-describedby="stats-summary stats-key">
+              <caption>HLstatsX player rankings · first page</caption>
+              <thead>
+                <tr>
+                  <th scope="col" class="numeric">
+                    Rank
+                  </th>
+                  <th scope="col">Player</th>
+                  <th scope="col">Country</th>
+                  <th scope="col" class="numeric">
+                    Skill
+                  </th>
+                  <th scope="col" class="numeric">
+                    Kills
+                  </th>
+                  <th scope="col" class="numeric">
+                    Deaths
+                  </th>
+                  <th scope="col" class="numeric">
+                    Kills / death
+                  </th>
+                  <th scope="col" class="numeric">
+                    Headshots
+                  </th>
+                  <th scope="col" class="numeric">
+                    Accuracy
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((player) => (
+                  <tr>
+                    <td class="numeric player-rank">{player.rank}</td>
+                    <th scope="row" class="player-name">
+                      <span class="player-identity">
+                        {player.rankUrl && (
+                          <img
+                            class="rank-badge"
+                            src={player.rankUrl}
+                            alt={`HLstatsX rank badge for ${player.name}`}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        )}
+                        <span>{player.name}</span>
+                      </span>
+                    </th>
+                    <td>
+                      <span class="country">
+                        {player.flagUrl && (
+                          <img
+                            class="country-flag"
+                            src={player.flagUrl}
+                            alt={
+                              player.flagAlt ||
+                              `${player.country || 'Country'} flag`
+                            }
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        )}
+                        <span>{player.country || 'Not available'}</span>
+                      </span>
+                    </td>
+                    <td class="numeric skill">{formatNumber(player.skill)}</td>
+                    <td class="numeric">{formatNumber(player.kills)}</td>
+                    <td class="numeric">{formatNumber(player.deaths)}</td>
+                    <td class="numeric">{player.kpd ?? 'Not available'}</td>
+                    <td class="numeric">{formatNumber(player.headshots)}</td>
+                    <td class="numeric">
+                      {player.accuracy ?? 'Not available'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p id="stats-key" class="stats-key">
+            Skill is the HLstatsX rating. Kills / death is the kill-to-death
+            ratio. Missing statistics are marked “Not available”.
+          </p>
+        </>
+      )}
+    </section>
+  </section>
+</Layout>
+
+<style>
+  .stats-page {
+    min-width: 0;
+  }
+  .stats-intro,
+  .stats-summary,
+  .stats-scroll-help,
+  .stats-key {
+    color: var(--muted);
+  }
+  .stats-intro {
+    max-width: 65ch;
+  }
+  .stats-summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+  }
+  .stats-summary strong {
+    color: #e7eef3;
+    font-variant-numeric: tabular-nums;
+  }
+  .stats-state {
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border: 1px solid var(--edge);
+    border-radius: 8px;
+    background: linear-gradient(145deg, #1a2b45, var(--surface) 65%);
+  }
+  .stats-state h2 {
+    margin-bottom: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+  .stats-state p {
+    color: var(--muted);
+  }
+  .stats-notice {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #8d713c;
+    border-radius: 6px;
+    background: #322b1b;
+    color: #fde4a7;
+  }
+  .stats-scroll-help,
+  .stats-key {
+    margin-block: 0.75rem;
+    font-size: 0.8125rem;
+  }
+  .stats-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-color: #4878b6 #131f32;
+  }
+  .stats-table-scroll:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+  table {
+    width: 100%;
+    min-width: 64rem;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.875rem;
+  }
+  caption {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: #e7eef3;
+    background: #16263d;
+    border-bottom: 1px solid var(--edge);
+  }
+  th,
+  td {
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
+  }
+  thead th {
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-top: 1px solid var(--edge);
+  }
+  tbody th {
+    font-weight: 600;
+  }
+  .numeric {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .player-rank,
+  .skill {
+    color: #93c5fd;
+    font-weight: 700;
+  }
+  .player-name {
+    min-width: 13rem;
+    max-width: 22rem;
+    white-space: nowrap;
+  }
+  .player-identity,
+  .country {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+  .country {
+    min-width: 7rem;
+    white-space: nowrap;
+  }
+  .rank-badge {
+    width: 1.75rem;
+    max-height: 2rem;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  .country-flag {
+    width: 1.25rem;
+    max-height: 1rem;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  @media (max-width: 700px) {
+    th,
+    td {
+      padding: 0.75rem;
+    }
+  }
+</style>

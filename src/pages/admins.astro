@@ -1,88 +1,162 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { translator } from '../lib/page-copy';
+import { localeFromPath, type SiteLocale } from '../lib/localized-content';
+interface Props {
+  locale?: SiteLocale;
+}
+const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
+const t = translator(locale);
 
 const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
 ---
 
-<Layout title="Admini | LaMaTeam">
-  <section class="mx-auto w-full max-w-6xl px-4 py-8 text-left text-gray-100">
-    <header class="mb-6 rounded-2xl border border-gray-700 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Admini</h1>
+<Layout title={t('Admins | LaMaTeAm')} lang={locale}>
+  <section class="w-full fl-py-2/5 text-left text-gray-100">
+    <header class="fl-mb-4/6 page-heading">
+      <h1 class="fl-text-2xl/4xl font-bold tracking-tight">{t('Admins')}</h1>
     </header>
-
-    <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
-      <ul class="flex flex-wrap items-center gap-2 text-sm text-gray-200">
-        {admins.map((name) => <li class="rounded-lg border border-gray-700 bg-gray-950/70 px-3 py-2 font-semibold">{name}</li>)}
+    <article class="space-y-6 panel fl-p-3/6 text-gray-200">
+      <ul
+        translate="no"
+        class="flex flex-wrap items-center fl-gap-2/4 fl-text-sm/base text-gray-200"
+      >
+        {admins.map((name) => (
+          <li class="rounded-lg border border-gray-700 bg-gray-950/70 px-3 py-2 font-semibold">
+            {name}
+          </li>
+        ))}
       </ul>
-    </article>
-
-    <header class="mt-8 mb-6 rounded-2xl border border-gray-700 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h2 class="text-2xl font-extrabold tracking-tight md:text-3xl">Administrátorská pravidla</h2>
-      <p class="mt-2 text-sm text-gray-300 md:text-base"><em>Neznalost pravidel neomlouvá.</em></p>
-    </header>
-
-    <article class="space-y-6 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg text-gray-200">
+      <header>
+        <h2 class="fl-text-xl/3xl font-bold tracking-tight">
+          {t('Admin Rules')}
+        </h2>
+        <p class="fl-mt-2/4 fl-text-sm/base text-gray-300">
+          <em>{t('Not knowing the rules is no excuse.')}</em>
+        </p>
+      </header>
       <section>
-        <h3 class="text-xl font-bold">1. Základní povinnosti Admina</h3>
+        <h3 class="fl-text-lg/2xl font-bold">
+          {t('1. Basic Admin Responsibilities')}
+        </h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li><strong>Atmosféra a chování</strong> — Vytvářejte přátelskou atmosféru, nepovyšujte se nad běžné hráče, nezneužívejte práva.</li>
-          <li><strong>Dodržování pravidel</strong> — Admin musí dodržovat stejná pravidla jako hráči, neměnit mapy/vote bez důvodu.</li>
-          <li><strong>Aktivita a komunikace</strong> — Buďte aktivní, při delší neaktivitě se omluvte předem.</li>
+          <li>
+            <strong>{t('Atmosphere and conduct')}</strong>{' '}
+            {t(
+              '— Create a friendly atmosphere, do not act superior to regular players, and do not abuse your privileges.',
+            )}
+          </li>
+          <li>
+            <strong>{t('Following the rules')}</strong>{' '}
+            {t(
+              '— Admins must follow the same rules as players and must not change maps or start votes without a valid reason.',
+            )}
+          </li>
+          <li>
+            <strong>{t('Activity and communication')}</strong>{' '}
+            {t(
+              '— Stay active and give advance notice if you will be away for an extended period.',
+            )}
+          </li>
         </ul>
       </section>
-
       <section>
-        <h3 class="text-xl font-bold">2. Postup při trestání</h3>
+        <h3 class="fl-text-lg/2xl font-bold">
+          {t('2. Enforcement Procedure')}
+        </h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li><strong>Sekvence trestů</strong> — upozornění → varování → kick/kratší ban, delší ban s důkazem.</li>
-          <li><strong>Důkazy</strong> — při cheatech nahrávat demo/screenshoty, uchovat alespoň 14 dní.</li>
-          <li><strong>Odůvodnění</strong> — vždy pravdivý a slušný důvod trestu.</li>
-          <li><strong>Respektování kolegů</strong> — neměnit tresty jiných adminů bez domluvy.</li>
+          <li>
+            <strong>{t('Escalation')}</strong>{' '}
+            {t(
+              '— reminder → warning → kick/short ban; longer bans require evidence.',
+            )}
+          </li>
+          <li>
+            <strong>{t('Evidence')}</strong>{' '}
+            {t(
+              '— Record a demo or take screenshots when dealing with cheats, and keep the evidence for at least 14 days.',
+            )}
+          </li>
+          <li>
+            <strong>{t('Reason')}</strong>{' '}
+            {t(
+              '— Always provide a truthful and respectful reason for a punishment.',
+            )}
+          </li>
+          <li>
+            <strong>{t('Respect for other admins')}</strong>{' '}
+            {t(
+              "— Do not change another admin's punishment without discussing it first.",
+            )}
+          </li>
         </ul>
       </section>
-
       <section>
-        <h3 class="text-xl font-bold">3. Jak na cheatery</h3>
+        <h3 class="fl-text-lg/2xl font-bold">
+          {t('3. Dealing with Cheaters')}
+        </h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li>Diskrétně sledovat podezřelého hráče.</li>
-          <li>Nahrát demo příkazem <code>record &lt;nazev&gt;</code>, ukončit <code>stop</code>.</li>
-          <li>Ověřit STEAMID přes <code>status</code>.</li>
-          <li>Při jasném cheatu udělit ban.</li>
+          <li>{t('Observe the suspected player discreetly.')}</li>
+          <li>
+            {t('Record a demo with')}{' '}
+            <code translate="no">record &lt;demo_name&gt;</code>{' '}
+            {t('and finish it with')} <code translate="no">stop</code>.
+          </li>
+          <li>
+            {t('Verify the SteamID with')} <code translate="no">status</code>.
+          </li>
+          <li>{t('Issue a ban when the cheating is clear.')}</li>
         </ul>
       </section>
-
       <section>
-        <h3 class="text-xl font-bold">4. Chování k hráčům</h3>
+        <h3 class="fl-text-lg/2xl font-bold">
+          {t('4. Conduct Toward Players')}
+        </h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li>Pomáhat hráčům, ale nevyhovovat neodůvodněným požadavkům.</li>
-          <li>Urážky/spam řešit postupně (mute/gag, kick, ban).</li>
+          <li>{t('Help players, but do not grant unreasonable requests.')}</li>
+          <li>
+            {t('Handle insults and spam progressively (mute/gag, kick, ban).')}
+          </li>
         </ul>
       </section>
-
       <section>
-        <h3 class="text-xl font-bold">5. Příkazy a manipulace s týmy</h3>
+        <h3 class="fl-text-lg/2xl font-bold">
+          {t('5. Commands and Team Management')}
+        </h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li>Používat admin příkazy adekvátně situaci.</li>
-          <li>SwapTeam jen při jasně nevyrovnané hře.</li>
-          <li>Mapy/vote jen při nutnosti (bug, selhání pluginu, hromadný odchod).</li>
+          <li>{t('Use admin commands appropriately for the situation.')}</li>
+          <li>
+            {t('Use SwapTeam only when the teams are clearly unbalanced.')}
+          </li>
+          <li>
+            {t(
+              'Change maps or start votes only when necessary (bug, plugin failure, or a large number of players leaving).',
+            )}
+          </li>
         </ul>
       </section>
-
       <section>
-        <h3 class="text-xl font-bold">6. Sankce pro Adminy</h3>
+        <h3 class="fl-text-lg/2xl font-bold">{t('6. Penalties for Admins')}</h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li>Hlavní admini mohou kontrolovat logy a důkazy.</li>
-          <li>Opakované nebo závažné porušení může vést k odebrání práv.</li>
-          <li>O navrácení práv rozhodují hlavní admini.</li>
+          <li>{t('Head admins may review logs and evidence.')}</li>
+          <li>
+            {t(
+              'Repeated or serious violations may result in the removal of admin privileges.',
+            )}
+          </li>
+          <li>
+            {t('Head admins decide whether privileges will be restored.')}
+          </li>
         </ul>
       </section>
-
       <section>
-        <h3 class="text-xl font-bold">7. Závěrem</h3>
+        <h3 class="fl-text-lg/2xl font-bold">{t('7. Final Notes')}</h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
-          <li>Admin je tu pro komunitu a férovou hru.</li>
-          <li>Zachovej chladnou hlavu a slušnou komunikaci.</li>
-          <li>Při nejasnostech kontaktuj hlavní adminy.</li>
+          <li>
+            {t('Admins are here to support the community and fair play.')}
+          </li>
+          <li>{t('Stay calm and communicate respectfully.')}</li>
+          <li>{t('Contact the head admins if anything is unclear.')}</li>
         </ul>
       </section>
     </article>

@@ -1,5 +1,6 @@
 {
   "name": "lamateam-web",
+  "account_id": "35fb1fa78fd6e4b3fec59816541918fd",
   "compatibility_date": "2026-01-20",
   "main": "@astrojs/cloudflare/entrypoints/server",
   "assets": {
@@ -23,6 +24,14 @@
   },
   "kv_namespaces": [
     { "binding": "SESSION", "id": "78ed4236838944ed86f5f0cedbac92c6" },
+  ],
+  // Approximate, per-colo burst protection; not a global usage or spend cap.
+  "ratelimits": [
+    {
+      "name": "TRANSLATION_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 6, "period": 60 },
+    },
   ],
   "observability": {
     "logs": { "enabled": true },
