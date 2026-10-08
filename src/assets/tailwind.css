@@ -1860,7 +1860,7 @@ body.is-game:has(#live-chat-panel[hidden]) {
 .is-game.motd-home .motd-top-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: space-between;
   gap: var(--motd-space);
   min-width: 0;
@@ -1876,7 +1876,9 @@ body.is-game:has(#live-chat-panel[hidden]) {
   flex: 1 1 15rem;
   max-width: 24rem;
   min-width: 0;
-  height: 14rem;
+  /* Reserve a compact, type-scaled slot without changing height on API load.
+     Auto-sized siblings stretch to this same height when sharing its row. */
+  height: 11.5em;
   overflow-y: auto;
 }
 .is-game.motd-home [data-motd-stats-state] {

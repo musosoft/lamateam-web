@@ -442,6 +442,23 @@ test(
               };
             });
             assert.equal(geometry.overflow, false);
+            assert.ok(
+              geometry.boxes[1].height <= 184,
+              "compact stats slot follows capped MOTD type scale",
+            );
+            if (width === 1920) {
+              const [welcome, stats, rating] = geometry.boxes;
+              for (const panel of [welcome, rating]) {
+                assert.ok(
+                  Math.abs(panel.y - stats.y) < 1,
+                  "wide panels share a row",
+                );
+                assert.ok(
+                  Math.abs(panel.height - stats.height) < 1,
+                  "wide panels have equal height",
+                );
+              }
+            }
             if (!statsSlotGeometry) statsSlotGeometry = geometry.boxes[1];
             assert.deepEqual(
               geometry.boxes[1],
@@ -653,6 +670,16 @@ test(
         userAgent: "Mozilla/5.0 Chromium",
       });
       const web = await desktop.newPage();
+      await web.goto(process.env.LAMATEAM_UI_URL);
+      assert.equal(
+        (await web.locator(".footer-copy").textContent()).trim(),
+        "© LaMaTeAm: crazy69 • web & server: muso.sk",
+      );
+      await web.goto(`${process.env.LAMATEAM_UI_URL}/sk/`);
+      assert.equal(
+        (await web.locator(".footer-copy").textContent()).trim(),
+        "© LaMaTeAm: crazy69 • web & server: muso.sk",
+      );
       await web.goto(process.env.LAMATEAM_UI_URL);
       assert.equal(
         await web.locator('.desktop-community a[href*="sourcetv"]').count(),
