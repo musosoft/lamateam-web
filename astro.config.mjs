@@ -8,10 +8,15 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   site: import.meta.env.PUBLIC_SITE_URL ?? process.env.PUBLIC_SITE_URL,
   output: "server",
+  i18n: {
+    locales: ["en", "cs", "sk", "pl", "hu", "de", "uk", "fr"],
+    defaultLocale: "en",
+    routing: { prefixDefaultLocale: false, redirectToDefaultLocale: false },
+  },
   adapter: cloudflare({
-		platformProxy: {
-			enabled: true,
-		},
+    platformProxy: {
+      enabled: true,
+    },
     mode: "directory",
     imageService: "cloudflare",
   }),
@@ -21,7 +26,9 @@ export default defineConfig({
     resolve: {
       alias: {
         debug: fileURLToPath(new URL("./src/shims/debug.mjs", import.meta.url)),
-        "node-fetch": fileURLToPath(new URL("./src/shims/node-fetch.mjs", import.meta.url)),
+        "node-fetch": fileURLToPath(
+          new URL("./src/shims/node-fetch.mjs", import.meta.url),
+        ),
       },
     },
     optimizeDeps: {
@@ -36,6 +43,5 @@ export default defineConfig({
     "/faq": "/",
     "/tv": "/sourcetv",
     "/info": "/commands",
-    "/stats": "https://stats.lamateam.eu/",
   },
 });

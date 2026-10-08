@@ -1,0 +1,332 @@
+---
+import { locales, localePath, type PageKind } from '../lib/localized-content';
+import LanguageFlag from './LanguageFlag.astro';
+interface Props {
+  currentLanguage?: string;
+  pageKind?: PageKind;
+}
+const { currentLanguage = 'en', pageKind } = Astro.props;
+const names = {
+  en: 'English',
+  cs: 'Čeština',
+  sk: 'Slovenčina',
+  pl: 'Polski',
+  hu: 'Magyar',
+  de: 'Deutsch',
+  uk: 'Українська',
+  fr: 'Français',
+};
+// Text-only native selects need a fallback; customizable selects render the SVG.
+const nativeFlags = {
+  en: '🇬🇧',
+  cs: '🇨🇿',
+  sk: '🇸🇰',
+  pl: '🇵🇱',
+  hu: '🇭🇺',
+  de: '🇩🇪',
+  uk: '🇺🇦',
+  fr: '🇫🇷',
+};
+---
+
+<div class="language-control fl-text-xs/sm">
+  <label for="language" class="sr-only">
+    Language
+  </label>
+  <select
+    id="language"
+    translate="no"
+    data-no-translate
+    aria-describedby="translation-status"
+    class="fl-px-2/3 fl-py-1/2"
+    data-page-kind={pageKind}
+    data-current-language={currentLanguage.toUpperCase()}
+  >
+    <button type="button" class="language-select-button">
+      <selectedcontent></selectedcontent>
+    </button>
+    {(['en', ...locales] as const).map((locale) => (
+      <option
+        value={locale.toUpperCase()}
+        selected={locale === currentLanguage}
+        data-path={pageKind ? localePath(locale, pageKind) : undefined}
+        aria-label={names[locale]}
+      >
+        <span class="language-native-flag" aria-hidden="true">
+          {nativeFlags[locale]}
+        </span>{' '}
+        <LanguageFlag locale={locale} />
+        <span>{names[locale]}</span>
+      </option>
+    ))}
+  </select>
+  <span id="translation-status" role="status" aria-live="polite"></span>
+</div>
+{pageKind && (
+  <noscript>
+    <nav aria-label="Languages">
+      {(['en', ...locales] as const).map((locale) => (
+        <a
+          class="fl-px-2/3"
+          href={localePath(locale, pageKind)}
+          hreflang={locale}
+          lang={locale}
+        >
+          {names[locale]}
+        </a>
+      ))}
+    </nav>
+  </noscript>
+)}
+<script>
+  import { navigate } from 'astro:transitions/client';
+  let cleanup: (() => void) | undefined;
+  const initializeLanguageSelector = () => {
+    cleanup?.();
+    const bindings = new AbortController();
+    const selector = document.getElementById(
+      'language',
+    ) as unknown as HTMLSelectElement | null;
+    const status = document.querySelector<HTMLElement>('#translation-status');
+    const originals = new Map<Text, string>();
+    const attributes = new Map<Element, Map<string, string>>();
+    const originalTitle = document.title;
+    const pageLanguage = selector?.dataset.currentLanguage || 'EN';
+    const excluded =
+      'script,style,noscript,svg,code,pre,kbd,samp,form,textarea,input,select,option,[translate="no"],[data-no-translate],[role="status"],[role="alert"],[aria-live],tbody,time,#shoutboxMessages,.shoutbox-message,.shoutbox-status,#shoutboxForm,#server-ip,.supporters li,.copy-content,iframe';
+    let generation = 0;
+    let controller: AbortController | undefined;
+    const preferenceKey = 'lamateam-language';
+    const shortcuts = document.querySelectorAll<HTMLAnchorElement>(
+      '[data-language-shortcut]',
+    );
+    const updateShortcuts = () => {
+      const current = document.documentElement.lang.toUpperCase();
+      shortcuts.forEach((shortcut) => {
+        const selected = shortcut.dataset.languageShortcut === current;
+        if (selected) shortcut.setAttribute('aria-current', 'true');
+        else shortcut.removeAttribute('aria-current');
+      });
+    };
+    shortcuts.forEach((shortcut) =>
+      shortcut.addEventListener(
+        'click',
+        (event) => {
+          if (
+            !selector ||
+            event.ctrlKey ||
+            event.metaKey ||
+            event.shiftKey ||
+            event.altKey
+          )
+            return;
+          event.preventDefault();
+          selector.value = shortcut.dataset.languageShortcut ?? 'EN';
+          selector.dispatchEvent(new Event('change'));
+        },
+        { signal: bindings.signal },
+      ),
+    );
+    const languageObserver = new MutationObserver(updateShortcuts);
+    languageObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['lang'],
+    });
+    updateShortcuts();
+    const persistLanguage = (language: string) => {
+      try {
+        localStorage.setItem(preferenceKey, language);
+      } catch {
+        // Storage can be disabled in embedded MOTD browsers.
+      }
+    };
+    const capture = () => {
+      // Traverse the shared shell as well as main: Menu/Guides, Connect, skip
+      // link and footer labels all belong to the same atomic translation.
+      const root = document.body;
+      const safe = (text: string) =>
+        /\p{L}/u.test(text) &&
+        !/\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?\b|\bSTEAM_\d+:\d+:\d+\b|steam:\/\//i.test(
+          text,
+        );
+      const rememberAttribute = (element: Element, name: string) => {
+        const value = element.getAttribute(name);
+        if (!value?.trim() || !safe(value) || element.closest(excluded)) return;
+        let values = attributes.get(element);
+        if (!values) attributes.set(element, (values = new Map()));
+        if (!values.has(name)) values.set(name, value);
+      };
+      if (root) {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) {
+          const node = walker.currentNode as Text;
+          if (
+            !node.textContent?.trim() ||
+            !safe(node.textContent) ||
+            node.parentElement?.closest(excluded)
+          )
+            continue;
+          if (!originals.has(node)) originals.set(node, node.textContent);
+        }
+        root
+          .querySelectorAll('[aria-label],[title],img[alt]')
+          .forEach((element) => {
+            for (const name of ['aria-label', 'title', 'alt']) {
+              // No form values/placeholders, URLs, IDs or arbitrary attributes.
+              if (name !== 'alt' || element.tagName === 'IMG')
+                rememberAttribute(element, name);
+            }
+          });
+      }
+      document
+        .querySelectorAll(
+          'meta[name="description"],meta[property="og:title"],meta[property="og:description"],meta[property="og:image:alt"],meta[name="twitter:title"],meta[name="twitter:description"],meta[name="twitter:image:alt"]',
+        )
+        .forEach((element) => rememberAttribute(element, 'content'));
+    };
+    selector?.addEventListener(
+      'change',
+      async () => {
+        if (pageLanguage !== 'EN' && selector.dataset.pageKind) {
+          // Existing static SEO pages remain authoritative. For another
+          // language, visit their English counterpart and translate it there.
+          const path =
+            selector.querySelector<HTMLOptionElement>('option[value="EN"]')
+              ?.dataset.path;
+          if (!path) return;
+          persistLanguage(selector.value);
+          const target = new URL(path, window.location.origin);
+          // Preserve MOTD context without putting identity in canonical URLs.
+          target.search = window.location.search;
+          void navigate(target.href);
+          return;
+        }
+        const request = ++generation;
+        controller?.abort();
+        controller = new AbortController();
+        capture();
+        const entries = [...originals]
+          .filter(([node]) => node.isConnected)
+          .map(([node, source]) => ({
+            source,
+            apply: (value: string) => {
+              node.textContent = value;
+            },
+          }));
+        for (const [element, values] of attributes) {
+          if (!element.isConnected) continue;
+          for (const [name, source] of values)
+            entries.push({
+              source,
+              apply: (value: string) => element.setAttribute(name, value),
+            });
+        }
+        if (originalTitle?.trim())
+          entries.push({
+            source: originalTitle,
+            apply: (value: string) => {
+              document.title = value;
+            },
+          });
+        const restoreEnglish = () => {
+          entries.forEach(({ source, apply }) => apply(source));
+          document.documentElement.lang = 'en';
+          selector.value = 'EN';
+          persistLanguage('EN');
+        };
+        const targetLang = selector.value;
+        if (targetLang === 'EN') {
+          restoreEnglish();
+          window.dispatchEvent(new Event('resize'));
+          if (status) status.textContent = '';
+          return;
+        }
+        if (!['CS', 'SK', 'PL', 'HU', 'DE', 'UK', 'FR'].includes(targetLang)) {
+          restoreEnglish();
+          return;
+        }
+        if (status) status.textContent = 'Translating…';
+        try {
+          // Bounded batches; do not send player messages or identity data to translation.
+          const translated: string[] = [];
+          for (let start = 0; start < entries.length;) {
+            if (request !== generation) return;
+            const texts: string[] = [];
+            let characters = 0;
+            while (start < entries.length && texts.length < 40) {
+              const text = entries[start].source.trim();
+              if (text.length > 9000) throw new Error('Text too long');
+              if (characters + text.length > 9000) break;
+              texts.push(text);
+              characters += text.length;
+              start++;
+            }
+            const response = await fetch('/api/translate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ texts, targetLang }),
+              signal: controller.signal,
+            });
+            if (!response.ok) throw new Error('Translation unavailable');
+            const data = (await response.json()) as { translations: string[] };
+            if (
+              !Array.isArray(data.translations) ||
+              data.translations.length !== texts.length ||
+              data.translations.some(
+                (text) => typeof text !== 'string' || !text.trim(),
+              )
+            )
+              throw new Error('Invalid translation');
+            translated.push(
+              ...data.translations.map((text) =>
+                text.replace(/lamateam/gi, 'LaMaTeAm'),
+              ),
+            );
+          }
+          if (request !== generation) return;
+          entries.forEach(({ source, apply }, index) => {
+            apply(source.replace(source.trim(), () => translated[index]));
+          });
+          document.documentElement.lang = targetLang.toLowerCase();
+          persistLanguage(targetLang);
+          window.dispatchEvent(new Event('resize'));
+          if (status) status.textContent = '';
+        } catch {
+          if (request !== generation) return;
+          restoreEnglish();
+          if (status)
+            status.textContent = 'Translation unavailable. Try again.';
+        }
+      },
+      { signal: bindings.signal },
+    );
+    const applySavedLanguage = () => {
+      // Real language routes are authoritative: never redirect on stored preference.
+      if (pageLanguage !== 'EN') return;
+      try {
+        const savedLanguage = localStorage.getItem(preferenceKey);
+        if (
+          selector &&
+          savedLanguage &&
+          ['CS', 'SK', 'PL', 'HU', 'DE', 'UK', 'FR'].includes(savedLanguage)
+        ) {
+          selector.value = savedLanguage;
+          selector.dispatchEvent(new Event('change'));
+        }
+      } catch {
+        // Keep English usable when persistent storage is unavailable.
+      }
+    };
+    cleanup = () => {
+      bindings.abort();
+      languageObserver.disconnect();
+      generation++;
+      controller?.abort();
+      originals.clear();
+      attributes.clear();
+    };
+    applySavedLanguage();
+  };
+  document.addEventListener('astro:before-swap', () => cleanup?.());
+  document.addEventListener('astro:page-load', initializeLanguageSelector);
+</script>

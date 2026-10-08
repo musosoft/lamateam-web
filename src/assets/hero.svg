@@ -1,4 +1,14 @@
-<svg class="h-full w-full animate-spin-slow group-hover:hidden" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
+<svg class="h-full w-full animate-spin-slow group-hover:hidden" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-labelledby="hero-title">
+    <title id="hero-title">LaMaTeAm Counter-Strike community</title>
+    <defs>
+      <clipPath id="hero-lettering" clipPathUnits="userSpaceOnUse" fill="white">
+        <rect width="1920" height="908" />
+        <rect y="1007" width="1920" height="73" />
+        <rect y="908" width="580" height="99" />
+        <rect x="1370" y="908" width="550" height="99" />
+      </clipPath>
+    </defs>
+    <g clip-path="url(#hero-lettering)">
     <style>
       .st0 {
         fill: #fff;
@@ -369,4 +379,7 @@
       class="st0"
     ></path>
     <path d="M1365 411h-3.1l3.2-1v1z"></path>
+    </g>
+    <rect x="580" y="908" width="790" height="99" fill="white" />
+    <text x="975" y="1001" text-anchor="middle" fill="black" font-family="Impact, 'Arial Narrow', sans-serif" font-weight="900" font-size="112" textLength="720" lengthAdjust="spacingAndGlyphs" aria-hidden="true">LaMaTeAm</text>
   </svg>

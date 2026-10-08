@@ -1,0 +1,213 @@
+---
+import { translator } from '../lib/page-copy';
+import {
+  localeFromPath,
+  localizedHref,
+  type SiteLocale,
+} from '../lib/localized-content';
+interface Props {
+  locale?: SiteLocale;
+  compact?: boolean;
+}
+const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
+const { compact = false } = Astro.props;
+const Heading = compact ? 'h2' : 'h1';
+const t = translator(locale);
+---
+
+<section
+  class:list={[
+    'w-full fl-py-2/5 text-left text-gray-100',
+    { 'motd-rules': compact },
+  ]}
+  aria-label={t('Server Rules')}
+>
+  <header class="fl-mb-4/6 page-heading">
+    <Heading class="fl-text-2xl/4xl font-bold tracking-tight">
+      {t('Server Rules')}
+    </Heading>
+  </header>
+  <article class="panel fl-p-3/6 overflow-x-auto">
+    <table class="w-full table-auto border-collapse border border-gray-600 rounded-lg contain-paint">
+      <thead class="bg-gray-800">
+        <tr>
+          <th class="px-4 py-2 text-left font-semibold text-gray-200 border border-gray-700 uppercase">
+            {t('Prohibited')}
+          </th>
+          <th class="px-4 py-2 text-left font-semibold text-gray-200 border border-gray-700 uppercase">
+            {t('Penalty')}
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-gray-800 text-gray-200 text-left">
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ cheats, scripts, external programs, or settings that give a player an unfair advantage',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            ⛔
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ insults, racism, threats, political arguments, or degrading other players or minorities; languages other than CZ/SK/EN',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            🔇⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ intentional team attacks, teamkills, team flashes, blocking teammates, or obstructing their view',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            ⚡🦵⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ camping at spawn: T after 1:30 on bomb maps / CT after 1:45 on hostage maps',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            ⚡
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t('❌ inappropriate sprays or nicknames, and advertising')}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            🦵⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ exploiting map or server bugs, defusing through walls, or abusing game glitches',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            🦵⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t('❌ buying more than 1× HE, 1× Smoke, and 2× Flash')}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            🦵⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t('❌ impersonating an admin, stealing nicknames, etc.')}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            ⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ macros (BHOP / strafe jumping, auto-jump / auto-shoot, etc.)',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            ⚡🦵⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ spamming commands, chat, or voice, and repeatedly pressuring players to use rtv, votemap/ban/kick/mute',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            🔇🦵⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ evading bans, repeatedly breaking the rules, or attacking the server',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            ⛔
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ helping or advising enemy players, including giving information after death or from spectator mode',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            🔇🦵⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ ignoring team objectives (hostages, bomb) — the player who kills the last living terrorist has priority to defuse if there is enough time',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            ⚡🦵⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t('❌ repeatedly joining the stronger team (balance abuse)')}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            🦵⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t(
+              '❌ throwing the bomb into inaccessible places, dropping it instead of passing it to a teammate, or delaying the game',
+            )}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            🦵⏳
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-600">
+          <td class="px-4 py-2 border border-gray-700">
+            {t('❌ playing with severe lag')}
+          </td>
+          <td class="px-4 py-2 border border-gray-700" translate="no">
+            🦵
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="fl-mt-4/6 font-bold text-red-400">
+      {t('NOT KNOWING THE RULES IS NO EXCUSE!')}
+    </p>
+    <section aria-label={t('Rules reminder')}>
+      <h2 class="fl-mt-4/6 fl-text-lg/2xl font-bold">{t('Rules reminder')}</h2>
+      <p class="fl-mt-3/5">
+        {t(
+          'Players may submit an appeal through the form. Do not send complaints directly to the server owner. LaMaTeAm is a private server, and the rules apply to everyone. If you disagree, play elsewhere.',
+        )}{' '}
+        <a
+          href={localizedHref('/contact', locale)}
+          class="text-cyan-300 underline"
+        >
+          {t('Contact')}
+        </a>
+      </p>
+    </section>
+  </article>
+</section>

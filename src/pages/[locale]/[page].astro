@@ -1,0 +1,37 @@
+---
+import Rules from '../rules.astro';
+import Maps from '../maps.astro';
+import Commands from '../commands.astro';
+import Money from '../money.astro';
+import Hitreg from '../hitreg.astro';
+import Fixes from '../fixes.astro';
+import Speed from '../speed.astro';
+import SourceTV from '../sourcetv.astro';
+import Admins from '../admins.astro';
+import Vip from '../vip.astro';
+import Contact from '../contact.astro';
+import { isLocale } from '../../lib/localized-content';
+
+export const prerender = false;
+const pages = {
+  rules: Rules,
+  maps: Maps,
+  commands: Commands,
+  money: Money,
+  hitreg: Hitreg,
+  fixes: Fixes,
+  speed: Speed,
+  sourcetv: SourceTV,
+  admins: Admins,
+  vip: Vip,
+  contact: Contact,
+};
+const slug = Astro.params.page;
+if (!isLocale(Astro.params.locale) || !slug || !Object.hasOwn(pages, slug)) {
+  return new Response('Not found', { status: 404 });
+}
+const Page = pages[slug as keyof typeof pages];
+const locale = Astro.params.locale;
+---
+
+<Page locale={locale} />

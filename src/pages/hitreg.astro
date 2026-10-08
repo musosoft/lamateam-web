@@ -1,43 +1,98 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { translator } from '../lib/page-copy';
+import { localeFromPath, type SiteLocale } from '../lib/localized-content';
+interface Props {
+  locale?: SiteLocale;
+}
+const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
+const t = translator(locale);
 ---
 
-<Layout title="Hitreg | LaMaTeam">
-  <section class="mx-auto w-full max-w-6xl px-4 py-8 text-left text-gray-100">
-    <header class="mb-6 rounded-2xl border border-gray-700 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Hitboxy, Hitreg, Rate, „nehituje to“</h1>
+<Layout title={t('Hitreg | LaMaTeAm')} lang={locale}>
+  <section class="w-full fl-py-2/5 text-left text-gray-100">
+    <header class="fl-mb-4/6 page-heading">
+      <h1 class="fl-text-2xl/4xl font-bold tracking-tight">
+        {t('Hit Registration & Rates')}
+      </h1>
     </header>
-
-    <article class="space-y-4 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg text-gray-200">
+    <article class="space-y-4 panel fl-p-3/6 text-gray-200">
       <ul class="space-y-2 list-disc pl-5">
-        <li><strong>Hitbox</strong> — Neviditelná krabice kolem hráče, kterou server používá k detekci zásahů.</li>
-        <li><strong>Hitreg</strong> — Kontrola, zda jsi trefil hitbox. Střely se kontrolují na serveru, ne na tvém PC.</li>
-        <li><strong>Tickrate 100</strong> — Server přepočítává hru 100× za sekundu.</li>
-        <li><strong>Updaterate 100</strong> — Server posílá 100 aktualizací za sekundu (vynucené).</li>
-        <li><strong>Cmdrate 100</strong> — Tvoje příkazy jdou 100× za sekundu na server (vynucené).</li>
-        <li><strong>Rate 196000</strong> — Vynucená rychlost dat, nelze změnit.</li>
-        <li><strong>Interp 0-0.031</strong> — Vynucený rozsah interpu.</li>
-        <li><strong>Ping vs Latency</strong> — ping je tam+i zpět, latency je jednosměrně na server.</li>
-        <li><strong>Krev bez damage</strong> — krev vykresluje klient, hit potvrzuje server.</li>
-        <li><strong>Net_Graph 4</strong> — sleduj loss/choke a mezery v čarách.</li>
-        <li><strong>Rate Checker</strong> — ukazuje lokál, serverové hodnoty stejně platí server.</li>
+        <li>
+          <strong>{t('Hitbox')}</strong>{' '}
+          {t(
+            '— An invisible box around a player that the server uses to detect hits.',
+          )}
+        </li>
+        <li>
+          <strong>{t('Hit registration')}</strong>{' '}
+          {t(
+            '— The check that determines whether you hit a hitbox. Shots are verified by the server, not your PC.',
+          )}
+        </li>
+        <li>
+          <strong>{t('Tickrate 100')}</strong>{' '}
+          {t('— The server updates the game 100 times per second.')}
+        </li>
+        <li>
+          <strong>{t('Ping vs. latency')}</strong>{' '}
+          {t(
+            '— Ping is the round trip; latency is the one-way trip to the server.',
+          )}
+        </li>
+        <li>
+          <strong>{t('Blood but no damage')}</strong>{' '}
+          {t(
+            '— Your client renders the blood, but the server confirms the hit.',
+          )}
+        </li>
+        <li>
+          <strong>{t('Rate Checker')}</strong>{' '}
+          {t(
+            "— It shows your local settings, but the server's enforced values still apply.",
+          )}
+        </li>
       </ul>
-
-      <h2 class="text-xl font-bold mt-6">Když ti to „nehituje“, zkontroluj:</h2>
+      <h2 class="fl-text-lg/2xl font-bold fl-mt-4/6">
+        {t('Shots not registering?')}
+      </h2>
       <ol class="list-decimal pl-5 space-y-2">
-        <li><strong>Loss</strong> musí být 0%.</li>
-        <li><strong>Ping</strong> drž co nejnižší.</li>
-        <li><strong>Choke</strong> drž na 0%.</li>
-        <li>Sleduj <strong>Net_Graph 4</strong>.</li>
+        <li>
+          {t('Use')} <code translate="no">net_graph 4</code>{' '}
+          {t('to monitor loss, choke, and gaps in the graph lines.')}
+        </li>
+        <li>
+          {t('Keep')} <strong translate="no">loss</strong> {t('and')}{' '}
+          <strong translate="no">choke</strong> {t('at 0%.')}
+        </li>
+        <li>
+          {t('Keep your')} <strong translate="no">ping</strong>{' '}
+          {t('as low as possible.')}
+        </li>
       </ol>
-
-      <h2 class="text-xl font-bold mt-6">Co vynucuje server</h2>
+      <h2 class="fl-text-lg/2xl font-bold fl-mt-4/6">
+        {t('Server-Enforced Settings')}
+      </h2>
       <ul class="list-disc pl-5 space-y-2">
-        <li><strong>Rate</strong> = 196000</li>
-        <li><strong>Cmdrate</strong> = 100</li>
-        <li><strong>Updaterate</strong> = 100</li>
-        <li><strong>Interp</strong> = 0-0.031</li>
-        <li><strong>Interp Ratio</strong> = 1</li>
+        <li>
+          <strong translate="no">Rate</strong>{' '}
+          {t('= 196000 — the data rate cannot be changed.')}
+        </li>
+        <li>
+          <strong translate="no">Cmdrate</strong>{' '}
+          {t('= 100 — commands sent to the server per second.')}
+        </li>
+        <li>
+          <strong translate="no">Updaterate</strong>{' '}
+          {t('= 100 — updates received from the server per second.')}
+        </li>
+        <li>
+          <strong translate="no">Interp</strong>{' '}
+          {t('= 0-0.031 — the interpolation range.')}
+        </li>
+        <li>
+          <strong translate="no">Interp Ratio</strong> = 1
+        </li>
       </ul>
     </article>
   </section>

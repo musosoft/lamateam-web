@@ -1,0 +1,9 @@
+---
+import Home from '../index.astro';
+import { isLocale } from '../../lib/localized-content';
+export const prerender = false;
+if (!isLocale(Astro.params.locale))
+  return new Response('Not found', { status: 404 });
+---
+
+<Home />

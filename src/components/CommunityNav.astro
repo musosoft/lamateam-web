@@ -1,0 +1,377 @@
+---
+import { Icon } from 'astro-icon/components';
+import LanguageFlag from './LanguageFlag.astro';
+import { locales, localePath } from '../lib/localized-content';
+const { currentPath, currentLanguage = 'en', pageKind } = Astro.props;
+const languageOptions = [
+  ['en', 'English'],
+  ['cs', 'Čeština'],
+  ['sk', 'Slovenčina'],
+  ['pl', 'Polski'],
+  ['hu', 'Magyar'],
+  ['de', 'Deutsch'],
+  ['uk', 'Українська'],
+  ['fr', 'Français'],
+] as const;
+const links = [
+  ['Rules', '/rules', 'mdi:gavel'],
+  ['Maps', '/maps', 'mdi:map'],
+  ['Commands', '/commands', 'mdi:console'],
+  ['Money', '/money', 'mdi:cash-multiple'],
+  ['Hitreg', '/hitreg', 'mdi:crosshairs-gps'],
+  ['Fixes', '/fixes', 'mdi:wrench-cog'],
+  ['Speed', '/speed', 'mdi:run-fast'],
+  ['SourceTV', '/sourcetv', 'mdi:download-network'],
+  ['Admins', '/admins', 'mdi:shield-account'],
+  ['VIP', '/vip', 'mdi:star'],
+  ['Contact', '/contact', 'mdi:email-outline'],
+];
+---
+
+<header id="community-nav" class="community-nav" data-open="false">
+  <div class="nav-inner fl-px-3/8 fl-py-2/4 fl-gap-2/5">
+    <a href="/" class="brand fl-gap-2/3" aria-label="LaMaTeAm community">
+      <img src="/assets/favicon.svg" alt="" width="48" height="36" />
+      <span translate="no">
+        LaMaTeAm<span class="brand-sub">CS:S SERVER</span>
+      </span>
+    </a>
+    <button
+      class="nav-peek"
+      type="button"
+      aria-controls="community-links"
+      aria-expanded="false"
+    >
+      <span aria-hidden="true">☰</span>
+      <span class="sr-only">Menu</span>
+    </button>
+    <nav
+      id="community-links"
+      aria-label="Community"
+      class="nav-links fl-gap-1/2"
+    >
+      <div class="nav-guides-links">
+        {links.map(([label, href, icon]) => (
+          <a
+            data-menu-route={href}
+            href={href}
+            aria-current={currentPath === href ? 'page' : undefined}
+            class="nav-link fl-p-2/3 fl-text-xs/lg"
+          >
+            <Icon name={icon} class="h-4 w-4" />
+            <span>{label}</span>
+          </a>
+        ))}
+      </div>
+    </nav>
+    <div class="nav-connect">
+      <nav
+        class="header-language-options"
+        aria-label="Languages"
+        data-no-translate
+        translate="no"
+      >
+        {languageOptions.map(([locale, name]) => (
+          <a
+            href={
+              pageKind
+                ? localePath(
+                    locale as 'en' | (typeof locales)[number],
+                    pageKind,
+                  )
+                : '#language'
+            }
+            data-language-shortcut={locale.toUpperCase()}
+            aria-label={name}
+            title={name}
+            hreflang={locale}
+            lang={locale}
+            aria-current={locale === currentLanguage ? 'true' : undefined}
+          >
+            <LanguageFlag locale={locale} />
+          </a>
+        ))}
+      </nav>
+      <a
+        href="/connect"
+        aria-current={currentPath === '/connect' ? 'page' : undefined}
+        class="connect-button fl-px-3/5 fl-py-2/3 fl-text-xs/lg"
+      >
+        <Icon name="mdi:play" class="h-4 w-4" />
+        <span>Connect</span>
+      </a>
+    </div>
+  </div>
+</header>
+<noscript>
+  <style>
+    #community-nav .nav-inner {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    #community-nav .nav-links {
+      display: block;
+      position: static;
+      width: 100%;
+    }
+    #community-nav .nav-guides-links {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    #community-nav .nav-peek {
+      display: none;
+    }
+  </style>
+</noscript>
+<button
+  class="nav-reveal"
+  type="button"
+  aria-controls="community-nav"
+  aria-label="Pull down navigation"
+  hidden
+></button>
+<script>
+  let cleanup: (() => void) | undefined;
+  function initNav() {
+    cleanup?.();
+    const nav = document.querySelector<HTMLElement>('#community-nav');
+    const toggle = nav?.querySelector<HTMLButtonElement>('.nav-peek');
+    const links = nav?.querySelector<HTMLElement>('.nav-links');
+    const languageControls = nav?.querySelector<HTMLElement>(
+      '.header-language-options',
+    );
+    const revealButton =
+      document.querySelector<HTMLButtonElement>('.nav-reveal');
+    if (!nav || !toggle || !links || !languageControls || !revealButton) return;
+    const controller = new AbortController();
+    const { signal } = controller;
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
+    cleanup = () => {
+      controller.abort();
+      clearTimeout(hideTimer);
+      resizeObserver.disconnect();
+    };
+    nav.dataset.menuReady = 'true';
+    const setHidden = (hidden: boolean) => {
+      nav.dataset.hidden = String(hidden);
+      revealButton.hidden = !hidden;
+    };
+    const reveal = () => {
+      clearTimeout(hideTimer);
+      hideTimer = undefined;
+      setHidden(false);
+    };
+    reveal();
+    const desktop = matchMedia('(min-width: 1400px)');
+    const inGame = /valve|steam/i.test(navigator.userAgent);
+    const phone = matchMedia(
+      inGame ? '(max-width: 480px)' : '(max-width: 700px)',
+    );
+    const inner = nav.querySelector<HTMLElement>('.nav-inner')!;
+    const fitNavigation = () => {
+      // Closing before measuring keeps dropdown geometry out of the fit calculation.
+      const wasOpen = nav.dataset.open === 'true';
+      nav.dataset.open = 'false';
+      nav.dataset.measuring = 'true';
+      const isPhone = phone.matches;
+      // Move the single language row, rather than cloning IDs or listeners.
+      (
+        (isPhone && !inGame
+          ? links
+          : nav.querySelector('.nav-connect')!) as ParentNode
+      ).prepend(languageControls);
+      const items = Array.from(
+        links.querySelectorAll<HTMLElement>('.nav-guides-links > a'),
+      );
+      items.forEach((item) => item.removeAttribute('data-overflow'));
+      const available = links.clientWidth;
+      let used = 0;
+      items.forEach((item) => {
+        used += item.getBoundingClientRect().width + (used ? 4 : 0);
+        item.dataset.overflow = String(isPhone || used > available);
+      });
+      nav.dataset.hasOverflow = String(
+        items.some((item) => item.dataset.overflow === 'true') || isPhone,
+      );
+      delete nav.dataset.measuring;
+      const open = wasOpen && nav.dataset.hasOverflow === 'true';
+      nav.dataset.open = String(open);
+      toggle.setAttribute('aria-expanded', String(open));
+      if (
+        !open &&
+        links.contains(document.activeElement) &&
+        (isPhone ||
+          (document.activeElement as HTMLElement)?.dataset.overflow === 'true')
+      )
+        toggle.focus();
+    };
+    const resizeObserver = new ResizeObserver(fitNavigation);
+    resizeObserver.observe(inner);
+    window.addEventListener('resize', fitNavigation, { signal });
+    const labelObserver = new MutationObserver(fitNavigation);
+    labelObserver.observe(links, { characterData: true, subtree: true });
+    const disconnectResize = cleanup;
+    cleanup = () => {
+      disconnectResize?.();
+      labelObserver.disconnect();
+    };
+    document.fonts.ready.then(() => {
+      if (!signal.aborted) fitNavigation();
+    });
+    fitNavigation();
+    let pointerNearTop = false;
+    const pinned = () =>
+      pointerNearTop ||
+      nav.dataset.open === 'true' ||
+      nav.contains(document.activeElement);
+    const updateVisibility = () => {
+      if (inGame || window.scrollY < 16 || pinned()) {
+        reveal();
+        return;
+      }
+      // A short leave delay bridges small pointer gaps and focus changes.
+      if (hideTimer !== undefined) return;
+      hideTimer = setTimeout(() => {
+        hideTimer = undefined;
+        if (window.scrollY >= 16 && !pinned()) setHidden(true);
+      }, 180);
+    };
+    const setOpen = (open: boolean) => {
+      nav.dataset.open = String(open);
+      toggle.setAttribute('aria-expanded', String(open));
+      if (open) {
+        reveal();
+        links
+          .querySelector<HTMLElement>(
+            '[data-overflow="true"], .header-language-options a',
+          )
+          ?.focus();
+      } else if (links.contains(document.activeElement)) {
+        toggle.focus();
+      }
+      updateVisibility();
+    };
+    revealButton.addEventListener(
+      'focus',
+      () => {
+        reveal();
+        nav.querySelector<HTMLAnchorElement>('.brand')?.focus();
+      },
+      { signal },
+    );
+    revealButton.addEventListener(
+      'click',
+      () => {
+        reveal();
+        if (!desktop.matches) {
+          setOpen(true);
+          toggle.focus();
+        } else {
+          nav.querySelector<HTMLAnchorElement>('.brand')?.focus();
+        }
+      },
+      { signal },
+    );
+    document.addEventListener(
+      'pointermove',
+      (event) => {
+        if (event.pointerType === 'touch') return;
+        // Narrow reveal zone while hidden; wider retention zone when visible.
+        pointerNearTop =
+          event.clientY <=
+          (nav.dataset.hidden === 'true' ? 32 : nav.offsetHeight + 24);
+        updateVisibility();
+      },
+      { passive: true, signal },
+    );
+    document.addEventListener(
+      'pointerleave',
+      () => {
+        pointerNearTop = false;
+        updateVisibility();
+      },
+      { signal },
+    );
+    nav.addEventListener(
+      'pointerleave',
+      (event) => {
+        if (event.pointerType === 'touch') return;
+        pointerNearTop =
+          event.clientY >= 0 && event.clientY <= nav.offsetHeight + 24;
+        updateVisibility();
+      },
+      { signal },
+    );
+    toggle.addEventListener(
+      'click',
+      () => setOpen(nav.dataset.open !== 'true'),
+      { signal },
+    );
+    nav.addEventListener('focusin', reveal, { signal });
+    nav.addEventListener(
+      'focusout',
+      () => {
+        queueMicrotask(() => {
+          if (!signal.aborted) updateVisibility();
+        });
+      },
+      { signal },
+    );
+    document.addEventListener(
+      'click',
+      (event) => {
+        if (
+          event.target instanceof Node &&
+          !nav.contains(event.target) &&
+          !revealButton.contains(event.target)
+        ) {
+          setOpen(false);
+        }
+      },
+      { signal },
+    );
+    nav.addEventListener(
+      'click',
+      (event) => {
+        if (event.target instanceof Element && event.target.closest('a'))
+          setOpen(false);
+      },
+      { signal },
+    );
+    document.addEventListener(
+      'keydown',
+      (event) => {
+        if (event.key !== 'Escape') return;
+        if (nav.dataset.open === 'true') {
+          setOpen(false);
+          toggle.focus();
+        }
+      },
+      { signal },
+    );
+    desktop.addEventListener(
+      'change',
+      () => {
+        setOpen(false);
+        fitNavigation();
+      },
+      { signal },
+    );
+    phone.addEventListener(
+      'change',
+      () => {
+        setOpen(false);
+        fitNavigation();
+      },
+      { signal },
+    );
+    window.addEventListener('scroll', updateVisibility, {
+      passive: true,
+      signal,
+    });
+    updateVisibility();
+  }
+  initNav();
+  document.addEventListener('astro:page-load', initNav);
+  document.addEventListener('astro:before-swap', () => cleanup?.());
+</script>

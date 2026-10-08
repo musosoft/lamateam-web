@@ -1,0 +1,182 @@
+---
+import { SOURCEBANS_URL, type BanList } from '../lib/sourcebans';
+interface Props {
+  data: BanList | null;
+  fetchedAt: number | null;
+  stale: boolean;
+}
+const { data, fetchedAt, stale } = Astro.props;
+const updated = fetchedAt !== null ? new Date(fetchedAt).toISOString() : null;
+---
+
+<section class="w-full fl-py-2/5 text-left text-gray-100">
+  <header class="fl-mb-4/6 page-heading">
+    <h1 class="fl-text-2xl/4xl font-bold tracking-tight">Ban List</h1>
+  </header>
+  <section class="panel fl-p-3/6 ban-content">
+    <p class="mb-4 text-gray-300">
+      Latest public bans from SourceBans, including expired and removed bans.
+      <a
+        class="underline underline-offset-4 hover:text-white"
+        href={SOURCEBANS_URL}
+        rel="external"
+      >
+        Full ban history on SourceBans
+      </a>
+    </p>
+    {!data ? (
+      <p
+        role="status"
+        class="rounded-2xl border border-gray-700 bg-gray-900/80 p-6"
+      >
+        The ban list is temporarily unavailable. Please try again later or visit
+        SourceBans using the link above.
+      </p>
+    ) : (
+      <>
+        {stale && (
+          <p role="status" class="mb-4 text-amber-200">
+            SourceBans could not be refreshed. Showing the last available list.
+          </p>
+        )}
+        <p id="banlist-summary" class="mb-4 text-sm text-gray-300">
+          Showing {data.bans.length} latest bans
+          {data.total !== null ? ` of ${data.total} total` : ''}.
+          {updated && (
+            <>
+              {' '}
+              Updated{' '}
+              <time datetime={updated}>
+                {updated.replace('T', ' ').replace(/\.\d+Z$/, ' UTC')}
+              </time>
+              . Refreshes at most every five minutes when available.
+            </>
+          )}
+        </p>
+        {data.bans.length === 0 ? (
+          <p
+            role="status"
+            class="rounded-2xl border border-gray-700 bg-gray-900/80 p-6"
+          >
+            No bans found.
+          </p>
+        ) : (
+          <div
+            class="ban-table-scroll rounded-2xl border border-gray-700 bg-gray-900/80 shadow-lg"
+            role="region"
+            aria-label="Latest bans, scroll horizontally on small screens"
+            tabindex="0"
+          >
+            <table aria-describedby="banlist-summary">
+              <caption class="sr-only">
+                Latest public SourceBans bans. Dates and ban durations are
+                displayed as supplied by SourceBans.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Player / Steam ID</th>
+                  <th scope="col">Admin</th>
+                  <th scope="col">Length / status</th>
+                  <th scope="col">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.bans.map((ban) => (
+                  <tr>
+                    <td class="ban-date">{ban.date}</td>
+                    <th scope="row">
+                      {ban.countryCode && ban.flagUrl && (
+                        <img
+                          src={ban.flagUrl}
+                          alt={`${ban.countryCode} flag`}
+                          width="16"
+                          height="11"
+                          loading="lazy"
+                          decoding="async"
+                          referrerpolicy="no-referrer"
+                        />
+                      )}
+                      {ban.countryCode && (
+                        <span class="ban-country">{ban.countryCode}</span>
+                      )}
+                      <span>{ban.player}</span>
+                      <span class="ban-steam">
+                        {ban.steamId || 'Not available'}
+                      </span>
+                    </th>
+                    <td>{ban.admin || 'Not available'}</td>
+                    <td>{ban.length}</td>
+                    <td>{ban.reason || 'No reason provided'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </>
+    )}
+  </section>
+</section>
+
+<style>
+  .ban-table-scroll {
+    overflow-x: auto;
+  }
+  .ban-table-scroll:focus-visible {
+    outline: 2px solid #fbbf24;
+    outline-offset: 4px;
+  }
+  table {
+    width: 100%;
+    min-width: 48rem;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  th,
+  td {
+    padding: 1rem;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+    max-width: 22rem;
+  }
+  thead {
+    background: rgb(31 41 55 / 80%);
+  }
+  tbody tr {
+    border-top: 1px solid #374151;
+  }
+  tbody tr:nth-child(even) {
+    background: rgb(31 41 55 / 30%);
+  }
+  tbody th {
+    font-weight: 500;
+  }
+  .ban-date {
+    white-space: nowrap;
+  }
+  .ban-steam {
+    display: inline;
+    margin-left: 0.5rem;
+    color: #d1d5db;
+    font-size: 0.8rem;
+  }
+  tbody th {
+    white-space: nowrap;
+    max-width: none;
+  }
+  tbody th img {
+    display: inline-block;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+  }
+  .ban-content {
+    width: 100%;
+    min-width: 0;
+  }
+  .ban-country {
+    margin-right: 0.5rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+</style>

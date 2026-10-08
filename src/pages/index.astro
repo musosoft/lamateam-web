@@ -1,102 +1,161 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { Icon } from "astro-icon/components";
-import { env } from "cloudflare:workers";
-
-const baseUrl = env.PUBLIC_BASE_URL || "/";
-
-const STEAM_API_KEY = env.STEAM_API_KEY;
-
+import Layout from '../layouts/Layout.astro';
+import { Icon } from 'astro-icon/components';
+import MapRatings from '../components/MapRatings.astro';
+import ServerRules from '../components/ServerRules.astro';
+import { translator } from '../lib/page-copy';
+import { localeFromPath } from '../lib/localized-content';
+import { isGameUserAgent, selectHomeLocale } from '../lib/motd-locale';
 const cookies = Astro.cookies;
-
-function parseSessionCookie() {
-  const raw = cookies.get("session")?.value;
-  if (!raw) return {};
-  try {
-    return JSON.parse(decodeURIComponent(raw));
-  } catch {
-    return {};
+const locale =
+  selectHomeLocale({
+    pathname: Astro.url.pathname,
+    userAgent: Astro.request.headers.get('user-agent'),
+    acceptLanguage: Astro.request.headers.get('accept-language'),
+    country: Astro.request.cf?.country as string | undefined,
+  }) ?? localeFromPath(Astro.url.pathname);
+// Layout's server-side home adapter translates this shared markup once. Keep
+// source copy English here, otherwise its strict dictionary sees translated keys.
+const t = translator('en');
+// Reuse the established translation's first sentence, without repeating the
+// classic-map invitation already covered by the preceding hero copy.
+const communityIntro =
+  translator(locale)(
+    'LaMaTeAm is a CZ/SK Counter-Strike: Source community on a European server. Join us for classic maps every evening.',
+  ).split('. ')[0] + '.';
+if (Astro.url.pathname === '/') {
+  // Country fallback varies by request, not just by headers. Never share MOTD
+  // HTML through a cache with ordinary browsers or a different player's locale.
+  Astro.response.headers.set('Cache-Control', 'private, no-store');
+  Astro.response.headers.append('Vary', 'Accept-Language, User-Agent');
+}
+// Display-only profile, never an authentication or statistics identity.
+let profile: { playerName?: unknown; playerAvatar?: unknown } = {};
+try {
+  const value = JSON.parse(
+    decodeURIComponent(cookies.get('session')?.value || '{}'),
+  );
+  if (value && typeof value === 'object') profile = value;
+} catch {
+  /* An invalid display cookie gets the anonymous hero. */
+}
+let avatar = '/assets/default-avatar.webp';
+try {
+  if (typeof profile.playerAvatar === 'string') {
+    const url = new URL(profile.playerAvatar);
+    if (
+      url.protocol === 'https:' &&
+      /(^|\.)steamstatic\.com$|(^|\.)akamaihd\.net$/.test(url.hostname)
+    )
+      avatar = url.href;
   }
+} catch {
+  /* Keep the local fallback. */
 }
 
-const userAgent = Astro.request.headers.get("user-agent")?.toLowerCase() || "";
-const isGame = userAgent.includes("valve") || userAgent.includes("steam");
+const isGame = isGameUserAgent(Astro.request.headers.get('user-agent'));
 
-const queryCommunityId = Astro.url.searchParams.get("communityid") || "";
-const queryPlayerName = Astro.url.searchParams.get("name") || "";
-const rawCommunityId = queryCommunityId || cookies.get("communityid")?.value || "";
-const rawPlayerName = queryPlayerName || cookies.get("name")?.value || "";
+const queryCommunityId = Astro.url.searchParams.get('communityid') || '';
+const queryPlayerName = Astro.url.searchParams.get('name') || '';
+const rawCommunityId =
+  queryCommunityId || cookies.get('communityid')?.value || '';
+const rawPlayerName = queryPlayerName || cookies.get('name')?.value || '';
+const displayName =
+  isGame && rawPlayerName && rawPlayerName !== 'Guest'
+    ? rawPlayerName.slice(0, 128)
+    : typeof profile.playerName === 'string' && profile.playerName !== 'Guest'
+      ? profile.playerName.slice(0, 128)
+      : '';
 const motdQuery =
   isGame && rawCommunityId && rawPlayerName
     ? `?communityid=${encodeURIComponent(rawCommunityId)}&name=${encodeURIComponent(rawPlayerName)}`
-    : "";
-
-function convertToSteam64(communityId: string): string {
-  const match = communityId.match(/^\[U:1:(\d+)\]$/);
-  if (match) {
-    return (BigInt(match[1]) + BigInt("76561197960265728")).toString();
-  }
-  return communityId;
-}
-
-const session = parseSessionCookie();
-
-let steamID = "";
-let playerName = "Guest";
-
-if (isGame && rawCommunityId) {
-  steamID = convertToSteam64(rawCommunityId);
-  playerName = rawPlayerName || "Guest";
-} else {
-  steamID = session?.steamID || "";
-  playerName = session?.playerName || "Guest";
-}
-
-const isAuthenticated = !!(steamID && playerName !== "Guest");
-
-async function fetchSteamAvatar(steam64: string) {
-  if (!STEAM_API_KEY) {
-    console.error("STEAM_API_KEY is not set.");
-    return "/assets/default-avatar.webp";
-  }
-  try {
-    const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steam64}`;
-    const resp = await fetch(url);
-    if (!resp.ok) {
-      console.error("Steam API error:", resp.status);
-      return "/assets/default-avatar.webp";
-    }
-    const data = (await resp.json()) as {
-      response?: { players?: Array<{ avatarfull?: string }> };
-    };
-    return data.response?.players?.[0]?.avatarfull || "/assets/default-avatar.webp";
-  } catch (error) {
-    console.error("Error fetching avatar from Steam:", error);
-    return "/assets/default-avatar.webp";
-  }
-}
-
-let playerAvatar = "/assets/default-avatar.webp";
-
-if (steamID) {
-  playerAvatar = await fetchSteamAvatar(steamID);
-}
+    : '';
 
 const pages = [
-  { title: 'Pravidla', description: 'Pravidla serveru.', link: '/rules', icon: 'mdi:gavel' },
-  { title: 'Mapy', description: 'Aktuální mapy na serveru.', link: '/maps', icon: 'mdi:map' },
-  { title: 'Peníze', description: 'Money systém CS:S.', link: '/money', icon: 'mdi:cash-multiple' },
-  { title: 'Hitreg', description: 'Hitboxy, rates a netgraph.', link: '/hitreg', icon: 'mdi:crosshairs-gps' },
-  { title: 'Fixy', description: 'FPS / radar / zvuk fixy.', link: '/fixes', icon: 'mdi:wrench-cog' },
-  { title: 'Příkazy', description: 'Hráčské příkazy a demo.', link: '/commands', icon: 'mdi:console' },
-  { title: 'SourceTV', description: 'Stažení SourceTV dem.', link: '/sourcetv', icon: 'mdi:download-network' },
-  { title: 'Rychlost', description: 'Pohyb podle zbraně.', link: '/speed', icon: 'mdi:run-fast' },
-  { title: 'Admini', description: 'Admini a jejich pravidla.', link: '/admins', icon: 'mdi:shield-account' },
-  { title: 'Banlist', description: 'Seznam banů.', link: '/banlist', icon: 'mdi:ban' },
-  { title: 'VIP', description: 'Podpora serveru.', link: '/vip', icon: 'mdi:star' },
-  { title: 'Kontakt', description: 'Napište nám.', link: '/contact', icon: 'mdi:card-account-mail' },
-  { title: 'Připojit', description: 'Připojte se k serveru.', link: '/connect', icon: 'mdi:play-network' },
-  { title: 'Statistiky', description: 'HLstatsX statistiky.', link: 'https://stats.lamateam.eu/', icon: 'mdi:chart-bar' },
+  {
+    title: 'Rules',
+    description: 'Server rules.',
+    link: '/rules',
+    icon: 'mdi:gavel',
+  },
+  {
+    title: 'Maps',
+    description: 'Current server maps.',
+    link: '/maps',
+    icon: 'mdi:map',
+  },
+  {
+    title: 'Money',
+    description: 'CS:S money system.',
+    link: '/money',
+    icon: 'mdi:cash-multiple',
+  },
+  {
+    title: 'Hitreg',
+    description: 'Hitboxes, rates, and netgraph.',
+    link: '/hitreg',
+    icon: 'mdi:crosshairs-gps',
+  },
+  {
+    title: 'Fixes',
+    description: 'FPS, radar, and sound fixes.',
+    link: '/fixes',
+    icon: 'mdi:wrench-cog',
+  },
+  {
+    title: 'Commands',
+    description: 'Player commands and demos.',
+    link: '/commands',
+    icon: 'mdi:console',
+  },
+  {
+    title: 'SourceTV',
+    description: 'Download SourceTV demos.',
+    link: '/sourcetv',
+    icon: 'mdi:download-network',
+  },
+  {
+    title: 'Speed',
+    description: 'Movement speed by weapon.',
+    link: '/speed',
+    icon: 'mdi:run-fast',
+  },
+  {
+    title: 'Admins',
+    description: 'Admins and admin rules.',
+    link: '/admins',
+    icon: 'mdi:shield-account',
+  },
+  {
+    title: 'Banlist',
+    description: 'Server bans.',
+    link: '/banlist',
+    icon: 'mdi:ban',
+  },
+  {
+    title: 'VIP',
+    description: 'Support the server.',
+    link: '/vip',
+    icon: 'mdi:star',
+  },
+  {
+    title: 'Contact',
+    description: 'Contact us.',
+    link: '/contact',
+    icon: 'mdi:card-account-mail',
+  },
+  {
+    title: 'Connect',
+    description: 'Join the server.',
+    link: '/connect',
+    icon: 'mdi:play-network',
+  },
+  {
+    title: 'Statistics',
+    description: 'HLstatsX statistics.',
+    link: 'https://stats.lamateam.eu/',
+    icon: 'mdi:chart-bar',
+  },
 ].map((page) => ({
   ...page,
   link:
@@ -106,46 +165,874 @@ const pages = [
 }));
 ---
 
-<Layout title="Home">
-  {
-    isAuthenticated ? (
-      <div class="flex items-center space-x-4 mb-8 justify-center">
-        <img
-          src={playerAvatar}
-          alt="Player Avatar"
-          class="w-14 h-14 rounded-full border-2 border-gray-700"
-        />
-        <h1 class="text-lg font-bold text-white">
-          <strong>{playerName}</strong>, vítej na LaMaTeam!
-        </h1>
-      </div>
-    ) : (
-      <h1 class="fl-text-lg/3xl font-bold text-center text-white mb-8">
-        Vítej na LaMaTeam!
-      </h1>
-    )
-  }
-
-  <div class="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 fl-mb-0/8">
-    {
-      pages.map((page) => (
-        <a
-          href={page.link}
-          class="group/card relative flex flex-col items-center"
-          data-astro-prefetch="load"
-          aria-label={`${page.title} — ${page.description}`}
+<Layout
+  lang={locale}
+  canonicalPath={Astro.url.pathname === '/' ? '/' : undefined}
+  title="LaMaTeAm — Counter-Strike: Source Community"
+  description="Join LaMaTeAm CS:S — a fair EU classic rotation server with quiet-hours-friendly bots."
+>
+  <div class="community-grid fl-gap-3/8">
+    <div class="community-main">
+      <div class:list={['home-top-row', { 'motd-top-row': isGame }]}>
+        <header
+          class:list={[
+            'home-hero',
+            { 'fl-p-4/12 fl-gap-4/10 fl-mb-5/12': !isGame },
+            { 'motd-welcome': isGame },
+          ]}
         >
-          <div class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500/15 text-blue-400 shadow-md transition-all duration-200 group-hover/card:bg-blue-500/30 group-hover/card:text-white group-hover/card:scale-110 group-hover/card:shadow-blue-500/20 group-hover/card:shadow-lg">
-            <Icon name={page.icon} class="h-7 w-7" />
+          <div class="hero-summary">
+            <div class="hero-copy">
+              {!isGame && (
+                <p class="eyebrow fl-mb-3/5">
+                  {t('Counter-Strike: Source · CZ/SK community')}
+                </p>
+              )}
+              <h1 class="fl-text-2xl/6xl">{t('Welcome to LaMaTeAm.')}</h1>
+              {displayName && (
+                <div class="hero-player fl-mt-3/5">
+                  <img
+                    src={avatar}
+                    data-motd-avatar={isGame ? rawCommunityId : undefined}
+                    alt=""
+                    width="48"
+                    height="48"
+                    referrerpolicy="no-referrer"
+                    onerror="this.onerror=null;this.src='/assets/default-avatar.webp';"
+                  />
+                  <strong translate="no" data-no-translate>
+                    {displayName}
+                  </strong>
+                </div>
+              )}
+              {!isGame && (
+                <>
+                  <p class="hero-intro fl-mt-3/5 fl-text-base/xl">
+                    {t(
+                      'Back for another round? Classic maps, fair play and a place to reconnect.',
+                    )}
+                  </p>
+                  <p class="hero-intro fl-mt-3/5" data-no-translate>
+                    {communityIntro}
+                  </p>
+                </>
+              )}
+            </div>
+            {displayName && !isGame && (
+              <section
+                class="hero-stats"
+                data-hero-stats
+                data-no-translate
+                hidden
+              >
+                <h2 class="eyebrow" data-stats-title />
+                <dl class="hero-stats-values" />
+              </section>
+            )}
           </div>
-          <span class="pointer-events-none absolute top-full left-1/2 z-20 mt-2 hidden w-max max-w-44 -translate-x-1/2 rounded-lg bg-black/90 px-3 py-1.5 text-xs font-medium text-gray-100 shadow-xl group-hover/card:block text-center">
-            {page.title}
-          </span>
-        </a>
-      ))
-    }
+          {!isGame && (
+            <div class="hero-connect fl-gap-3/5">
+              <a
+                href={`/connect${motdQuery}`}
+                class="connect-button fl-px-4/8 fl-py-3/5 fl-text-base/xl"
+              >
+                <Icon name="mdi:play" class="h-5 w-5" />
+                {t('Connect to the server')}
+              </a>
+              <p class="server-address" translate="no">
+                82.208.17.101:27516
+              </p>
+              <div class="hero-links">
+                <a href={`/rules${motdQuery}`}>{t('Rules')}</a>
+                <a href={`/contact${motdQuery}`}>{t('Contact')}</a>
+              </div>
+            </div>
+          )}
+        </header>
+        {isGame && (
+          <div class="motd-stats-slot">
+            <p data-motd-stats-state role="status" data-no-translate>
+              HLstatsX · …
+            </p>
+            <section
+              class="hero-stats motd-personal-stats"
+              data-hero-stats
+              data-motd-community-id={
+                rawCommunityId.length <= 32 ? rawCommunityId : undefined
+              }
+              data-no-translate
+              hidden
+            >
+              <h2 class="eyebrow" data-stats-title />
+              <dl class="hero-stats-values" />
+            </section>
+          </div>
+        )}
+        {isGame && (
+          <div class="motd-map-rating" data-no-translate>
+            <MapRatings compact locale={locale} />
+          </div>
+        )}
+      </div>
+      {isGame && (
+        <section class="motd-info" aria-label={t('Statistics')}>
+          <p data-no-translate>{communityIntro}</p>
+          <nav class="motd-guide-links" aria-label={t('Statistics')}>
+            {pages
+              .filter((page) =>
+                ['Statistics', 'Maps', 'Commands'].includes(page.title),
+              )
+              .sort(
+                (a, b) =>
+                  ['Statistics', 'Maps', 'Commands'].indexOf(a.title) -
+                  ['Statistics', 'Maps', 'Commands'].indexOf(b.title),
+              )
+              .map((page) => (
+                <a href={page.link}>
+                  <Icon name={page.icon} class="h-5 w-5" />
+                  <span class="guide-label">
+                    <strong>{page.title}</strong>
+                    <span class="guide-description">{page.description}</span>
+                  </span>
+                </a>
+              ))}
+          </nav>
+        </section>
+      )}
+      {isGame && <ServerRules compact locale="en" />}
+      {!isGame && (
+        <section
+          class="desktop-community panel fl-p-4/10"
+          aria-labelledby="about-title"
+        >
+          <p class="eyebrow fl-mb-2/3">Server guides</p>
+          <h2 id="about-title" class="fl-text-lg/3xl font-bold fl-mb-3/5">
+            Counter-Strike: Source, played together
+          </h2>
+          <p class="fl-mb-3/5">
+            We've been playing since the early days of Counter-Strike. Explore
+            our{' '}
+            <a href="/maps" class="text-cyan-300 underline">
+              map rotation
+            </a>{' '}
+            and find a familiar favourite.
+          </p>
+          <div class="quick-links fl-gap-2/4">
+            {pages
+              .filter((page) => page.link !== '/connect')
+              .map((page) => (
+                <a href={page.link} class="quick-link fl-p-3/5 fl-text-sm/lg">
+                  <Icon name={page.icon} class="h-5 w-5" />
+                  <span class="guide-label">
+                    <strong>{page.title}</strong>
+                    <span class="guide-description">{page.description}</span>
+                  </span>
+                </a>
+              ))}
+          </div>
+        </section>
+      )}
+    </div>
+    {!isGame && (
+      <aside
+        class="community-side flex flex-col fl-gap-3/6"
+        aria-label={t('Available maps and ratings')}
+      >
+        {!isGame && (
+          <div class="contents" data-no-translate>
+            <MapRatings compact locale={locale} />
+          </div>
+        )}
+        {!isGame && (
+          <>
+            <section
+              class="panel server-monitor"
+              aria-label="LaMaTeAm server monitor"
+            >
+              <header class="server-monitor-heading">
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/de/d/de/Logo_Counter-Strike_Source.svg"
+                  alt="Counter-Strike: Source"
+                  loading="lazy"
+                  width="180"
+                  height="44"
+                />
+                <p
+                  class="server-monitor-status"
+                  id="server-player-count"
+                  role="status"
+                  aria-live="polite"
+                  title="Approximate count; FakaHeda's feed may update about every five minutes."
+                >
+                  Checking player count…
+                </p>
+              </header>
+              <div class="gametracker-frame">
+                <iframe
+                  src="https://cache.gametracker.com/components/html0/?host=82.208.17.101:27516&bgColor=131f32&fontColor=e7eef3&titleBgColor=131f32&titleColor=b8ed75&borderColor=131f32&linkColor=a8bac8&showMap=1&currentPlayersHeight=80&showCurrPlayers=1&topPlayersHeight=0&showTopPlayers=0&showBlogs=0&width=300"
+                  title="Live LaMaTeAm players and current map"
+                  class="community-widget gametracker-widget"
+                  width="300"
+                  height="392"
+                  scrolling="no"
+                  loading="lazy"
+                  sandbox="allow-scripts allow-same-origin allow-popups"
+                />
+              </div>
+              <div class="server-monitor-actions">
+                <label class="sr-only" for="monitor-server-ip">
+                  Server address — select to copy
+                </label>
+                <input
+                  id="monitor-server-ip"
+                  class="monitor-server-ip"
+                  value="82.208.17.101:27516"
+                  readonly
+                  translate="no"
+                  aria-describedby="monitor-copy-status"
+                />
+                <a href="/connect" class="connect-button widget-connect">
+                  <Icon name="mdi:play" class="h-4 w-4" />
+                  Connect
+                </a>
+              </div>
+              <p
+                id="monitor-copy-status"
+                class="sr-only"
+                role="status"
+                aria-live="polite"
+              ></p>
+            </section>
+            <section class="panel" aria-label="LaMaTeAm Discord community">
+              <iframe
+                src="https://discord.com/widget?id=817862677886926900&theme=dark"
+                title="LaMaTeAm Discord community"
+                class="community-widget"
+                loading="lazy"
+                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+              />
+            </section>
+          </>
+        )}
+      </aside>
+    )}
   </div>
 
+  <style>
+    .home-top-row {
+      display: contents;
+    }
+    .home-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      border: 1px solid #b8ed7526;
+      border-radius: 20px;
+      background: none;
+    }
+    .home-hero h1 {
+      font-weight: 800;
+      max-width: 18ch;
+    }
+    .hero-intro {
+      max-width: 48ch;
+      color: var(--muted);
+    }
+    .hero-player {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+    .hero-player img {
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .hero-player strong {
+      overflow-wrap: anywhere;
+    }
+    .hero-stats[hidden] {
+      display: none;
+    }
+    .hero-stats {
+      width: 100%;
+      max-width: 30rem;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #b8ed7526;
+      font-size: 0.8rem;
+    }
+    .hero-stats-values {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem 1rem;
+      margin-top: 0.5rem;
+    }
+    .hero-stats-values :global(dt) {
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+    .hero-stats-values :global(dd) {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .hero-stats-values :global(.stats-bar) {
+      display: block;
+      height: 4px;
+      max-width: 100%;
+      margin-top: 0.25rem;
+      background: #b8ed75;
+    }
+    .hero-stats-values :global(.stats-bar-deaths) {
+      background: #a8bac8;
+    }
+    .motd-welcome .hero-stats {
+      max-width: 24rem;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+    }
+    .hero-summary,
+    .hero-copy {
+      min-width: 0;
+    }
+    @media (min-width: 600px) {
+      .motd-welcome .hero-summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: center;
+        gap: 1rem;
+      }
+      .motd-welcome .hero-stats {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: 0;
+      }
+    }
+    .hero-connect {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .hero-connect .connect-button {
+      white-space: normal;
+      text-align: center;
+      max-width: 100%;
+    }
+    .hero-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      color: var(--muted);
+    }
+    .hero-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      text-decoration: underline;
+      text-underline-offset: 0.25em;
+    }
+    .motd-welcome {
+      padding: 1rem;
+      gap: 0.75rem;
+      margin-bottom: 0;
+      border-radius: 10px;
+    }
+    .motd-welcome h1 {
+      font-size: 1.5rem;
+    }
+    .motd-welcome .eyebrow {
+      font-size: 0.65rem;
+    }
+    .motd-welcome .hero-intro {
+      font-size: 0.875rem;
+    }
+    .motd-welcome .hero-connect {
+      gap: 0.35rem;
+    }
+    .motd-welcome .hero-player img {
+      width: 36px;
+      height: 36px;
+    }
+    .community-grid {
+      row-gap: clamp(2rem, 4vw, 3rem);
+    }
+    .community-main {
+      display: grid;
+      gap: clamp(1.25rem, 3vw, 3rem);
+    }
+    .community-main .home-hero {
+      margin-bottom: 0;
+    }
+    :global(.is-game) .community-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 0.5rem;
+    }
+    .motd-welcome {
+      gap: 0.35rem;
+    }
+    .motd-welcome h1 {
+      font-size: 1.25rem;
+    }
+    .motd-welcome .hero-intro,
+    .motd-welcome .hero-player {
+      margin-top: 0.35rem;
+    }
+    .motd-welcome .eyebrow {
+      margin-bottom: 0.35rem;
+    }
+    .motd-welcome .hero-links a {
+      min-height: 32px;
+    }
+
+    @media (min-width: 1000px) and (min-height: 600px) {
+      :global(.is-game) .motd-welcome {
+        padding: clamp(1rem, 1.25vw, 3rem);
+        gap: clamp(0.35rem, 0.65vw, 1.75rem);
+      }
+      .motd-welcome h1 {
+        font-size: clamp(1.25rem, 1.7vw, 4.25rem);
+      }
+      .motd-welcome .hero-intro,
+      .motd-welcome .hero-player,
+      .motd-welcome .hero-links {
+        font-size: clamp(0.875rem, 0.8vw, 2rem);
+      }
+      .motd-welcome .eyebrow,
+      .motd-welcome .hero-stats {
+        font-size: clamp(0.75rem, 0.65vw, 1.625rem);
+      }
+      .motd-welcome .hero-stats {
+        max-width: 36em;
+      }
+      .motd-welcome .hero-connect {
+        gap: clamp(0.35rem, 0.65vw, 1.75rem);
+      }
+      .motd-welcome .hero-connect .connect-button {
+        font-size: clamp(0.875rem, 0.8vw, 2rem);
+        padding: 0.65em 1em;
+      }
+      .motd-welcome .hero-player img {
+        width: clamp(36px, 2vw, 80px);
+        height: clamp(36px, 2vw, 80px);
+      }
+    }
+
+    .community-main,
+    .community-side,
+    .join-overview > div,
+    .panel-heading > div {
+      min-width: 0;
+    }
+
+    .join-overview p,
+    .panel-heading,
+    .server-address {
+      overflow-wrap: anywhere;
+    }
+
+    .guide-label {
+      display: grid;
+      gap: 0.25rem;
+      min-width: 0;
+    }
+
+    .guide-description {
+      color: var(--muted);
+      font-size: 0.85em;
+      line-height: 1.5;
+    }
+
+    .quick-link {
+      align-items: flex-start;
+    }
+
+    .quick-link :global(svg) {
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+    }
+
+    #messageInput {
+      min-width: 0;
+      width: 100%;
+    }
+
+    #sendButton {
+      flex-shrink: 0;
+    }
+
+    @media (min-width: 1000px) {
+      .community-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+        column-gap: clamp(1.5rem, 3vw, 3rem);
+      }
+    }
+    @media (min-width: 1400px) {
+      .home-hero:not(.motd-welcome) {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+    }
+
+    /* Scoped Astro selectors must override the older two-column hero too;
+       otherwise its empty stats track doubles the welcome's intrinsic width. */
+    :global(.is-game.motd-home) .motd-welcome {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: none;
+      box-shadow: none;
+      gap: 0;
+      align-self: flex-start;
+    }
+    :global(.is-game.motd-home) .motd-welcome .hero-summary {
+      display: block;
+    }
+    :global(.is-game.motd-home) .motd-welcome h1 {
+      max-width: none;
+      font-size: calc(var(--motd-text) * 1.45);
+      line-height: 1.2;
+    }
+    :global(.is-game.motd-home) .motd-welcome .hero-player {
+      margin-top: 0.5rem;
+    }
+    :global(.is-game.motd-home) .motd-welcome .hero-intro,
+    :global(.is-game.motd-home) .motd-welcome .hero-player,
+    :global(.is-game.motd-home) .motd-welcome .hero-stats,
+    :global(.is-game.motd-home) .motd-welcome .hero-links,
+    :global(.is-game.motd-home) .motd-welcome .eyebrow {
+      font-size: var(--motd-text);
+    }
+    :global(.is-game.motd-home) .motd-guide-links {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 14em), 1fr));
+      gap: var(--motd-space);
+    }
+    :global(.is-game.motd-home) .guide-description {
+      font-size: var(--motd-text);
+    }
+    .motd-guide-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+      gap: clamp(0.5rem, 0.65vw, 1.5rem);
+      margin-top: 0.65rem;
+    }
+    .motd-guide-links a {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6em;
+      padding: 0.65em 0.75em;
+      border: 1px solid var(--edge);
+      border-radius: 0.5rem;
+      background: #131f3299;
+      min-width: 0;
+      text-decoration: none;
+    }
+    .motd-guide-links a:hover {
+      border-color: var(--accent);
+      background: #1c2e47;
+    }
+    .motd-guide-links a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .motd-guide-links :global(svg) {
+      flex-shrink: 0;
+      margin-top: 0.2em;
+    }
+    .motd-guide-links .guide-label {
+      gap: 0.1em;
+    }
+  </style>
+
+  <script is:inline data-astro-rerun>
+    (() => {
+      const root = document.querySelector('[data-hero-stats]');
+      if (!root || root.dataset.ready) return;
+      root.dataset.ready = 'true';
+      const copy = {
+        en: [
+          'Your HLstatsX snapshot',
+          'Kills',
+          'Deaths',
+          'Rank',
+          'Skill',
+          'Kills / deaths',
+          'Accuracy',
+          'Headshots',
+        ],
+        cs: [
+          'Tvé statistiky HLstatsX',
+          'Zabití',
+          'Úmrtí',
+          'Pořadí',
+          'Body',
+          'Zabití / úmrtí',
+          'Přesnost',
+          'Zásahy do hlavy',
+        ],
+        sk: [
+          'Tvoje štatistiky HLstatsX',
+          'Zabitia',
+          'Úmrtia',
+          'Poradie',
+          'Body',
+          'Zabitia / úmrtia',
+          'Presnosť',
+          'Zásahy do hlavy',
+        ],
+        pl: [
+          'Twoje statystyki HLstatsX',
+          'Zabójstwa',
+          'Śmierci',
+          'Pozycja',
+          'Punkty',
+          'Zabójstwa / śmierci',
+          'Celność',
+          'Trafienia w głowę',
+        ],
+        hu: [
+          'HLstatsX statisztikáid',
+          'Ölések',
+          'Halálok',
+          'Helyezés',
+          'Pontszám',
+          'Ölések / halálok',
+          'Pontosság',
+          'Fejlövések',
+        ],
+        de: [
+          'Deine HLstatsX-Statistik',
+          'Kills',
+          'Tode',
+          'Rang',
+          'Punkte',
+          'Kills / Tode',
+          'Genauigkeit',
+          'Kopfschüsse',
+        ],
+        uk: [
+          'Твоя статистика HLstatsX',
+          'Вбивства',
+          'Смерті',
+          'Місце',
+          'Бали',
+          'Вбивства / смерті',
+          'Точність',
+          'Влучання в голову',
+        ],
+        fr: [
+          'Tes statistiques HLstatsX',
+          'Éliminations',
+          'Morts',
+          'Rang',
+          'Points',
+          'Éliminations / morts',
+          'Précision',
+          'Tirs à la tête',
+        ],
+      };
+      const keys = [
+        'kills',
+        'deaths',
+        'rank',
+        'skill',
+        'kpd',
+        'accuracy',
+        'headshots',
+      ];
+      const controller = new AbortController();
+      let stats;
+      const state = root.parentElement?.querySelector(
+        '[data-motd-stats-state]',
+      );
+      let publicSnapshot = false;
+      const publicTitles = {
+        en: 'Public HLstatsX snapshot · unverified player',
+        cs: 'Veřejné statistiky HLstatsX · neověřený hráč',
+        sk: 'Verejné štatistiky HLstatsX · neoverený hráč',
+        pl: 'Publiczne statystyki HLstatsX · niezweryfikowany gracz',
+        hu: 'Nyilvános HLstatsX statisztika · nem ellenőrzött játékos',
+        de: 'Öffentliche HLstatsX-Statistik · unbestätigter Spieler',
+        uk: 'Публічна статистика HLstatsX · неперевірений гравець',
+        fr: 'Statistiques HLstatsX publiques · joueur non vérifié',
+      };
+      const render = () => {
+        if (!stats || controller.signal.aborted) return;
+        const lang = document.documentElement.lang.toLowerCase().split('-')[0];
+        const labels = copy[lang] || copy.en;
+        const format = new Intl.NumberFormat(lang || 'en', {
+          maximumFractionDigits: 2,
+        });
+        root.querySelector('[data-stats-title]').textContent = publicSnapshot
+          ? publicTitles[lang] || publicTitles.en
+          : labels[0];
+        const list = root.querySelector('dl');
+        list.replaceChildren();
+        // Only the same-unit pair shares a scale. No trend or population comparison.
+        const max = Math.max(stats.kills || 0, stats.deaths || 0);
+        keys.forEach((key, index) => {
+          const value = stats[key];
+          if (value === null) return;
+          const row = document.createElement('div');
+          const label = document.createElement('dt');
+          label.textContent = labels[index + 1];
+          const number = document.createElement('dd');
+          number.textContent =
+            format.format(value) + (key === 'accuracy' ? '%' : '');
+          if (index < 2 && stats.kills !== null && stats.deaths !== null) {
+            const bar = document.createElement('span');
+            bar.className = `stats-bar stats-bar-${key}`;
+            bar.setAttribute('aria-hidden', 'true');
+            bar.style.width = `${max > 0 ? (value / max) * 100 : 0}%`;
+            number.append(bar);
+          }
+          row.append(label, number);
+          list.append(row);
+        });
+        root.hidden = false;
+        if (state) state.hidden = true;
+      };
+      const observer = new MutationObserver(render);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['lang'],
+      });
+      const cleanup = () => {
+        controller.abort();
+        observer.disconnect();
+        document.removeEventListener('astro:before-swap', cleanup);
+      };
+      document.addEventListener('astro:before-swap', cleanup, { once: true });
+      void (async () => {
+        try {
+          const options = {
+            method: 'GET',
+            credentials: 'same-origin',
+            cache: 'no-store',
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+          };
+          let response = await fetch('/api/stats/me', options);
+          // Only an explicit unauthorized result permits the public lookup.
+          // Verified sessions with missing/unavailable stats retain precedence.
+          const communityId = root.dataset.motdCommunityId;
+          if (
+            response.status === 401 &&
+            communityId &&
+            communityId.length <= 32
+          ) {
+            response = await fetch(
+              `/api/stats/motd?${new URLSearchParams({ communityid: communityId })}`,
+              options,
+            );
+            publicSnapshot = true;
+          }
+          if (response.status !== 200) return;
+          const data = await response.json();
+          if (data?.available !== true || !data.stats) return;
+          if (
+            publicSnapshot &&
+            (data.source !== 'motd' ||
+              data.verified !== false ||
+              data.authenticated !== false)
+          )
+            return;
+          // Whitelist finite numbers only: never retain or render response identity.
+          const values = {};
+          for (const key of keys) {
+            const value = data.stats[key];
+            if (
+              value !== null &&
+              (typeof value !== 'number' ||
+                !Number.isFinite(value) ||
+                value < 0)
+            )
+              return;
+            if (key === 'accuracy' && value > 100) return;
+            values[key] = value;
+          }
+          if (keys.every((key) => values[key] === null)) return;
+          stats = values;
+          render();
+        } catch {
+          // Missing identity, service outages and aborts leave the hero intact.
+        } finally {
+          if (state && !stats && !controller.signal.aborted) {
+            const unavailable = {
+              en: 'HLstatsX statistics unavailable',
+              cs: 'Statistiky HLstatsX nejsou dostupné',
+              sk: 'Štatistiky HLstatsX nie sú dostupné',
+              pl: 'Statystyki HLstatsX są niedostępne',
+              hu: 'A HLstatsX statisztika nem érhető el',
+              de: 'HLstatsX-Statistik nicht verfügbar',
+              uk: 'Статистика HLstatsX недоступна',
+              fr: 'Statistiques HLstatsX indisponibles',
+            };
+            const lang = document.documentElement.lang
+              .toLowerCase()
+              .split('-')[0];
+            state.textContent = unavailable[lang] || unavailable.en;
+          }
+        }
+      })();
+    })();
+  </script>
+  <script is:inline data-astro-rerun>
+    (() => {
+      const image = document.querySelector('img[data-motd-avatar]');
+      if (!image || image.dataset.avatarReady) return;
+      image.dataset.avatarReady = 'true';
+      const identity = image.dataset.motdAvatar || '';
+      // CS:S embedded engines may lack BigInt. Only the uint32 account portion
+      // becomes a Number; add it to the Steam64 base as decimal digits exactly.
+      let steamid;
+      if (/^765\d{14}$/.test(identity)) {
+        if (identity > '76561197960265728' && identity <= '76561202255233023')
+          steamid = identity;
+      } else {
+        const steam3 = /^\[U:1:(\d{1,10})\]$/.exec(identity);
+        const steam2 = /^STEAM_[01]:([01]):(\d{1,10})$/.exec(identity);
+        const account = steam3
+          ? Number(steam3[1])
+          : steam2
+            ? Number(steam2[2]) * 2 + Number(steam2[1])
+            : 0;
+        if (account > 0 && account <= 4294967295) {
+          const digits = '76561197960265728'.split('');
+          let carry = account;
+          for (let i = digits.length - 1; i >= 0; i--) {
+            const sum = Number(digits[i]) + carry;
+            digits[i] = String(sum % 10);
+            carry = Math.floor(sum / 10);
+          }
+          steamid = digits.join('');
+        }
+      }
+      if (!steamid) return;
+      void (async () => {
+        try {
+          const response = await fetch(`/api/steamUser?steamid=${steamid}`, {
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json' },
+          });
+          if (!response.ok) return;
+          const data = await response.json();
+          if (typeof data?.avatar !== 'string') return;
+          const url = new URL(data.avatar);
+          if (
+            image.isConnected &&
+            url.protocol === 'https:' &&
+            !url.username &&
+            !url.password &&
+            !url.port &&
+            /(^|\.)steamstatic\.com$|(^|\.)akamaihd\.net$/.test(url.hostname)
+          )
+            image.src = url.href;
+        } catch {
+          // Outages or invalid responses keep the existing local/profile image.
+        }
+      })();
+    })();
+  </script>
   <script is:inline>
     (() => {
       const legacy = {
@@ -186,150 +1073,305 @@ const pages = [
       }
     })();
   </script>
-
-  <!-- Integrated Shoutbox below -->
-  <section class="mx-auto w-full px-2 py-4 bg-gray-900 rounded-md">
-
-    <form
-      id="shoutboxForm"
-      class="flex gap-4 items-center mb-6"
-      onsubmit="return false;"
-    >
-      <input
-        type="text"
-        id="messageInput"
-        placeholder=`Co máš na umě ${playerName}? ;)`
-        class="flex-1 p-3 rounded-md border border-gray-600 bg-gray-800 text-white"
-        autocomplete="off"
-        disabled={!isAuthenticated}
-      />
-      <button
-        type="button"
-        id="sendButton"
-        class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded-md"
-        disabled={!isAuthenticated}
-      >
-        Odeslat
-      </button>
-    </form>
-
-    <div
-      id="shoutboxMessages"
-      class="fl-max-h-64/96 overflow-y-auto fl-p-0/4 bg-gray-800 rounded-md"
-    >
-      <!-- Messages will be loaded dynamically -->
-    </div>
-  </section>
-
-  <!-- 3) Inline script that has access to these server variables: baseUrl, playerName, playerAvatar, steamID -->
-  <!--    define:vars automatically JSON-serializes them so you can reference them by name. -->
-  <script is:inline define:vars={{ baseUrl, steamID, playerName, playerAvatar }}
-  >
-    // This code runs in the client, after the DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
-      const messageInput = document.getElementById('messageInput');
-      const sendButton = document.getElementById('sendButton');
-      const shoutboxMessages = document.getElementById('shoutboxMessages');
-
-      // Make sure baseUrl has a trailing slash
-      const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
-
-      // Convert a timestamp to "how long ago" string
-      function timeSince(timestamp) {
-        const now = Date.now();
-        const diffTime = now - new Date(timestamp).getTime();
-        if (isNaN(diffTime)) return 'Neplatný čas';
-
-        const seconds = Math.floor(diffTime / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
-        const months = Math.floor(days / 30);
-        const years = Math.floor(days / 365);
-
-        if (years > 0)
-          return `${years} rok${years > 1 && years < 5 ? 'y' : years > 4 ? 'ů' : ''}`;
-        if (months > 0)
-          return `${months} měsíc${months > 1 && months < 5 ? 'e' : months > 4 ? 'ů' : ''}`;
-        if (days > 0) {
-          if (days === 1) return '1 den';
-          if (days > 1 && days < 5) return `${days} dny`;
-          return `${days} dní`;
-        }
-        if (hours > 0)
-          return `${hours} hodin${hours > 1 && hours < 5 ? 'y' : ''}`;
-        if (minutes > 0)
-          return `${minutes} minut${minutes > 1 && minutes < 5 ? 'y' : ''}`;
-        return `${seconds} sekund${seconds > 1 && seconds < 5 ? 'y' : ''}`;
-      }
-
-      // Render messages into the DOM
-      function renderMessages(messages) {
-        shoutboxMessages.innerHTML = '';
-        messages.forEach(
-          ({ player_avatar, player_name, message, timestamp }) => {
-            shoutboxMessages.insertAdjacentHTML(
-              'beforeend',
-              `<div class="flex items-center space-x-4 mb-4">
-               <img
-                 src="${player_avatar || '/assets/default-avatar.webp'}"
-                 alt="Player Avatar"
-                 class="w-8 h-8 rounded-full"
-               />
-               <div class="flex flex-1">
-                 <p class="text-white"><strong>${player_name}</strong>: ${message}</p>
-                 <p class="text-gray-400 text-sm ml-auto">${timeSince(timestamp)}</p>
-               </div>
-             </div>`,
-            );
-          },
-        );
-      }
-
-      // Load recent messages from /api/shoutbox
-      async function fetchMessages() {
+  <script>
+    function initializeMonitorAddress() {
+      const input =
+        document.querySelector<HTMLInputElement>('#monitor-server-ip');
+      if (!input || input.dataset.copyReady) return;
+      input.dataset.copyReady = 'true';
+      input.addEventListener('focus', () => input.select());
+      input.addEventListener('click', async () => {
+        input.select();
+        const status = document.getElementById('monitor-copy-status');
         try {
-          const resp = await fetch(`${normalizedBaseUrl}api/shoutbox`);
-          if (!resp.ok) {
-            throw new Error(`HTTP error! status: ${resp.status}`);
-          }
-          const messages = await resp.json();
-          renderMessages(messages);
-        } catch (error) {
-          console.error('Error fetching messages:', error);
+          await navigator.clipboard.writeText(input.value);
+          if (status) status.textContent = 'Server address copied.';
+        } catch {
+          if (status)
+            status.textContent =
+              'Address selected. Use your device’s copy command.';
         }
+      });
+    }
+    initializeMonitorAddress();
+    document.addEventListener('astro:page-load', initializeMonitorAddress);
+  </script>
+  <script>
+    let disconnectWidget: (() => void) | undefined;
+    function fitGameTracker() {
+      disconnectWidget?.();
+      const frame = document.querySelector<HTMLElement>('.gametracker-frame');
+      const widget = frame?.querySelector<HTMLIFrameElement>('iframe');
+      if (!frame || !widget) return;
+      // GameTracker's generator: 164 base + 124 map + (80 + 24) players.
+      // Scale its native viewport, not undocumented cross-origin URL options.
+      const fit = () => {
+        widget.style.transform = `scale(${frame.getBoundingClientRect().width / 300})`;
+      };
+      const observer = new ResizeObserver(fit);
+      observer.observe(frame);
+      fit();
+      disconnectWidget = () => observer.disconnect();
+    }
+    fitGameTracker();
+    document.addEventListener('astro:page-load', fitGameTracker);
+    document.addEventListener('astro:before-swap', () => disconnectWidget?.());
+  </script>
+  <script>
+    let stopPlayerCount: (() => void) | undefined;
+    const playerCountLabels: Record<
+      string,
+      {
+        loading: string;
+        unavailable: string;
+        approximate: (count: number) => string;
+        stale: string;
       }
-
-      // Submit a new message to /api/shoutbox
-      async function handleSubmit() {
-        const msg = messageInput.value.trim();
-        if (!msg) return;
-
+    > = {
+      en: {
+        loading: 'Checking player count…',
+        unavailable: 'Player count unavailable',
+        approximate: (n) => `${n} ${n === 1 ? 'member' : 'members'} online`,
+        stale: 'may be outdated',
+      },
+      cs: {
+        loading: 'Zjišťuji počet hráčů…',
+        unavailable: 'Počet hráčů není dostupný',
+        approximate: (n) =>
+          `${n} ${n === 1 ? 'člen' : n >= 2 && n <= 4 ? 'členové' : 'členů'} online`,
+        stale: 'údaj může být zastaralý',
+      },
+      sk: {
+        loading: 'Zisťujem počet hráčov…',
+        unavailable: 'Počet hráčov nie je dostupný',
+        approximate: (n) =>
+          `${n} ${n === 1 ? 'člen' : n >= 2 && n <= 4 ? 'členovia' : 'členov'} online`,
+        stale: 'údaj môže byť zastaraný',
+      },
+      pl: {
+        loading: 'Sprawdzam liczbę graczy…',
+        unavailable: 'Liczba graczy jest niedostępna',
+        approximate: (n) => `${n} ${n === 1 ? 'członek' : 'członków'} online`,
+        stale: 'dane mogą być nieaktualne',
+      },
+      hu: {
+        loading: 'Játékosszám lekérdezése…',
+        unavailable: 'A játékosszám nem érhető el',
+        approximate: (n) => `${n} játékos online`,
+        stale: 'az adat elavult lehet',
+      },
+      de: {
+        loading: 'Spielerzahl wird geladen…',
+        unavailable: 'Spielerzahl nicht verfügbar',
+        approximate: (n) =>
+          `${n} ${n === 1 ? 'Mitglied' : 'Mitglieder'} online`,
+        stale: 'möglicherweise veraltet',
+      },
+      uk: {
+        loading: 'Перевіряємо кількість гравців…',
+        unavailable: 'Кількість гравців недоступна',
+        approximate: (n) =>
+          `${n} ${n === 1 ? 'учасник' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'учасники' : 'учасників'} онлайн`,
+        stale: 'дані можуть бути застарілими',
+      },
+      fr: {
+        loading: 'Vérification du nombre de joueurs…',
+        unavailable: 'Nombre de joueurs indisponible',
+        approximate: (n) => `${n} ${n === 1 ? 'membre' : 'membres'} en ligne`,
+        stale: 'données potentiellement obsolètes',
+      },
+    };
+    function initializePlayerCount() {
+      stopPlayerCount?.();
+      const element = document.getElementById('server-player-count');
+      if (!element) return;
+      const controller = new AbortController();
+      const { signal } = controller;
+      let timer: number | undefined;
+      let current: { players: number | null; stale: boolean } | undefined;
+      const labels = () =>
+        playerCountLabels[
+          document.documentElement.lang.toLowerCase().split('-')[0]
+        ] ?? playerCountLabels.en;
+      const render = () => {
+        const text = labels();
+        if (!current) {
+          element.textContent = text.loading;
+        } else if (current.players === null) {
+          element.textContent = text.unavailable;
+        } else {
+          element.textContent = `${text.approximate(current.players)}${current.stale ? ` · ${text.stale}` : ''}`;
+        }
+      };
+      const refresh = async () => {
         try {
-          const resp = await fetch(`${normalizedBaseUrl}api/shoutbox`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              steamid: steamID,
-              player_name: playerName,
-              player_avatar: playerAvatar,
-              message: msg,
-            }),
+          const response = await fetch('/api/server-status', {
+            headers: { Accept: 'application/json' },
+            signal,
           });
-          if (!resp.ok) {
-            throw new Error(`HTTP error! status: ${resp.status}`);
-          }
-          messageInput.value = '';
-          fetchMessages();
-        } catch (err) {
-          console.error('Error submitting message:', err);
+          if (!response.ok) throw new Error('Status unavailable');
+          const data = (await response.json()) as {
+            players?: unknown;
+            stale?: unknown;
+          };
+          if (
+            !(
+              data.players === null ||
+              (Number.isSafeInteger(data.players) &&
+                (data.players as number) >= 0)
+            ) ||
+            typeof data.stale !== 'boolean'
+          )
+            throw new Error('Invalid status');
+          current = {
+            players: data.players as number | null,
+            stale: data.stale,
+          };
+        } catch {
+          if (signal.aborted) return;
+          current = { players: null, stale: false };
         }
+        render();
+      };
+      const observer = new MutationObserver(render);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['lang'],
+      });
+      render();
+      void refresh();
+      timer = window.setInterval(() => void refresh(), 60_000);
+      stopPlayerCount = () => {
+        controller.abort();
+        observer.disconnect();
+        if (timer !== undefined) window.clearInterval(timer);
+      };
+    }
+    initializePlayerCount();
+    document.addEventListener('astro:page-load', initializePlayerCount);
+    document.addEventListener('astro:before-swap', () => stopPlayerCount?.());
+  </script>
+  <script>
+    import { navigate } from 'astro:transitions/client';
+    import type { TransitionBeforePreparationEvent } from 'astro:transitions/client';
+    import { isGameUserAgent } from '../lib/motd-locale';
+    import {
+      allLocales,
+      localePath,
+      type SiteLocale,
+    } from '../lib/localized-content';
+
+    function savedMotdLanguage(): SiteLocale | undefined {
+      if (!isGameUserAgent(navigator.userAgent)) return;
+      try {
+        const saved = localStorage.getItem('lamateam-language')?.toLowerCase();
+        return allLocales.find((locale) => locale === saved);
+      } catch {
+        // Embedded browsers may disable storage; keep the negotiated HTML.
       }
+    }
 
-      sendButton?.addEventListener('click', handleSubmit);
+    function rememberMotdLanguage(value: string | undefined) {
+      if (location.pathname !== '/' || !isGameUserAgent(navigator.userAgent))
+        return;
+      const language = allLocales.find(
+        (locale) => locale === value?.toLowerCase(),
+      );
+      if (!language) return;
+      try {
+        localStorage.setItem('lamateam-language', language.toUpperCase());
+      } catch {
+        // Navigation still works if this embedded browser disables storage.
+      }
+    }
 
-      // Initial load of messages
-      fetchMessages();
+    // The server-localized shell navigates directly. Save a fresh root choice
+    // before its existing handlers run, so an older preference cannot undo it.
+    document.addEventListener(
+      'change',
+      (event) => {
+        const target = event.target as HTMLSelectElement | null;
+        if (target?.id === 'language') rememberMotdLanguage(target.value);
+      },
+      { capture: true },
+    );
+    document.addEventListener(
+      'click',
+      (event) => {
+        if (
+          event.ctrlKey ||
+          event.metaKey ||
+          event.shiftKey ||
+          event.altKey ||
+          event.button !== 0
+        )
+          return;
+        const shortcut = (
+          event.target as HTMLElement | null
+        )?.closest<HTMLAnchorElement>('[data-language-shortcut]');
+        if (shortcut) rememberMotdLanguage(shortcut.dataset.languageShortcut);
+      },
+      { capture: true },
+    );
+
+    // English has no /en/ route. For a remembered English choice, use the same
+    // root with an explicit English request header, not a URL override or cookie.
+    document.addEventListener('astro:before-preparation', (event) => {
+      const preparation = event as TransitionBeforePreparationEvent;
+      if (
+        preparation.to.origin !== location.origin ||
+        preparation.to.pathname !== '/' ||
+        preparation.formData ||
+        savedMotdLanguage() !== 'en'
+      )
+        return;
+      const originalLoader = preparation.loader;
+      preparation.loader = async () => {
+        try {
+          const response = await fetch(preparation.to.href, {
+            headers: { 'Accept-Language': 'en' },
+            signal: preparation.signal,
+          });
+          if (
+            !response.ok ||
+            !response.headers.get('content-type')?.includes('text/html')
+          ) {
+            await originalLoader();
+            return;
+          }
+          preparation.newDocument = new DOMParser().parseFromString(
+            await response.text(),
+            'text/html',
+          );
+          preparation.newDocument
+            .querySelectorAll('noscript')
+            .forEach((node) => node.remove());
+        } catch {
+          if (!preparation.signal.aborted) await originalLoader();
+        }
+      };
+    });
+
+    let attemptedPreference: SiteLocale | undefined;
+    document.addEventListener('astro:page-load', () => {
+      if (location.pathname !== '/') return;
+      const saved = savedMotdLanguage();
+      if (!saved || saved === document.documentElement.lang) {
+        attemptedPreference = undefined;
+        return;
+      }
+      // If an old embedded engine strips our header or navigation fails, avoid
+      // repeatedly fetching the same root. A different explicit choice can retry.
+      if (attemptedPreference === saved) return;
+      attemptedPreference = saved;
+      // Storage cannot be read by SSR. Reconcile only this MOTD root; explicit
+      // localized pages and the existing selector's ordinary-browser flow stay put.
+      void navigate(
+        localePath(saved, 'home') + location.search + location.hash,
+        {
+          history: 'replace',
+        },
+      );
     });
   </script>
 </Layout>
