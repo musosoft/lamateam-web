@@ -130,7 +130,7 @@ test("previous shared-chrome/home and page-section requests remain in place", ()
   assert.ok(read("../assets/hero.svg").includes(">LaMaTeAm</text>"));
   assert.ok(
     read("../layouts/Layout.astro").includes(
-      "t('© LaMaTeAm • web & server by muso.sk')",
+      "© LaMaTeAm: crazy69 • web &amp; server: muso.sk",
     ),
   );
 });

@@ -195,11 +195,13 @@ test("MOTD map preview is a bounded horizontal thumbnail beside prompt and contr
   assert.match(rule(".is-game.motd-home .live-chat-panel"), /min-height: 0/);
 });
 
-test("MOTD welcome and rating use natural top-aligned sizing without full-width controls", () => {
+test("MOTD panels stretch to equal row height without full-width controls", () => {
   const row = rule(".is-game.motd-home .motd-top-row");
   assert.match(row, /display: flex/);
   assert.match(row, /flex-wrap: wrap/);
-  assert.match(row, /align-items: flex-start/);
+  assert.match(row, /align-items: stretch/);
+  assert.match(rule(".is-game.motd-home .motd-stats-slot"), /height: 11\.5em/);
+  assert.match(home, /align-self: stretch/);
   assert.match(row, /justify-content: space-between/);
   for (const selector of [".motd-welcome", ".motd-map-rating"]) {
     assert.match(rule(`.is-game.motd-home ${selector}`), /flex: 0 1 auto/);
