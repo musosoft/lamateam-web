@@ -36,9 +36,10 @@ class Element {
 
 async function setup(
   response,
-  { lang = "en", present = true, pending = false } = {},
+  { lang = "en", present = true, pending = false, communityid } = {},
 ) {
   const root = new Element();
+  if (communityid) root.dataset.motdCommunityId = communityid;
   const title = new Element();
   const list = new Element();
   root.querySelector = (selector) => (selector === "dl" ? list : title);
@@ -58,6 +59,7 @@ async function setup(
     document,
     Intl,
     AbortController,
+    URLSearchParams,
     MutationObserver: class {
       observe() {}
       disconnect() {
@@ -72,7 +74,7 @@ async function setup(
           resolve = done;
         });
       if (response instanceof Error) throw response;
-      return response;
+      return Array.isArray(response) ? response[requests - 1] : response;
     },
   };
   runInNewContext(script, context);
@@ -102,6 +104,47 @@ const ok = (values = stats) => ({
     stats: values,
     identity: "<img onerror=alert(1)>",
   }),
+});
+
+test("MOTD public fallback is explicitly unverified and never overrides a verified session", async () => {
+  const id = "76561197960265729";
+  const publicResponse = {
+    status: 200,
+    json: async () => ({
+      available: true,
+      source: "motd",
+      verified: false,
+      authenticated: false,
+      stats,
+    }),
+  };
+  const ui = await setup([{ status: 401 }, publicResponse], {
+    communityid: id,
+  });
+  assert.equal(ui.requests, 2);
+  assert.equal(ui.request.url, `/api/stats/motd?communityid=${id}`);
+  assert.equal(ui.root.hidden, false);
+  assert.match(ui.title.textContent, /Public.*unverified/);
+  assert.doesNotMatch(ui.title.textContent, /Your/);
+  assert.doesNotMatch(ui.request.url, /name|steam_user|session/);
+  for (const response of [ok(), { status: 404 }, { status: 503 }]) {
+    const verified = await setup(response, { communityid: id });
+    assert.equal(verified.requests, 1);
+    if (response.status === 200)
+      assert.match(verified.title.textContent, /Your/);
+  }
+  for (const response of [
+    ok(),
+    { status: 429 },
+    { status: 200, json: async () => ({ available: false }) },
+  ]) {
+    const denied = await setup([{ status: 401 }, response], {
+      communityid: id,
+    });
+    assert.equal(denied.root.hidden, true);
+  }
+  const tooLong = await setup({ status: 401 }, { communityid: "1".repeat(33) });
+  assert.equal(tooLong.requests, 1);
 });
 
 test("snapshot renders real same-unit bars, accessible labels and percentage points only", async () => {

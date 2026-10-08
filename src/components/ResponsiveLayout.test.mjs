@@ -36,10 +36,12 @@ test("navigation fits natural link widths and moves languages into the phone men
     }),
   };
   const phone = { matches: false };
+  let inGame = false;
   const fit = () =>
     vm.runInNewContext(stripTypeScriptTypes(body), {
       nav,
       phone,
+      inGame,
       links,
       languageControls,
       toggle: { setAttribute() {} },
@@ -59,6 +61,9 @@ test("navigation fits natural link widths and moves languages into the phone men
   fit();
   assert.ok(items.every((item) => item.dataset.overflow === "true"));
   assert.equal(languageParent, "menu");
+  inGame = true;
+  fit();
+  assert.equal(languageParent, "header", "MOTD flags stay outside closed menu");
   assert.equal(nav.dataset.hasOverflow, "true");
   assert.ok(!("measuring" in nav.dataset));
 });

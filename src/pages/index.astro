@@ -250,6 +250,25 @@ const pages = [
           )}
         </header>
         {isGame && (
+          <div class="motd-stats-slot">
+            <p data-motd-stats-state role="status" data-no-translate>
+              HLstatsX · …
+            </p>
+            <section
+              class="hero-stats motd-personal-stats"
+              data-hero-stats
+              data-motd-community-id={
+                rawCommunityId.length <= 32 ? rawCommunityId : undefined
+              }
+              data-no-translate
+              hidden
+            >
+              <h2 class="eyebrow" data-stats-title />
+              <dl class="hero-stats-values" />
+            </section>
+          </div>
+        )}
+        {isGame && (
           <div class="motd-map-rating" data-no-translate>
             <MapRatings compact locale={locale} />
           </div>
@@ -822,6 +841,20 @@ const pages = [
       ];
       const controller = new AbortController();
       let stats;
+      const state = root.parentElement?.querySelector(
+        '[data-motd-stats-state]',
+      );
+      let publicSnapshot = false;
+      const publicTitles = {
+        en: 'Public HLstatsX snapshot · unverified player',
+        cs: 'Veřejné statistiky HLstatsX · neověřený hráč',
+        sk: 'Verejné štatistiky HLstatsX · neoverený hráč',
+        pl: 'Publiczne statystyki HLstatsX · niezweryfikowany gracz',
+        hu: 'Nyilvános HLstatsX statisztika · nem ellenőrzött játékos',
+        de: 'Öffentliche HLstatsX-Statistik · unbestätigter Spieler',
+        uk: 'Публічна статистика HLstatsX · неперевірений гравець',
+        fr: 'Statistiques HLstatsX publiques · joueur non vérifié',
+      };
       const render = () => {
         if (!stats || controller.signal.aborted) return;
         const lang = document.documentElement.lang.toLowerCase().split('-')[0];
@@ -829,7 +862,9 @@ const pages = [
         const format = new Intl.NumberFormat(lang || 'en', {
           maximumFractionDigits: 2,
         });
-        root.querySelector('[data-stats-title]').textContent = labels[0];
+        root.querySelector('[data-stats-title]').textContent = publicSnapshot
+          ? publicTitles[lang] || publicTitles.en
+          : labels[0];
         const list = root.querySelector('dl');
         list.replaceChildren();
         // Only the same-unit pair shares a scale. No trend or population comparison.
@@ -854,6 +889,7 @@ const pages = [
           list.append(row);
         });
         root.hidden = false;
+        if (state) state.hidden = true;
       };
       const observer = new MutationObserver(render);
       observer.observe(document.documentElement, {
@@ -868,16 +904,38 @@ const pages = [
       document.addEventListener('astro:before-swap', cleanup, { once: true });
       void (async () => {
         try {
-          const response = await fetch('/api/stats/me', {
+          const options = {
             method: 'GET',
             credentials: 'same-origin',
             cache: 'no-store',
             headers: { Accept: 'application/json' },
             signal: controller.signal,
-          });
+          };
+          let response = await fetch('/api/stats/me', options);
+          // Only an explicit unauthorized result permits the public lookup.
+          // Verified sessions with missing/unavailable stats retain precedence.
+          const communityId = root.dataset.motdCommunityId;
+          if (
+            response.status === 401 &&
+            communityId &&
+            communityId.length <= 32
+          ) {
+            response = await fetch(
+              `/api/stats/motd?${new URLSearchParams({ communityid: communityId })}`,
+              options,
+            );
+            publicSnapshot = true;
+          }
           if (response.status !== 200) return;
           const data = await response.json();
           if (data?.available !== true || !data.stats) return;
+          if (
+            publicSnapshot &&
+            (data.source !== 'motd' ||
+              data.verified !== false ||
+              data.authenticated !== false)
+          )
+            return;
           // Whitelist finite numbers only: never retain or render response identity.
           const values = {};
           for (const key of keys) {
@@ -897,6 +955,23 @@ const pages = [
           render();
         } catch {
           // Missing identity, service outages and aborts leave the hero intact.
+        } finally {
+          if (state && !stats && !controller.signal.aborted) {
+            const unavailable = {
+              en: 'HLstatsX statistics unavailable',
+              cs: 'Statistiky HLstatsX nejsou dostupné',
+              sk: 'Štatistiky HLstatsX nie sú dostupné',
+              pl: 'Statystyki HLstatsX są niedostępne',
+              hu: 'A HLstatsX statisztika nem érhető el',
+              de: 'HLstatsX-Statistik nicht verfügbar',
+              uk: 'Статистика HLstatsX недоступна',
+              fr: 'Statistiques HLstatsX indisponibles',
+            };
+            const lang = document.documentElement.lang
+              .toLowerCase()
+              .split('-')[0];
+            state.textContent = unavailable[lang] || unavailable.en;
+          }
         }
       })();
     })();

@@ -200,7 +200,7 @@ test("MOTD welcome and rating use natural top-aligned sizing without full-width 
   assert.match(row, /display: flex/);
   assert.match(row, /flex-wrap: wrap/);
   assert.match(row, /align-items: flex-start/);
-  assert.match(row, /justify-content: flex-start/);
+  assert.match(row, /justify-content: space-between/);
   for (const selector of [".motd-welcome", ".motd-map-rating"]) {
     assert.match(rule(`.is-game.motd-home ${selector}`), /flex: 0 1 auto/);
   }

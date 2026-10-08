@@ -176,7 +176,9 @@ const links = [
       const isPhone = phone.matches;
       // Move the single language row, rather than cloning IDs or listeners.
       (
-        (isPhone ? links : nav.querySelector('.nav-connect')!) as ParentNode
+        (isPhone && !inGame
+          ? links
+          : nav.querySelector('.nav-connect')!) as ParentNode
       ).prepend(languageControls);
       const items = Array.from(
         links.querySelectorAll<HTMLElement>('.nav-guides-links > a'),

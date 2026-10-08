@@ -202,6 +202,15 @@ test(
             );
             assert.equal(metrics.placeholder, "Click Send to chat");
             assert.equal(metrics.helpRows, 0);
+            const flags = page.locator(".header-language-options a");
+            assert.equal(await flags.count(), 8);
+            for (const flag of await flags.all()) {
+              assert.equal(await flag.isVisible(), true);
+              assert.ok(await flag.getAttribute("aria-label"));
+              const box = await flag.boundingBox();
+              assert.ok(box.width >= 44 && box.height >= 44);
+              assert.ok(box.x >= 0 && box.x + box.width <= width);
+            }
             if (!baseline) baseline = metrics;
             for (const part of ["main", "nav", ...(open ? ["chat"] : [])]) {
               for (const key of ["x", "y", "width", "height"])
@@ -285,6 +294,189 @@ test(
           .locator("main")
           .evaluate((main) => main.getBoundingClientRect().width),
         700,
+      );
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+test(
+  "MOTD flags navigate and verified/public stats retain precedence, labels and right-aligned geometry",
+  { skip: !process.env.LAMATEAM_UI_URL, timeout: 120_000 },
+  async () => {
+    const { chromium } = await import(
+      process.env.LAMATEAM_PLAYWRIGHT_MODULE || "playwright"
+    );
+    const browser = await chromium.launch({
+      headless: true,
+      ...(process.env.CHROMIUM_BIN
+        ? { executablePath: process.env.CHROMIUM_BIN }
+        : {}),
+    });
+    try {
+      const context = await browser.newContext({
+        userAgent: "Valve Client",
+        locale: "en-US",
+      });
+      const page = await context.newPage();
+      let available = false;
+      let invalid = false;
+      let publicAvailable = false;
+      let publicRequests = 0;
+      await page.route("**/api/stats/motd?*", (route) => {
+        publicRequests++;
+        assert.ok(!route.request().url().includes("name="));
+        return route.fulfill({
+          status: publicAvailable ? 200 : 404,
+          json: publicAvailable
+            ? {
+                available: true,
+                source: "motd",
+                verified: false,
+                authenticated: false,
+                stats: {
+                  rank: 12,
+                  skill: 1800,
+                  kills: 80,
+                  deaths: 40,
+                  kpd: 2,
+                  headshots: 20,
+                  accuracy: 32.5,
+                },
+              }
+            : {
+                available: false,
+                source: "motd",
+                verified: false,
+                authenticated: false,
+                reason: "not_found",
+              },
+        });
+      });
+      await page.route("**/api/stats/me", (route) =>
+        route.fulfill({
+          status: available ? 200 : 401,
+          json: available
+            ? {
+                available: true,
+                stats: {
+                  rank: 12,
+                  skill: 1800,
+                  kills: invalid ? "untrusted" : 80,
+                  deaths: 40,
+                  kpd: 2,
+                  headshots: 20,
+                  accuracy: 32.5,
+                },
+              }
+            : { available: false, reason: "unauthorized" },
+        }),
+      );
+      for (const width of [390, 700, 1920]) {
+        await page.setViewportSize({
+          width,
+          height: width === 700 ? 400 : 1080,
+        });
+        for (const open of [true, false]) {
+          let statsSlotGeometry;
+          for (const state of [
+            "unauthorized",
+            "invalid",
+            "available",
+            "public",
+          ]) {
+            available = state === "available" || state === "invalid";
+            invalid = state === "invalid";
+            publicAvailable = state === "public";
+            const beforePublic = publicRequests;
+            await page.goto(
+              `${process.env.LAMATEAM_UI_URL}/?communityid=76561197960265729&name=UnverifiedQuery`,
+            );
+            if (await page.locator(".chat-launcher").isVisible())
+              await page.locator(".chat-launcher").click();
+            if (!open) await page.locator(".chat-close").click();
+            const panel = page.locator(".motd-personal-stats");
+            if (state === "available" || state === "public") {
+              await panel.waitFor({ state: "visible" });
+              assert.equal(await panel.locator("dl > div").count(), 7);
+              assert.equal(
+                await panel.locator("dd").first().textContent(),
+                "80",
+              );
+              assert.ok(
+                !(await panel.textContent()).includes("UnverifiedQuery"),
+              );
+              const title = await panel
+                .locator("[data-stats-title]")
+                .textContent();
+              if (state === "public") assert.match(title, /Public.*unverified/);
+              else {
+                assert.match(title, /Your/);
+                assert.equal(
+                  publicRequests,
+                  beforePublic,
+                  "verified session prevents public lookup",
+                );
+              }
+            } else {
+              assert.equal(await panel.isHidden(), true);
+              assert.equal(await panel.locator("dl > div").count(), 0);
+              await page.waitForFunction(() =>
+                document
+                  .querySelector("[data-motd-stats-state]")
+                  ?.textContent.includes("unavailable"),
+              );
+            }
+            const geometry = await page.evaluate(() => {
+              const row = document.querySelector(".motd-top-row");
+              const boxes = [...row.children].map((child) =>
+                child.getBoundingClientRect().toJSON(),
+              );
+              return {
+                boxes,
+                right: row.getBoundingClientRect().right,
+                overflow:
+                  document.querySelector("main").scrollWidth >
+                  document.querySelector("main").clientWidth,
+              };
+            });
+            assert.equal(geometry.overflow, false);
+            if (!statsSlotGeometry) statsSlotGeometry = geometry.boxes[1];
+            assert.deepEqual(
+              geometry.boxes[1],
+              statsSlotGeometry,
+              "loading/unavailable/available retain stable stats slot geometry",
+            );
+            assert.ok(
+              Math.abs(geometry.boxes[2].right - geometry.right) < 1,
+              "rating must align with row right edge",
+            );
+            if (state === "available" || state === "public") {
+              const [welcome, stats, rating] = geometry.boxes;
+              assert.ok(stats.y >= welcome.y);
+              assert.ok(
+                stats.y < rating.y || stats.right <= rating.x,
+                "stats precede rating visually",
+              );
+              if (width === 1920)
+                assert.ok(stats.x >= welcome.right && rating.x >= stats.right);
+            }
+            if (process.env.LAMATEAM_MOTD_SCREENSHOTS && state !== "invalid")
+              await page.screenshot({
+                path: `${process.env.LAMATEAM_MOTD_SCREENSHOTS}/motd-stats-${state === "available" || state === "public" ? `mock-${state}-NOT-REAL` : "anonymous"}-${width}-${open ? "open" : "closed"}.png`,
+              });
+          }
+        }
+      }
+      await page.locator('[data-language-shortcut="SK"]').click();
+      await page.waitForURL("**/sk/**");
+      assert.equal(await page.locator("html").getAttribute("lang"), "sk");
+      assert.equal(
+        await page
+          .locator('[data-language-shortcut="SK"]')
+          .getAttribute("aria-current"),
+        "true",
       );
     } finally {
       await browser.close();
