@@ -1,40 +1,140 @@
 ---
 // src/pages/vip.astro
 import Layout from '../layouts/Layout.astro';
+import { translator } from '../lib/page-copy';
+import {
+  localeFromPath,
+  localizedHref,
+  type SiteLocale,
+} from '../lib/localized-content';
+interface Props {
+  locale?: SiteLocale;
+}
+const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
+const t = translator(locale);
 
-const supporters = ['(CZ)Kropi "exploited victim"','.:Urv@neC:.','.@xel','.C','b ^ PaTrOn','Bassik','Belly Savalas','Bobik189','BOT - Luc@sonE™','c۸Mp€Я$_K!ŁŁ','crazy69','CTHULHU','Dark','Deadman','Diesel','Domča','DonJuanDeag','HantenPuardon','HLAVOMLAT TEQUILA JOE','HoR','hovnove kolace CSSR','InhumaN ErectioN','Ipos','Jacoooob','Jerzi!','Jezis','K@det','Karko ︻芫 一','KissAngel - Mliko','Kubajs♥L','KuCHaŘ - čtvrtá cenová','LamaQa4','majk25','Majuško ™','MarekQX','Mirec','Mozeczek','Mr. Perniczech ヅ','Mr.SV','muso.sk','NEJSEMPANNA','Nohit','Old Supik','Paty','Pese','Qatro-SPS','Rainer','Sobo','štefan','Tony','vladko','Volavka','Voody312','Zuzule'];
+const supporters = [
+  '(CZ)Kropi "exploited victim"',
+  '.:Urv@NeC:....',
+  '.@xel',
+  '.C',
+  'b ^ PaTrOn',
+  'Bassik',
+  'Belly Savalas',
+  'Bobik189',
+  'BOT - Luc@sonE™',
+  'c۸Mp€Я$_K!ŁŁ',
+  'crazy69',
+  'CTHULHU',
+  'Dark',
+  'Deadman',
+  'Diesel',
+  'Domča',
+  'DonJuanDeag',
+  'HantenPuardon',
+  'HLAVOMLAT TEQUILA JOE',
+  'HoR',
+  'hovnove kolace CSSR',
+  'InhumaN ErectioN',
+  'Ipos',
+  'Jacoooob',
+  'Jerzi!',
+  'Jezis',
+  'K@det',
+  'Karko ︻芫 一',
+  'KissAngel - Mliko',
+  'Kubajs♥L',
+  'KuCHaŘ - čtvrtá cenová',
+  'LamaQa4',
+  'majk25',
+  'Majuško ™',
+  'MarekQX',
+  'Mirec',
+  'Mozeczek',
+  'Mr. Perniczech ヅ',
+  'Mr.SV',
+  'muso.sk',
+  'NEJSEMPANNA',
+  'Nohit',
+  'Old Supik',
+  'Paty',
+  'Pese',
+  'Qatro-SPS',
+  'Rainer',
+  'Sobo',
+  'štefan',
+  'Tony',
+  'vladko',
+  'Volavka',
+  'Voody312',
+  'Zuzule',
+];
 ---
 
-<Layout title="VIP | LaMaTeam">
-  <section class="mx-auto w-full max-w-4xl px-4 py-8 text-left text-gray-100">
-    <header class="mb-6 rounded-2xl border border-gray-700 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Chceš se stát VIP?</h1>
+<Layout title={t('VIP | LaMaTeAm')} lang={locale}>
+  <section class="w-full fl-py-2/5 text-left text-gray-100">
+    <header class="fl-mb-4/6 page-heading">
+      <h1 class="fl-text-2xl/4xl font-bold tracking-tight">
+        {t('VIP & Server Support')}
+      </h1>
     </header>
-
-    <article class="space-y-3 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg text-gray-200">
-      <p class="text-yellow-400">Chceš nás sponzorovat a vždy se připojit, když je plný server? Podpoř nás:</p>
+    <article class="space-y-3 panel fl-p-3/6 text-gray-200">
+      <p class="text-yellow-400">
+        {t(
+          'Want to support us and be able to join even when the server is full? Become a supporter:',
+        )}
+      </p>
       <ul class="space-y-1 text-yellow-400 list-disc pl-5">
-        <li>1 měsíc = 100 Kč</li>
-        <li>6 měsíců = 300 Kč</li>
-        <li>12 mesíců = 500 Kč</li>
+        <li>{t('1 month = 100 CZK')}</li>
+        <li>{t('6 months = 300 CZK')}</li>
+        <li>{t('12 months = 500 CZK')}</li>
       </ul>
-      <p class="text-yellow-400">Peníze můžete zasílat na číslo účtu: <strong>1939775153/0800</strong></p>
-      <p class="text-sm text-gray-400">IBAN CZ88 0800 0000 0019 3977 5153</p>
-      <p>Do informace pro příjemce uveď svůj nick, ať víme kdo poslal příspěvek.</p>
-      <p>Podpořit provoz serveru můžeš i zcela nezjištně i libovolnou částkou. Napiš nám a určitě se dohodneme.</p>
-      <div class="mt-4 rounded-xl border border-gray-800 bg-gray-950/70 p-3">
-        <p class="font-semibold">Kliknutím  <a class="text-blue-400" href="/connect">ZDE</a> se můžeš připojit do VIP slotu, NEBO V KONZOLE:</p>
-        <code class="text-red-400">connect 82.208.17.101:27516</code>
+      <p class="text-yellow-400">
+        {t('Send your payment to bank account:')}{' '}
+        <strong translate="no">1939775153/0800</strong>
+      </p>
+      <p class="fl-text-sm/base text-gray-400" translate="no">
+        IBAN CZ88 0800 0000 0019 3977 5153
+      </p>
+      <p>
+        {t(
+          'Include your nickname in the payment message so we know who sent the contribution.',
+        )}
+      </p>
+      <p>
+        {t(
+          'You can also support the server without receiving VIP status by contributing any amount. Contact us and we will arrange the details.',
+        )}
+      </p>
+      <div class="fl-mt-3/5 rounded border border-gray-800 bg-gray-950/70 fl-p-2/4">
+        <p class="font-semibold">
+          {t('Click')}{' '}
+          <a class="text-blue-400" href={localizedHref('/connect', locale)}>
+            {t('HERE')}
+          </a>{' '}
+          {t('to join through the VIP slot, OR ENTER THIS IN THE CONSOLE:')}
+        </p>
+        <code class="text-red-400" translate="no">
+          connect 82.208.17.101:27516
+        </code>
       </div>
-    </article>
-
-    <header class="mt-8 mb-6 rounded-2xl border border-gray-700 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h2 class="text-2xl font-extrabold tracking-tight md:text-3xl">Kdo podpořil server</h2>
-      <p class="mt-2 text-sm text-gray-300 md:text-base">Veľké thanks všetkým, čo podporili chod servera.</p>
-    </header>
-    <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
-      <ul class="flex flex-wrap items-center justify-center gap-2 text-sm text-gray-200">
-        {supporters.map((name) => <li class="rounded-lg border border-gray-700 bg-gray-950/70 px-2 py-1">{name}</li>)}
+      <header class="fl-mt-4/8 fl-mb-4/6">
+        <h2 class="fl-text-xl/3xl font-bold tracking-tight">
+          {t('Our Supporters')}
+        </h2>
+        <p class="fl-mt-2/4 fl-text-sm/base text-gray-300">
+          {t('A huge thank you to everyone who has supported the server.')}
+        </p>
+      </header>
+      <ul
+        class="flex flex-wrap items-center justify-center fl-gap-2/4 fl-text-sm/base text-gray-200"
+        data-no-translate
+      >
+        {supporters.map((name) => (
+          <li class="rounded-lg border border-gray-700 bg-gray-950/70 px-2 py-1">
+            {name}
+          </li>
+        ))}
       </ul>
     </article>
   </section>

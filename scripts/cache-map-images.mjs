@@ -1,17 +1,17 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import fs from "node:fs/promises";
+import path from "node:path";
 
 const MAPS_CSV_URL =
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTufS4N6N-30qHu47IuYFnR8CqjM9iTTWQLQ9d4w0SxpmdI984EcnbG8D4ZAerbtKzuxtTHAlHrZpHQ/pub?output=csv';
-const MAP_IMAGE_BASE = 'https://stats.lamateam.eu/hlstatsimg/games/css/maps';
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTufS4N6N-30qHu47IuYFnR8CqjM9iTTWQLQ9d4w0SxpmdI984EcnbG8D4ZAerbtKzuxtTHAlHrZpHQ/pub?output=csv";
+const MAP_IMAGE_BASE = "https://stats.lamateam.eu/hlstatsimg/games/css/maps";
 
 const ROOT = process.cwd();
-const CACHE_DIR = path.join(ROOT, 'public', 'assets', 'map-cache');
-const OUT_JSON = path.join(ROOT, 'src', 'data', 'maps.generated.json');
+const CACHE_DIR = path.join(ROOT, "public", "assets", "map-cache");
+const OUT_JSON = path.join(ROOT, "src", "data", "maps.generated.json");
 
 function parseCsvLine(line, delimiter) {
   const out = [];
-  let cur = '';
+  let cur = "";
   let inQuotes = false;
 
   for (let i = 0; i < line.length; i++) {
@@ -27,7 +27,7 @@ function parseCsvLine(line, delimiter) {
     }
     if (ch === delimiter && !inQuotes) {
       out.push(cur);
-      cur = '';
+      cur = "";
       continue;
     }
     cur += ch;
@@ -38,7 +38,7 @@ function parseCsvLine(line, delimiter) {
 }
 
 function getCustomMapsFromCsv(raw) {
-  const delimiter = raw.includes('";"') ? ';' : ',';
+  const delimiter = raw.includes('";"') ? ";" : ",";
   const lines = raw
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -47,10 +47,10 @@ function getCustomMapsFromCsv(raw) {
   if (!lines.length) return [];
 
   const header = parseCsvLine(lines[0], delimiter).map((v) =>
-    v.trim().replace(/^"|"$/g, ''),
+    v.trim().replace(/^"|"$/g, ""),
   );
 
-  let mapCol = header.findIndex((h) => h.toUpperCase() === 'MAPA');
+  let mapCol = header.findIndex((h) => h.toUpperCase() === "MAPA");
   if (mapCol === -1) mapCol = 1;
 
   const uniq = new Set();
@@ -58,9 +58,9 @@ function getCustomMapsFromCsv(raw) {
     const row = parseCsvLine(lines[i], delimiter);
     if (row.length <= mapCol) continue;
 
-    let name = (row[mapCol] ?? '').trim().replace(/^"|"$/g, '');
+    let name = (row[mapCol] ?? "").trim().replace(/^"|"$/g, "");
     if (!name) continue;
-    if (name.toLowerCase().endsWith('.bsp')) name = name.slice(0, -4);
+    if (name.toLowerCase().endsWith(".bsp")) name = name.slice(0, -4);
     if (name) uniq.add(name);
   }
 
@@ -70,8 +70,8 @@ function getCustomMapsFromCsv(raw) {
 function fallbackMapNames(mapName) {
   const names = [mapName];
   let cur = mapName;
-  while (cur.includes('_')) {
-    cur = cur.replace(/_[^_]+$/, '');
+  while (cur.includes("_")) {
+    cur = cur.replace(/_[^_]+$/, "");
     if (cur && !names.includes(cur)) names.push(cur);
   }
   return names;
@@ -83,8 +83,8 @@ async function downloadImage(url, outPath, timeoutMs = 5000) {
   try {
     const res = await fetch(url, { signal: ctrl.signal });
     if (!res.ok) return false;
-    const ct = res.headers.get('content-type') || '';
-    if (!ct.includes('image')) return false;
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("image")) return false;
     const buf = Buffer.from(await res.arrayBuffer());
     if (buf.length < 512) return false;
     await fs.writeFile(outPath, buf);
@@ -103,7 +103,7 @@ async function resolveAndCache(mapName) {
 
   try {
     await fs.access(localPath);
-    return { map: mapName, image: publicPath, source: 'cache' };
+    return { map: mapName, image: publicPath, source: "cache" };
   } catch {}
 
   for (const base of fallbackMapNames(mapName)) {
@@ -120,7 +120,11 @@ async function resolveAndCache(mapName) {
     }
   }
 
-  return { map: mapName, image: '/assets/map-placeholder.svg', source: 'placeholder' };
+  return {
+    map: mapName,
+    image: "/assets/map-placeholder.svg",
+    source: "placeholder",
+  };
 }
 
 async function run() {
@@ -138,12 +142,24 @@ async function run() {
   for (const map of maps) {
     const item = await resolveAndCache(map);
     out.push(item);
-    if (!item.image.includes('map-placeholder')) ok++;
+    if (!item.image.includes("map-placeholder")) ok++;
   }
 
-  await fs.writeFile(OUT_JSON, JSON.stringify({ generatedAt: new Date().toISOString(), total: maps.length, ok, items: out }, null, 2));
+  await fs.writeFile(
+    OUT_JSON,
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        total: maps.length,
+        ok,
+        items: out,
+      },
+      null,
+      2,
+    ),
+  );
 
-  const percent = maps.length ? ((ok / maps.length) * 100).toFixed(1) : '0.0';
+  const percent = maps.length ? ((ok / maps.length) * 100).toFixed(1) : "0.0";
   console.log(`[maps] cached ${ok}/${maps.length} (${percent}%)`);
 }
 

@@ -1,78 +1,166 @@
 ---
-// src/pages/connect.astro
 import Layout from '../layouts/Layout.astro';
+import { translator, clientCopy } from '../lib/page-copy';
+import { localeFromPath, type SiteLocale } from '../lib/localized-content';
+interface Props {
+  locale?: SiteLocale;
+}
+const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
+const t = translator(locale);
 const serverIP = '82.208.17.101:27516';
 const redirectURL = `steam://connect/${serverIP}`;
 ---
 
-<Layout title="Připojení | LaMaTeam">
-  <section class="mx-auto w-full max-w-4xl px-4 py-8 text-left text-gray-100">
-    <header class="mb-6 rounded-2xl border border-gray-700 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Připojení k serveru</h1>
-      <p class="mt-2 text-sm text-gray-300 md:text-base">Automaticky tě přesměrujeme do hry.</p>
-    </header>
-
-    <article class="space-y-4 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg">
-      <p>
-        Pokud nejste automaticky přesměrováni, klikněte
-        <a href={redirectURL} class="text-cyan-300 underline">zde</a>
-        pro přímé připojení.
+<Layout
+  title={t('Connect | LaMaTeAm CS:S')}
+  lang={locale}
+  description={t(
+    'Join the European LaMaTeAm Counter-Strike: Source server at 82.208.17.101:27516 through Steam, the console, or Favorites.',
+  )}
+>
+  <section class="join-guide fl-py-2/5 text-left text-gray-100">
+    <header class="fl-mb-4/6 page-heading">
+      <p class="eyebrow fl-mb-2/3" translate="no">
+        Counter-Strike: Source
       </p>
-
-      <div class="flex items-center justify-center gap-2">
-        <input
-          type="text"
-          id="server-ip"
-          value={serverIP}
-          readonly
-          class="rounded-lg bg-gray-950/70 text-white p-2 border border-gray-700 w-full max-w-xs text-center"
-        />
-        <button
-          onclick="copyToClipboard()"
-          class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition"
-        >
-          Zkopírovat IP
-        </button>
-      </div>
-
-      <img
-        class="object-contain max-w-[550px] mx-auto rounded-lg"
-        src="http://query.fakaheda.eu/82.208.17.101:27516.jpg?size=550x100"
-        alt="[CZ/SK] LaMaTeAm [FAST DL]"
-      />
-
-      <div class="flex flex-1 gap-2 mx-auto">
-        <iframe
-          src="https://discord.com/widget?id=817862677886926900&theme=dark"
-          width="300"
-          height="500"
-          allow="fullscreen; clipboard-write; encrypted-media; picture-in-picture"
-          sandbox="allow-popups allow-same-origin allow-scripts"
-          class="w-full h-full rounded-lg"
-          title="Discord widget"></iframe>
-        <iframe
-          src="https://cache.gametracker.com/components/html0/?host=82.208.17.101:27516&bgColor=1e1f22&fontColor=ffffff&titleBgColor=1e1f22&titleColor=58a605&borderColor=1e1f22&linkColor=8a8e94&borderLinkColor=8a8e94&showMap=1&currPlayersHeight=100&showCurrPlayers=1&topPlayersHeight=100&showTopPlayers=1&showBlogs=0&width=300"
-          class="w-full h-full rounded-lg"
-          title="GameTracker widget"></iframe>
-      </div>
+      <h1 class="fl-text-2xl/4xl font-bold tracking-tight">
+        {t('Connect to LaMaTeAm')}
+      </h1>
+      <p class="fl-mt-2/4">
+        {t('You need Steam and an installed copy of')}{' '}
+        <strong translate="no">Counter-Strike: Source</strong> {t('(not CS2).')}
+      </p>
+      <p class="fl-mt-2/4 text-gray-300">
+        {t(
+          'No site sign-in needed to play. Steam sign-in on this website is only for site chat.',
+        )}
+      </p>
+    </header>
+    <article class="space-y-6 panel fl-p-3/6">
+      <section aria-labelledby="steam-join">
+        <h2 id="steam-join" class="fl-text-lg/2xl font-bold">
+          {t('1. Open Steam and join')}
+        </h2>
+        <p class="fl-my-2/4">
+          {t(
+            'Sign in to the Steam app, then use the button. Allow your browser to open Steam if prompted.',
+          )}
+        </p>
+        <a href={redirectURL} class="connect-button fl-px-4/8 fl-py-2/4">
+          {t('Launch CS:S & connect')}
+        </a>
+        <p class="fl-mt-2/4 text-gray-300">
+          {t(
+            'Nothing happens? Open CS:S from your Steam Library and use the console below.',
+          )}
+        </p>
+      </section>
+      <section aria-labelledby="console-join">
+        <h2 id="console-join" class="fl-text-lg/2xl font-bold">
+          {t('2. Or join from the game console')}
+        </h2>
+        <p class="fl-my-2/4">
+          {t(
+            'In CS:S, go to Options → Keyboard → Advanced and enable the developer console. Open it with the ~ key (the key below Esc), paste this command, then press Enter.',
+          )}
+        </p>
+        <label for="connect-command" class="block fl-mb-2/3">
+          {t('Console command')}
+        </label>
+        <div class="copy-row">
+          <input
+            id="connect-command"
+            type="text"
+            value={`connect ${serverIP}`}
+            readonly
+            translate="no"
+            class="rounded border border-gray-700 fl-p-2/3 font-mono"
+          />
+          <button
+            id="copy-command"
+            type="button"
+            class="connect-button fl-py-2/3 fl-px-3/5"
+          >
+            {t('Copy command')}
+          </button>
+        </div>
+        <p
+          id="copy-status"
+          role="status"
+          class="fl-mt-2/3 text-gray-300"
+          data-copy={JSON.stringify(clientCopy(locale))}
+        ></p>
+        <p class="fl-mt-2/3 text-gray-300">
+          {t(
+            'If copying fails, select the command and copy it manually, or type it into the console. If ~ does not work, check the Toggle console key in Keyboard options.',
+          )}
+        </p>
+      </section>
+      <section aria-labelledby="favorites-join">
+        <h2 id="favorites-join" class="fl-text-lg/2xl font-bold">
+          {t('3. Save it to Favorites')}
+        </h2>
+        <p class="fl-mt-2/4">
+          {t('In CS:S, open Find Servers → Favorites → Add a Server. Enter')}{' '}
+          <code translate="no">{serverIP}</code>
+          {t(', add it, then select the server and Connect.')}
+        </p>
+      </section>
+      <section aria-labelledby="join-help">
+        <h2 id="join-help" class="fl-text-lg/2xl font-bold">
+          {t('Still unable to join?')}
+        </h2>
+        <p class="fl-mt-2/4">
+          {t(
+            'Check the address, your connection, and that CS:S is installed and up to date. If the server is unavailable, try again later. For help, share the error message in',
+          )}{' '}
+          <a
+            href="https://discord.com/invite/2tvWZhuSaG"
+            class="text-cyan-300 underline"
+            translate="no"
+          >
+            LaMaTeAm Discord
+          </a>
+          .
+        </p>
+        <p class="fl-mt-2/4">
+          <a
+            href="https://www.gametracker.com/server_info/82.208.17.101:27516/"
+            class="text-cyan-300 underline"
+          >
+            {t('Check the external server monitor')}
+          </a>{' '}
+          {t('(may be delayed).')}
+        </p>
+      </section>
     </article>
   </section>
 </Layout>
-
-<script is:inline>
-  // Auto-redirect to steam://
-  (function() {
-    var url = document.querySelector('a[href^="steam://"]');
-    if (url) window.location.href = url.href;
-  })();
-
-  async function copyToClipboard() {
-    const copyText = document.getElementById('server-ip').value;
-    try {
-      await navigator.clipboard.writeText(copyText);
-      alert('IP zkopírována do schránky: ' + copyText);
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
-    }
-  }
+<script>
+  import { clientTranslator } from '../lib/client-copy';
+  const initializeCopyCommand = () => {
+    const command =
+      document.querySelector<HTMLInputElement>('#connect-command');
+    const status = document.querySelector<HTMLElement>('#copy-status');
+    const tc = clientTranslator(status);
+    const button = document.querySelector<HTMLButtonElement>('#copy-command');
+    if (!button || button.dataset.copyReady) return;
+    button.dataset.copyReady = 'true';
+    button.addEventListener('click', async () => {
+      if (!command || !status) return;
+      try {
+        await navigator.clipboard.writeText(command.value);
+        status.textContent = tc(
+          'Command copied. Paste it into the CS:S console.',
+        );
+      } catch {
+        command.focus();
+        command.select();
+        status.textContent = tc(
+          'Copy unavailable. The command is selected; copy it manually or type it into the console.',
+        );
+      }
+    });
+  };
+  document.addEventListener('astro:page-load', initializeCopyCommand);
 </script>

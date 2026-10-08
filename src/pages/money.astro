@@ -1,38 +1,164 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { translator } from '../lib/page-copy';
+import { localeFromPath, type SiteLocale } from '../lib/localized-content';
+interface Props {
+  locale?: SiteLocale;
+}
+const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
+const t = translator(locale);
 ---
 
-<Layout title="Peníze | LaMaTeam">
-  <section class="mx-auto w-full max-w-6xl px-4 py-8 text-left text-gray-100">
-    <header class="mb-6 rounded-2xl border border-gray-700 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h1 class="text-3xl font-extrabold tracking-tight md:text-4xl">Peníze v CS:S</h1>
-      <p class="mt-2 text-sm text-gray-300">👤 = dostane jen hráč • 👥 = dostane celý tým</p>
+<Layout title={t('Money | LaMaTeAm')} lang={locale}>
+  <section class="w-full fl-py-2/5 text-left text-gray-100">
+    <header class="fl-mb-4/6 page-heading">
+      <h1 class="fl-text-2xl/4xl font-bold tracking-tight">
+        {t('Money in CS:S')}
+      </h1>
     </header>
-
-    <article class="space-y-6 rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg text-gray-200">
-      <p class="text-center text-lg">Start kola: <strong class="text-green-400">$800</strong></p>
+    <article class="space-y-6 panel fl-p-3/6 text-gray-200">
+      <p class="fl-text-sm/base text-gray-300">
+        {t('👤 = awarded to the player only • 👥 = awarded to the entire team')}
+      </p>
+      <p class="text-center fl-text-lg/2xl">
+        {t('Starting money:')}{' '}
+        <strong class="text-green-400" translate="no">
+          $800
+        </strong>
+      </p>
       <div class="overflow-x-auto">
         <table class="w-full min-w-[760px] table-fixed border-collapse border border-gray-600 rounded-lg mb-6 overflow-hidden">
-          <thead><tr><th class="w-1/2 px-4 py-2 text-left bg-linear-to-r from-blue-800 to-blue-600 border border-gray-700">CT</th><th class="w-1/2 px-4 py-2 text-left bg-linear-to-l from-red-800 to-red-600 border border-gray-700">T</th></tr></thead>
+          <thead>
+            <tr>
+              <th class="w-1/2 px-4 py-2 text-left bg-linear-to-r from-blue-800 to-blue-600 border border-gray-700">
+                {t('CT')}
+              </th>
+              <th class="w-1/2 px-4 py-2 text-left bg-linear-to-l from-red-800 to-red-600 border border-gray-700">
+                {t('T')}
+              </th>
+            </tr>
+          </thead>
           <tbody>
-            <tr class="hover:bg-gray-700"><td class="px-4 py-2 border border-gray-700">👤 Zabití nepřítele: <strong class="text-green-400">+$300</strong></td><td class="px-4 py-2 border border-gray-700">👤 Zabití nepřítele: <strong class="text-green-400">+$300</strong></td></tr>
-            <tr class="hover:bg-gray-700"><td class="px-4 py-2 border border-gray-700">👥 Výhra eliminací: <strong class="text-green-400">+$3250</strong></td><td class="px-4 py-2 border border-gray-700">👥 Výhra eliminací: <strong class="text-green-400">+$3250</strong></td></tr>
-            <tr class="hover:bg-gray-700"><td class="px-4 py-2 border border-gray-700">👥 Výhra časem: <strong class="text-green-400">+$3250</strong></td><td class="px-4 py-2 border border-gray-700">—</td></tr>
-            <tr class="hover:bg-gray-700"><td class="px-4 py-2 border border-gray-700">👥 Defuse bomby: <strong class="text-green-400">+$3500</strong></td><td class="px-4 py-2 border border-gray-700">👥 Odpálení bomby: <strong class="text-green-400">+$3500</strong></td></tr>
-            <tr class="hover:bg-gray-700"><td class="px-4 py-2 border border-gray-700">👤 1. dotyk rukojmí: +$150 / dovedení: +$1000 / týmový bonus: +$850</td><td class="px-4 py-2 border border-gray-700">👥 Bomba položena + prohra: <strong class="text-green-400">+$800</strong></td></tr>
-            <tr class="hover:bg-gray-700"><td class="px-4 py-2 border border-gray-700">👥 Prohra bonus: $1400 +$500 za další (max $3400)</td><td class="px-4 py-2 border border-gray-700">👥 Prohra bonus: $1400 +$500 za další (max $3400)</td></tr>
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👤 Enemy kill:')}{' '}
+                <strong class="text-green-400" translate="no">
+                  +$300
+                </strong>
+              </td>
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👤 Enemy kill:')}{' '}
+                <strong class="text-green-400" translate="no">
+                  +$300
+                </strong>
+              </td>
+            </tr>
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👥 Win by elimination:')}{' '}
+                <strong class="text-green-400" translate="no">
+                  +$3250
+                </strong>
+              </td>
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👥 Win by elimination:')}{' '}
+                <strong class="text-green-400" translate="no">
+                  +$3250
+                </strong>
+              </td>
+            </tr>
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👥 Win when time expires:')}{' '}
+                <strong class="text-green-400" translate="no">
+                  +$3250
+                </strong>
+              </td>
+              <td class="px-4 py-2 border border-gray-700">—</td>
+            </tr>
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👥 Defuse the bomb:')}{' '}
+                <strong class="text-green-400" translate="no">
+                  +$3500
+                </strong>
+              </td>
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👥 Bomb explodes:')}{' '}
+                <strong class="text-green-400" translate="no">
+                  +$3500
+                </strong>
+              </td>
+            </tr>
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-700">
+                {t(
+                  '👤 First hostage contact: +$150 / rescue: +$1000 / team bonus: +$850',
+                )}
+              </td>
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👥 Bomb planted + round lost:')}{' '}
+                <strong class="text-green-400" translate="no">
+                  +$800
+                </strong>
+              </td>
+            </tr>
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-700">
+                {t(
+                  '👥 Loss bonus: $1400 +$500 for each consecutive loss (max $3400)',
+                )}
+              </td>
+              <td class="px-4 py-2 border border-gray-700">
+                {t(
+                  '👥 Loss bonus: $1400 +$500 for each consecutive loss (max $3400)',
+                )}
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full min-w-[760px] table-fixed border-collapse border border-gray-600 rounded-lg overflow-hidden">
-          <thead><tr><th class="w-1/2 px-4 py-2 text-left bg-linear-to-r from-blue-900 to-blue-700 border border-gray-700">CT ztráty</th><th class="w-1/2 px-4 py-2 text-left bg-linear-to-l from-red-900 to-red-700 border border-gray-700">T ztráty</th></tr></thead>
+        <table class="w-full min-w-[760px] table-fixed border-collapse border border-gray-600 rounded-lg mb-6 overflow-hidden">
+          <thead>
+            <tr>
+              <th class="w-1/2 px-4 py-2 text-left bg-linear-to-r from-blue-800 to-blue-600 border border-gray-700">
+                {t('CT Penalties')}
+              </th>
+              <th class="w-1/2 px-4 py-2 text-left bg-linear-to-l from-red-800 to-red-600 border border-gray-700">
+                {t('T Penalties')}
+              </th>
+            </tr>
+          </thead>
           <tbody>
-            <tr class="hover:bg-gray-700"><td class="px-4 py-2 border border-gray-700">👤 Teamkill: <strong class="text-red-400">-$3300</strong></td><td class="px-4 py-2 border border-gray-700">👤 Teamkill: <strong class="text-red-400">-$3300</strong></td></tr>
-            <tr class="hover:bg-gray-700"><td class="px-4 py-2 border border-gray-700">👤 Zranění rukojmí: -$150 / zabití rukojmí: -$1500</td><td class="px-4 py-2 border border-gray-700">—</td></tr>
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👤 Teamkill:')}{' '}
+                <strong class="text-red-400" translate="no">
+                  -$3300
+                </strong>
+              </td>
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👤 Teamkill:')}{' '}
+                <strong class="text-red-400" translate="no">
+                  -$3300
+                </strong>
+              </td>
+            </tr>
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-700">
+                {t('👤 Injure a hostage: -$150 / kill a hostage: -$1500')}
+              </td>
+              <td class="px-4 py-2 border border-gray-700">—</td>
+            </tr>
           </tbody>
         </table>
       </div>
     </article>
   </section>
+  <style>
+    table :is(th, td):first-child {
+      text-align: right;
+    }
+  </style>
 </Layout>

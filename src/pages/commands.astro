@@ -1,96 +1,167 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { translator } from '../lib/page-copy';
+import {
+  localeFromPath,
+  localizedHref,
+  type SiteLocale,
+} from '../lib/localized-content';
+interface Props {
+  locale?: SiteLocale;
+}
+const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
+const t = translator(locale);
 
 const commandGroups = [
   {
-    title: 'Najpoužívanejšie',
+    title: t('Most Used'),
     items: [
-      { cmd: '!motd', desc: 'Otvorí info/MOTD okno servera.' },
-      { cmd: '!nb', desc: 'Pokúsi sa ťa (alebo cieľ) odblokovať, keď si zaseknutý.' },
-      { cmd: '!rtv', desc: 'Rock The Vote – hlasovanie o zmene mapy (ak je povolené).' },
-      { cmd: '!nominate <mapa>', desc: 'Nominuje mapu do hlasovania.' },
-      { cmd: '!resetscore / !rs / !r', desc: 'Vynuluje tvoje skóre (K/D).' },
+      { cmd: '!motd', desc: t('Opens the server information/MOTD window.') },
+      {
+        cmd: '!nb',
+        desc: t('Attempts to unblock you (or a target) when stuck.'),
+      },
+      {
+        cmd: '!rtv',
+        desc: t(
+          'Rock the Vote — starts a vote to change the map, when available.',
+        ),
+      },
+      { cmd: '!nominate <map>', desc: t('Nominates a map for the vote.') },
+      { cmd: '!resetscore / !rs / !r', desc: t('Resets your score (K/D).') },
     ],
   },
   {
-    title: 'Mapa a server info',
+    title: t('Map and Server Information'),
     items: [
-      { cmd: '!timeleft', desc: 'Zobrazí zostávajúci čas mapy.' },
-      { cmd: '!nextmap', desc: 'Ukáže ďalšiu mapu (alebo pending vote).' },
-      { cmd: '!currentmap', desc: 'Ukáže aktuálnu mapu.' },
-      { cmd: '!thetime', desc: 'Vypíše aktuálny serverový čas.' },
+      {
+        cmd: '!timeleft',
+        desc: t('Shows the time remaining on the current map.'),
+      },
+      { cmd: '!nextmap', desc: t('Shows the next map (or a pending vote).') },
+      { cmd: '!currentmap', desc: t('Shows the current map.') },
+      { cmd: '!thetime', desc: t('Shows the current server time.') },
     ],
   },
   {
-    title: 'HLstatsX / štatistiky',
+    title: t('HLstatsX / Statistics'),
     items: [
-      { cmd: '!rank', desc: 'Tvoje poradie v HLstatsX.' },
-      { cmd: '!session', desc: 'Štatistiky aktuálnej session.' },
-      { cmd: '!kpd / !kdratio', desc: 'K/D štatistiky.' },
-      { cmd: '!top10 / !top20 / !top5', desc: 'Rebríčky hráčov.' },
-      { cmd: '!statsme', desc: 'Rýchly prehľad tvojich statov.' },
-      { cmd: '!hlx_menu', desc: 'HLstatsX menu.' },
+      { cmd: '!rank', desc: t('Shows your HLstatsX rank.') },
+      {
+        cmd: '!session',
+        desc: t('Shows statistics for your current session.'),
+      },
+      { cmd: '!kpd / !kdratio', desc: t('Shows your K/D statistics.') },
+      {
+        cmd: '!top10 / !top20 / !top5',
+        desc: t('Shows the player leaderboards.'),
+      },
+      {
+        cmd: '!statsme',
+        desc: t('Shows a quick overview of your statistics.'),
+      },
+      { cmd: '!hlx_menu', desc: t('Opens the HLstatsX menu.') },
     ],
   },
   {
-    title: 'Ostatné pluginy',
+    title: t('Other Plugins'),
     items: [
-      { cmd: 'bet <t|ct> <all|half|third|suma>', desc: 'TeamBets – stávka na víťaza kola.' },
-      { cmd: 'bounty', desc: 'Zobrazí aktuálne bounty odmeny.' },
-      { cmd: '!comms', desc: 'Ukáže status tvojich mute/gag obmedzení.' },
-      { cmd: '!tagslist', desc: 'HexTags – výber dostupného tagu (ak máš právo).' },
-      { cmd: '!trace', desc: 'Spray trace – info o spreji (ak plugin povolený).' },
+      {
+        cmd: 'bet <t|ct> <all|half|third|amount>',
+        desc: t('TeamBets — places a bet on the round winner.'),
+      },
+      { cmd: 'bounty', desc: t('Shows the current bounty rewards.') },
+      {
+        cmd: '!comms',
+        desc: t('Shows the status of your mute/gag restrictions.'),
+      },
+      {
+        cmd: '!tagslist',
+        desc: t('HexTags — selects an available tag, if permitted.'),
+      },
+      {
+        cmd: '!trace',
+        desc: t(
+          'Spray trace — shows information about a spray, if the plugin is enabled.',
+        ),
+      },
     ],
   },
   {
-    title: 'Demo / report cheatera',
+    title: t('Demo / Report a Cheater'),
     items: [
-      { cmd: 'record <nazov_dema>', desc: 'Spustí nahrávanie dema.' },
-      { cmd: 'stop', desc: 'Zastaví nahrávanie dema.' },
-      { cmd: 'playdemo <nazov_dema>', desc: 'Prehrá uložené demo.' },
-      { cmd: 'status', desc: 'Konzolový výpis hráčov/SteamID pre report.' },
+      { cmd: 'record <demo_name>', desc: t('Starts recording a demo.') },
+      { cmd: 'stop', desc: t('Stops recording the demo.') },
+      { cmd: 'playdemo <demo_name>', desc: t('Plays a saved demo.') },
+      {
+        cmd: 'status',
+        desc: t('Lists players and SteamIDs in the console for your report.'),
+      },
     ],
   },
 ];
 ---
 
-<Layout title="Info | LaMaTeam">
-  <section class="mx-auto w-full max-w-6xl px-4 py-8 text-left text-gray-100">
-    <div class="mb-8 rounded-2xl border border-gray-700 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-2xl">
-      <h1 class="mb-2 text-3xl font-extrabold tracking-tight md:text-4xl">Hráčske príkazy</h1>
-      <p class="text-sm text-gray-300 md:text-base">
-        Kompletný prehľad užitočných príkazov pre náš server.
-        Použitie: <span class="font-semibold">bez prefixu</span> (konzola)
-        alebo <span class="font-semibold">s prefixom / alebo !</span> (chat).
+<Layout title={t('Commands | LaMaTeAm')} lang={locale}>
+  <section class="w-full fl-py-2/5 text-left text-gray-100">
+    <header class="fl-mb-4/6 page-heading">
+      <h1 class="fl-text-2xl/4xl font-bold tracking-tight">
+        {t('Player Commands')}
+      </h1>
+    </header>
+    <section class="panel fl-p-3/6" aria-label={t('Server command reference')}>
+      <p class="fl-text-sm/base text-gray-300 fl-mb-3/6">
+        {t('A complete overview of useful commands for our server. Use them')}{' '}
+        <span class="font-semibold">{t('without a prefix')}</span>{' '}
+        {t('in the console or')}{' '}
+        <span class="font-semibold">{t('with the / or ! prefix')}</span>{' '}
+        {t('in chat.')}
       </p>
-    </div>
-
-    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {
-        commandGroups.map((group) => (
-          <article class="rounded-2xl border border-gray-700 bg-gray-900/80 p-5 shadow-lg transition hover:border-cyan-500/60">
-            <h2 class="mb-4 text-lg font-bold text-cyan-300">{group.title}</h2>
+      <div class="grid fl-gap-3/6 md:grid-cols-2 xl:grid-cols-3">
+        {commandGroups.map((group) => (
+          <article class="panel fl-p-3/6 transition hover:border-cyan-500/60">
+            <h2 class="fl-mb-3/5 fl-text-lg/2xl font-bold text-cyan-300">
+              {group.title}
+            </h2>
             <ul class="space-y-3">
               {group.items.map((item) => (
-                <li class="rounded-xl border border-gray-800 bg-gray-950/70 p-3">
-                  <code class="mb-1 block wrap-break-word text-sm font-semibold text-lime-400">{item.cmd}</code>
-                  <p class="text-sm text-gray-300">{item.desc}</p>
+                <li class="rounded border border-gray-800 bg-gray-950/70 fl-p-2/4">
+                  <code
+                    class="mb-1 block wrap-break-word fl-text-sm/base font-semibold text-lime-400"
+                    translate="no"
+                  >
+                    {item.cmd}
+                  </code>
+                  <p class="fl-text-sm/base text-gray-300">{item.desc}</p>
                 </li>
               ))}
             </ul>
           </article>
-        ))
-      }
-    </div>
-
-    <div class="mt-8 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-200">
-      <p class="font-semibold">Poznámka:</p>
-      <p>
-        Niektoré príkazy môžu byť podmienené právami, herným stavom (warmup/round), alebo konkrétnym pluginom.
-        Ak príkaz nefunguje, skús ho bez prefixu (konzola), alebo s prefixom
-        <code class="rounded bg-black/30 px-1">/</code> či <code class="rounded bg-black/30 px-1">!</code> (chat),
-        prípadne použi stránku <a href="/hitreg" class="font-semibold underline decoration-dotted hover:text-amber-100">/hitreg</a>.
-      </p>
-    </div>
+        ))}
+      </div>
+      <div class="fl-mt-4/8 rounded border border-amber-500/40 bg-amber-500/10 fl-p-3/5 fl-text-sm/base text-amber-200">
+        <p class="font-semibold">{t('Note:')}</p>
+        <p>
+          {t(
+            'Some commands may depend on permissions, the current game state (warmup/round), or a specific plugin. If a command does not work, try it without a prefix in the console, or with the',
+          )}{' '}
+          <code class="rounded bg-black/30 px-1" translate="no">
+            /
+          </code>{' '}
+          {t('or')}{' '}
+          <code class="rounded bg-black/30 px-1" translate="no">
+            !
+          </code>{' '}
+          {t('prefix in chat. You can also check the')}{' '}
+          <a
+            href={localizedHref('/hitreg', locale)}
+            class="font-semibold underline decoration-dotted hover:text-amber-100"
+          >
+            {t('Hitreg')}
+          </a>{' '}
+          {t('page.')}
+        </p>
+      </div>
+    </section>
   </section>
 </Layout>

@@ -1,0 +1,9 @@
+---
+import Connect from '../connect.astro';
+import { isLocale } from '../../lib/localized-content';
+export const prerender = false;
+const locale = Astro.params.locale;
+if (!isLocale(locale)) return new Response('Not found', { status: 404 });
+---
+
+<Connect locale={locale} />
