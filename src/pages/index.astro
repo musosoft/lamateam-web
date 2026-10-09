@@ -270,7 +270,12 @@ const pages = [
         )}
         {isGame && (
           <div class="motd-map-rating" data-no-translate>
-            <MapRatings compact locale={locale} />
+            <MapRatings
+              compact
+              motdPrompt
+              locale={locale}
+              communityId={rawCommunityId.length <= 32 ? rawCommunityId : ''}
+            />
           </div>
         )}
       </div>

@@ -25,6 +25,7 @@ class Element {
     this.hidden = false;
     this.textContent = "";
     this.classList = new Set();
+    this.attributes = new Set();
   }
   addEventListener(name, callback, options = {}) {
     const set = this.listeners.get(name) ?? new Set();
@@ -47,6 +48,9 @@ class Element {
   }
   contains(node) {
     return this.children.includes(node);
+  }
+  hasAttribute(name) {
+    return this.attributes.has(name);
   }
   querySelectorAll() {
     return this.children.filter((node) => node.dataset.mapRating);
@@ -163,7 +167,7 @@ function setup({ authenticated = true, unavailable = false, post } = {}) {
         ? await post(options)
         : unavailable
           ? response(null, 503)
-          : response({ authenticated, ratings });
+          : response({ authenticated, canRate: authenticated, ratings });
     },
   });
   return {
@@ -247,7 +251,16 @@ test("random-map save shares the gallery flow and locks duplicate/skip actions",
   assert.equal(options.credentials, "same-origin");
   assert.equal(options.headers["Content-Type"], "application/json");
   assert.deepEqual(JSON.parse(options.body), { map, stars: 5 });
-  finish(response({ map, average: 3.6, count: 11, userRating: 5 }));
+  finish(
+    response({
+      map,
+      average: 3.6,
+      count: 11,
+      userRating: 5,
+      authenticated: true,
+      canRate: true,
+    }),
+  );
   await pending;
   await flush();
   assert.equal(
@@ -296,7 +309,14 @@ test("choosing a star saves immediately and choosing the saved value does not vo
     post: async (options) => {
       posts++;
       const { map, stars } = JSON.parse(options.body);
-      return response({ map, average: stars, count: 1, userRating: stars });
+      return response({
+        map,
+        average: stars,
+        count: 1,
+        userRating: stars,
+        authenticated: true,
+        canRate: true,
+      });
     },
   });
   await flush();
@@ -385,7 +405,14 @@ test("a failed direct save rolls back selection so the same star can retry", asy
       posts++;
       if (posts === 1) return response(null, 503);
       const { map, stars } = JSON.parse(options.body);
-      return response({ map, average: stars, count: 1, userRating: stars });
+      return response({
+        map,
+        average: stars,
+        count: 1,
+        userRating: stars,
+        authenticated: true,
+        canRate: true,
+      });
     },
   });
   await flush();
@@ -415,7 +442,14 @@ test("navigation cleanup cancels pending thank-you advancement", async () => {
   const ui = setup({
     post: async (options) => {
       const { map, stars } = JSON.parse(options.body);
-      return response({ map, average: stars, count: 1, userRating: stars });
+      return response({
+        map,
+        average: stars,
+        count: 1,
+        userRating: stars,
+        authenticated: true,
+        canRate: true,
+      });
     },
   });
   await flush();

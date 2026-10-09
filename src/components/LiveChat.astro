@@ -136,19 +136,37 @@ const playerAvatar = steamID
       <label for="messageInput" class="sr-only">
         {t('Your message')}
       </label>
-      <input
-        type="text"
-        id="messageInput"
-        placeholder={
-          isAuthenticated
-            ? t('Say hello to the team…')
-            : t('Sign in with Steam to chat')
-        }
-        autocomplete="off"
-        maxlength="500"
-        data-game-placeholder={gamePlaceholder}
-        disabled={!isAuthenticated}
-      />
+      <div class="chat-input-wrap" data-rich-prompt={String(isGame)}>
+        <input
+          type="text"
+          id="messageInput"
+          placeholder={
+            isGame
+              ? ' '
+              : isAuthenticated
+                ? t('Say hello to the team…')
+                : t('Sign in with Steam to chat')
+          }
+          autocomplete="off"
+          maxlength="500"
+          data-game-placeholder={gamePlaceholder}
+          aria-describedby={isGame ? 'chat-game-instruction' : undefined}
+          disabled={!isAuthenticated}
+        />
+        <span
+          id="chat-game-prompt"
+          class="chat-game-prompt"
+          aria-hidden="true"
+          data-no-translate
+          translate="no"
+          hidden={!isGame}
+        >
+          Click <b>Send</b> to chat{' '}
+          <span class="text-red-500">
+            not <kbd>Enter</kbd>
+          </span>
+        </span>
+      </div>
       <button
         type="submit"
         id="sendButton"
@@ -158,6 +176,15 @@ const playerAvatar = steamID
         {t('Send')}
       </button>
     </form>
+    <p
+      id="chat-game-instruction"
+      class="sr-only"
+      hidden={!isGame}
+      data-no-translate
+      translate="no"
+    >
+      Click Send to chat, not Enter.
+    </p>
     <p
       id="shoutbox-status"
       class="shoutbox-status"
@@ -177,6 +204,43 @@ const playerAvatar = steamID
     <Icon name="mdi:chat-outline" class="h-6 w-6" />
   </button>
 </div>
+<style>
+  .chat-input-wrap {
+    display: contents;
+  }
+  .chat-input-wrap[data-rich-prompt='true'] {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    min-height: 3.5rem;
+  }
+  .chat-input-wrap[data-rich-prompt='true'] input {
+    grid-area: 1 / 1;
+    width: 100%;
+    height: 100%;
+  }
+  .chat-game-prompt {
+    grid-area: 1 / 1;
+    align-self: center;
+    z-index: 1;
+    padding: 0.5rem;
+    pointer-events: none;
+    color: #a1b3c1;
+    font-size: clamp(0.75rem, calc(var(--motd-text, 1rem) * 0.875), 0.875rem);
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+  .chat-game-prompt[hidden],
+  .chat-input-wrap input:not(:placeholder-shown) + .chat-game-prompt {
+    display: none;
+  }
+  .chat-game-prompt .text-red-500 {
+    color: #ef4444;
+  }
+  .chat-game-prompt kbd {
+    font: inherit;
+  }
+</style>
 <script>
   let cleanupChat: (() => void) | undefined;
   function initializeChat() {
@@ -205,7 +269,23 @@ const playerAvatar = steamID
     const status = shell.querySelector<HTMLElement>('#shoutbox-status')!;
     const controller = new AbortController();
     const { signal } = controller;
-    if (inGame) input.placeholder = input.dataset.gamePlaceholder!;
+    const prompt = shell.querySelector<HTMLElement>('#chat-game-prompt');
+    const instruction = shell.querySelector<HTMLElement>(
+      '#chat-game-instruction',
+    );
+    const inputWrap = shell.querySelector<HTMLElement>('.chat-input-wrap');
+    if (inputWrap) inputWrap.dataset.richPrompt = String(inGame);
+    if (instruction) instruction.hidden = !inGame;
+    if (inGame) {
+      input.placeholder = ' ';
+      input.setAttribute('aria-describedby', 'chat-game-instruction');
+    }
+    const syncPrompt = () => {
+      if (prompt) prompt.hidden = !inGame || input.value.length > 0;
+    };
+    syncPrompt();
+    input.addEventListener('input', syncPrompt, { signal });
+    input.addEventListener('change', syncPrompt, { signal });
     input.addEventListener(
       'keydown',
       (event) => {
@@ -458,6 +538,7 @@ const playerAvatar = steamID
           });
           if (signal.aborted) return;
           input.value = '';
+          syncPrompt();
           status.textContent = tc('Message sent.');
           void fetchMessages();
         } catch {
@@ -519,7 +600,7 @@ const playerAvatar = steamID
     if (input && nextInput) {
       input.dataset.gamePlaceholder = nextInput.dataset.gamePlaceholder;
       input.placeholder = /valve|steam/i.test(navigator.userAgent)
-        ? nextInput.dataset.gamePlaceholder!
+        ? ' '
         : nextInput.placeholder;
     }
     // Persist drafts and user messages, but take control labels from the new

@@ -404,6 +404,43 @@ test(
                 await panel.locator("dd").first().textContent(),
                 "80",
               );
+              const typography = await panel.evaluate((panel) => {
+                const slot = panel.parentElement;
+                const heading = panel.querySelector("[data-stats-title]");
+                const values = panel.querySelector("dl");
+                return {
+                  headingSize: parseFloat(getComputedStyle(heading).fontSize),
+                  panelSize: parseFloat(getComputedStyle(panel).fontSize),
+                  valuesSize: parseFloat(getComputedStyle(values).fontSize),
+                  lineHeight: parseFloat(getComputedStyle(values).lineHeight),
+                  bottom: values.getBoundingClientRect().bottom,
+                  slotBottom: slot.getBoundingClientRect().bottom,
+                  scrollHeight: slot.scrollHeight,
+                  clientHeight: slot.clientHeight,
+                };
+              });
+              assert.equal(typography.headingSize, typography.panelSize);
+              assert.ok(
+                Math.abs(
+                  typography.valuesSize / typography.headingSize - 0.875,
+                ) < 0.01,
+              );
+              assert.ok(
+                typography.valuesSize >= 12,
+                "snapshot values remain readable at small MOTD resolutions",
+              );
+              assert.ok(
+                Math.abs(typography.lineHeight / typography.valuesSize - 1.25) <
+                  0.01,
+              );
+              assert.ok(
+                typography.bottom <= typography.slotBottom + 1,
+                "all seven stats fit the reserved panel height",
+              );
+              assert.ok(
+                typography.scrollHeight <= typography.clientHeight + 1,
+                "snapshot content needs no vertical scrollbar",
+              );
               assert.ok(
                 !(await panel.textContent()).includes("UnverifiedQuery"),
               );

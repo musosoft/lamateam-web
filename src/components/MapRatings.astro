@@ -4,8 +4,10 @@ import { localeFromPath, type SiteLocale } from '../lib/localized-content';
 interface Props {
   locale?: SiteLocale;
   compact?: boolean;
+  motdPrompt?: boolean;
+  communityId?: string;
 }
-const { compact = false } = Astro.props;
+const { compact = false, motdPrompt = false, communityId = '' } = Astro.props;
 const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
 const t = translator(locale);
 const thanks = {
@@ -79,10 +81,13 @@ const mapCards = (mapsGenerated.items ?? [])
   ]}
   aria-label={t('Available maps and ratings')}
   data-locale={locale}
+  data-motd-map-prompt={motdPrompt ? '' : undefined}
+  data-motd-community-id={motdPrompt ? communityId : undefined}
   data-copy={JSON.stringify({
     ...clientCopy(locale),
     Rate: t('Rate'),
     'Thanks for rating!': thanks,
+    'Know map {map}?': t('Know map {map}?'),
   })}
 >
   <div class="map-ratings-intro" hidden={compact}>
@@ -116,7 +121,13 @@ const mapCards = (mapsGenerated.items ?? [])
     hidden={!compact || mapCards.length === 0}
   >
     <div class="random-map-prompt">
-      <h2 id="random-map-title">{t('Know this map? Rate it.')}</h2>
+      <h2
+        id="random-map-title"
+        translate={motdPrompt ? 'no' : undefined}
+        data-no-translate={motdPrompt ? '' : undefined}
+      >
+        {motdPrompt ? t('Loading a map…') : t('Know this map? Rate it.')}
+      </h2>
       <p
         id="random-map-announcement"
         role="status"
@@ -580,6 +591,7 @@ const mapCards = (mapsGenerated.items ?? [])
     count: number;
     userRating: number | null;
     authenticated?: boolean;
+    canRate?: boolean;
   };
   let cleanupRatings: (() => void) | undefined;
   function initializeMapRatings() {
@@ -587,6 +599,19 @@ const mapCards = (mapsGenerated.items ?? [])
     const grid = document.querySelector<HTMLElement>('#rated-map-grid');
     const root = document.querySelector<HTMLElement>('#map-ratings-root');
     const tc = clientTranslator(root);
+    const inMotd = root?.hasAttribute('data-motd-map-prompt') === true;
+    const communityId = inMotd
+      ? root?.dataset.motdCommunityId?.trim() || ''
+      : '';
+    const endpoint = communityId
+      ? `/api/map-ratings?${new URLSearchParams({ communityid: communityId })}`
+      : '/api/map-ratings';
+    const canRate = (rating?: Rating) =>
+      rating?.canRate === true &&
+      (inMotd ? !!communityId : rating.authenticated === true);
+    const motdTitle = root?.hasAttribute('data-motd-map-prompt')
+      ? root.querySelector<HTMLElement>('#random-map-title')
+      : null;
     const randomPreview = document.querySelector<HTMLElement>(
       '#random-map-preview',
     );
@@ -634,7 +659,9 @@ const mapCards = (mapsGenerated.items ?? [])
           (Number.isInteger(r.userRating) &&
             r.userRating >= 1 &&
             r.userRating <= 5)) &&
-        (r.authenticated === undefined || typeof r.authenticated === 'boolean')
+        (r.authenticated === undefined ||
+          typeof r.authenticated === 'boolean') &&
+        (r.canRate === undefined || typeof r.canRate === 'boolean')
       );
     };
     const request = async (options?: RequestInit) => {
@@ -642,7 +669,7 @@ const mapCards = (mapsGenerated.items ?? [])
       requests.add(controller);
       const timeout = window.setTimeout(() => controller.abort(), 12_000);
       try {
-        const response = await fetch('/api/map-ratings', {
+        const response = await fetch(endpoint, {
           credentials: 'same-origin',
           cache: 'no-store',
           ...options,
@@ -665,14 +692,8 @@ const mapCards = (mapsGenerated.items ?? [])
         .querySelector<HTMLFormElement>('form')
         ?.setAttribute('aria-busy', String(saving));
       fieldset.disabled =
-        !rating ||
-        rating.authenticated === false ||
-        saving ||
-        thankingMap === card.dataset.mapRating;
-      signIn.hidden =
-        !rating ||
-        (rating.authenticated !== false &&
-          (rating.authenticated === true || rating.userRating !== null));
+        !canRate(rating) || saving || thankingMap === card.dataset.mapRating;
+      signIn.hidden = inMotd || !rating || rating.authenticated === true;
       const randomMap =
         randomPreview?.querySelector<HTMLElement>('[data-map-rating]')?.dataset
           .mapRating;
@@ -739,6 +760,7 @@ const mapCards = (mapsGenerated.items ?? [])
         image.fetchPriority = 'auto';
       }
       randomPreview.replaceChildren(card);
+      if (motdTitle) motdTitle.textContent = tc('Know map {map}?', { map });
       const rating = states.get(map);
       card.querySelector<HTMLElement>('[data-rating-summary]')!.hidden =
         !rating;
@@ -763,20 +785,23 @@ const mapCards = (mapsGenerated.items ?? [])
         if (!response.ok) throw new Error('Unavailable');
         const data = response.data as {
           authenticated?: unknown;
+          canRate?: unknown;
           ratings?: unknown;
         } | null;
         if (
           !data ||
           typeof data.authenticated !== 'boolean' ||
+          typeof data.canRate !== 'boolean' ||
           !Array.isArray(data.ratings) ||
           !data.ratings.every(validRating)
         )
           throw new Error('Invalid ratings');
         const authenticated = data.authenticated;
+        const allowed = data.canRate;
         const ratings = new Map<string, Rating>(
           data.ratings.map((rating) => [
             rating.map,
-            { ...rating, authenticated },
+            { ...rating, authenticated, canRate: allowed },
           ]),
         );
         if (
@@ -837,7 +862,7 @@ const mapCards = (mapsGenerated.items ?? [])
       const selected = form.querySelector<HTMLInputElement>('input:checked');
       if (
         !rating ||
-        rating.authenticated === false ||
+        !canRate(rating) ||
         !selected ||
         busy.has(map) ||
         thankingMap === map ||
@@ -869,22 +894,27 @@ const mapCards = (mapsGenerated.items ?? [])
             const previous = states.get(other.dataset.mapRating!);
             if (previous) {
               previous.authenticated = false;
+              previous.canRate = false;
               render(other, previous);
             }
           });
-          feedback.textContent = tc('Sign in with Steam to save your rating.');
+          feedback.textContent = inMotd
+            ? tc('Ratings unavailable.')
+            : tc('Sign in with Steam to save your rating.');
           return;
         }
         if (!response.ok) throw new Error('Unavailable');
         const updated = response.data;
         if (
           !validRating(updated) ||
+          typeof updated.authenticated !== 'boolean' ||
+          !canRate(updated) ||
           updated.map !== map ||
           updated.userRating !== stars
         )
           throw new Error('Invalid rating');
         if (bindings.signal.aborted) return;
-        const saved = { ...updated, authenticated: true };
+        const saved = { ...updated };
         states.set(map, saved);
         matchingCards(map).forEach((item) => render(item, saved));
         feedback.textContent = tc(

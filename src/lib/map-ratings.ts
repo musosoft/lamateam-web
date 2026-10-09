@@ -1,10 +1,15 @@
 import type { Client } from "@libsql/client/web";
+import { normalizeMotdCommunityId } from "./hlstats-motd.ts";
+import { isGameUserAgent } from "./motd-locale.ts";
 
 type RatingDatabase = Pick<Client, "execute" | "batch">;
 type Dependencies = {
   maps: readonly string[];
   database: () => RatingDatabase;
   session: (request: Request) => Promise<string | null>;
+  rateLimiter?: {
+    limit(options: { key: string }): Promise<{ success: boolean }>;
+  };
 };
 
 const aggregateSQL = `SELECT map, AVG(stars) AS average, COUNT(*) AS count,
@@ -23,7 +28,7 @@ export function createMapRatingsHandler(deps: Dependencies) {
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "private, no-store",
-        Vary: "Cookie",
+        Vary: "Cookie, User-Agent",
         "X-Content-Type-Options": "nosniff",
       },
     });
@@ -42,6 +47,22 @@ export function createMapRatingsHandler(deps: Dependencies) {
     }
     try {
       const url = new URL(request.url);
+      const identity = async () => {
+        const sessionID = await deps.session(request);
+        const authenticated = sessionID !== null && /^\d{17}$/.test(sessionID);
+        const game = isGameUserAgent(request.headers.get("user-agent"));
+        const ids = url.searchParams.getAll("communityid");
+        // Unsigned MOTD IDs are intentionally allowed to vote, not authentication.
+        // Cookies, name and body fields never select a game's rating identity.
+        const steamID = game
+          ? ids.length === 1
+            ? normalizeMotdCommunityId(ids[0]!)
+            : null
+          : authenticated
+            ? sessionID
+            : null;
+        return { steamID, authenticated, canRate: steamID !== null, game };
+      };
       if (request.method === "POST") {
         // Require Origin even for clients without Fetch Metadata. No Referer fallback.
         const site = request.headers.get("sec-fetch-site");
@@ -60,9 +81,8 @@ export function createMapRatingsHandler(deps: Dependencies) {
         ) {
           return json({ error: "JSON body required" }, 415);
         }
-        const steamID = await deps.session(request);
-        if (!steamID || !/^\d{17}$/.test(steamID))
-          return json({ error: "Steam sign-in required" }, 401);
+        const { steamID, authenticated, canRate, game } = await identity();
+        if (!steamID) return json({ error: "Steam sign-in required" }, 401);
         let body: unknown;
         try {
           body = await request.json();
@@ -84,6 +104,23 @@ export function createMapRatingsHandler(deps: Dependencies) {
             400,
           );
         }
+        if (game) {
+          // Only the CF ingress header is trusted. Never use forwarded headers
+          // or a spoofable community ID as the quota key; fail closed everywhere.
+          const ip = request.headers.get("cf-connecting-ip")?.trim();
+          if (!ip || !deps.rateLimiter)
+            return json({ error: "Map ratings unavailable" }, 503);
+          const result = await deps.rateLimiter.limit({
+            key: `motd-map-ratings:${ip}`,
+          });
+          if (result.success === false) {
+            const response = json({ error: "Too many rating requests" }, 429);
+            response.headers.set("Retry-After", "60");
+            return response;
+          }
+          if (result.success !== true)
+            return json({ error: "Map ratings unavailable" }, 503);
+        }
         // One write transaction makes the returned aggregate include this vote.
         const results = await deps.database().batch(
           [
@@ -99,22 +136,26 @@ export function createMapRatingsHandler(deps: Dependencies) {
           ],
           "write",
         );
-        return json(aggregate(map, results[1].rows[0]));
+        return json({
+          ...aggregate(map, results[1].rows[0]),
+          authenticated,
+          canRate,
+        });
       }
       const map = url.searchParams.get("map");
       if (map !== null && !validMap(map))
         return json({ error: "Unknown map" }, 400);
-      const steamID = await deps.session(request);
+      const { steamID, authenticated, canRate } = await identity();
       const { rows } = await deps.database().execute({
         sql: `${aggregateSQL}${map !== null ? " WHERE map = ?" : ""} GROUP BY map`,
         args: map !== null ? [steamID, map] : [steamID],
       });
-      const authenticated = steamID !== null;
       if (map !== null)
-        return json({ ...aggregate(map, rows[0]), authenticated });
+        return json({ ...aggregate(map, rows[0]), authenticated, canRate });
       const byMap = new Map(rows.map((row) => [String(row.map), row]));
       return json({
         authenticated,
+        canRate,
         ratings: Array.from(maps, (name) => aggregate(name, byMap.get(name))),
       });
     } catch {
