@@ -16,7 +16,9 @@ test("all selected-card prompts follow the map while only the game opts into MOT
     (home.match(/<MapRatings\s+compact\s+motdPrompt/g) || []).length,
     1,
   );
-  assert.ok(home.includes("<MapRatings compact locale={locale} />"));
+  assert.ok(
+    home.includes("<MapRatings compact unratedOnly locale={locale} />"),
+  );
   assert.match(component, /motdPrompt = false/);
   assert.match(component, /\{t\('Loading a map…'\)\}/);
   assert.match(

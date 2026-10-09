@@ -210,18 +210,23 @@ const playerAvatar = steamID
   }
   .chat-input-wrap[data-rich-prompt='true'] {
     display: grid;
-    flex: 1;
+    grid-template-columns: minmax(0, 1fr);
+    position: relative;
+    flex: 1 1 0%;
+    width: 0;
     min-width: 0;
     min-height: 3.5rem;
   }
-  .chat-input-wrap[data-rich-prompt='true'] input {
-    grid-area: 1 / 1;
+  .chat-input-wrap[data-rich-prompt='true'] #messageInput {
+    display: block;
     width: 100%;
     height: 100%;
   }
   .chat-game-prompt {
-    grid-area: 1 / 1;
-    align-self: center;
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 1;
     padding: 0.5rem;
     pointer-events: none;

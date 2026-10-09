@@ -6,8 +6,10 @@ interface Props {
   compact?: boolean;
   motdPrompt?: boolean;
   communityId?: string;
+  unratedOnly?: boolean;
 }
 const { compact = false, motdPrompt = false, communityId = '' } = Astro.props;
+const unratedOnly = compact && !motdPrompt && Astro.props.unratedOnly === true;
 const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
 const t = translator(locale);
 const thanks = {
@@ -65,11 +67,13 @@ const mapCards = (mapsGenerated.items ?? [])
   data-locale={locale}
   data-motd-map-prompt={motdPrompt ? '' : undefined}
   data-motd-community-id={motdPrompt ? communityId : undefined}
+  data-unrated-only={unratedOnly ? '' : undefined}
   data-copy={JSON.stringify({
     ...clientCopy(locale),
     Rate: t('Rate'),
     'Thanks for rating!': thanks,
     'Know {map}? Rate it.': t('Know {map}? Rate it.'),
+    'All maps rated. Thanks!': t('All maps rated. Thanks!'),
   })}
 >
   <div class="map-ratings-intro" hidden={compact}>
@@ -82,7 +86,7 @@ const mapCards = (mapsGenerated.items ?? [])
       )}
     </p>
   </div>
-  <div class="ratings-notice fl-mb-3/5 sr-only">
+  <div class:list={['ratings-notice fl-mb-3/5', { 'sr-only': !unratedOnly }]}>
     <p id="map-ratings-status" role="status" aria-live="polite">
       {mapCards.length
         ? t('Loading map ratings…')
@@ -103,7 +107,7 @@ const mapCards = (mapsGenerated.items ?? [])
     hidden={!compact || mapCards.length === 0}
   >
     <div class="random-map-prompt">
-      <h2 id="random-map-title" translate="no" data-no-translate>
+      <h2 id="random-map-title" translate="no" data-no-translate tabindex="-1">
         {t('Loading a map…')}
       </h2>
       <p
@@ -577,6 +581,8 @@ const mapCards = (mapsGenerated.items ?? [])
     const root = document.querySelector<HTMLElement>('#map-ratings-root');
     const tc = clientTranslator(root);
     const inMotd = root?.hasAttribute('data-motd-map-prompt') === true;
+    const unratedOnly =
+      !inMotd && root?.hasAttribute('data-unrated-only') === true;
     const communityId = inMotd
       ? root?.dataset.motdCommunityId?.trim() || ''
       : '';
@@ -602,6 +608,7 @@ const mapCards = (mapsGenerated.items ?? [])
     const bindings = new AbortController();
     const requests = new Set<AbortController>();
     const states = new Map<string, Rating>();
+    let ratingsReady = false;
     const busy = new Set<string>();
     let advanceTimer: number | undefined;
     let thankingMap: string | undefined;
@@ -674,7 +681,8 @@ const mapCards = (mapsGenerated.items ?? [])
           .mapRating;
       if (randomSkip)
         randomSkip.disabled =
-          !!randomMap && (busy.has(randomMap) || thankingMap === randomMap);
+          (unratedOnly && (!ratingsReady || loading)) ||
+          (!!randomMap && (busy.has(randomMap) || thankingMap === randomMap));
     };
     const render = (card: HTMLElement, rating: Rating) => {
       const summary = card.querySelector<HTMLElement>('[data-rating-summary]')!;
@@ -704,13 +712,33 @@ const mapCards = (mapsGenerated.items ?? [])
       if (
         !randomPreview ||
         !randomAnnouncement ||
+        (unratedOnly && (!ratingsReady || loading)) ||
         busy.has(previousMap ?? '') ||
         thankingMap !== undefined ||
         !cards.length
       )
         return;
+      const candidates = unratedOnly
+        ? cards.filter(
+            (card) => states.get(card.dataset.mapRating!)?.userRating === null,
+          )
+        : cards;
+      if (unratedOnly) {
+        pool = pool.filter((card) => candidates.includes(card));
+        if (!candidates.length) {
+          pool = [];
+          previousMap = undefined;
+          randomPreview.replaceChildren();
+          if (randomTitle)
+            randomTitle.textContent = tc('All maps rated. Thanks!');
+          randomAnnouncement.textContent = tc('All maps rated. Thanks!');
+          if (randomSkip) randomSkip.hidden = true;
+          return;
+        }
+      }
+      if (randomSkip) randomSkip.hidden = false;
       if (!pool.length) {
-        pool = [...cards];
+        pool = [...candidates];
         for (let i = pool.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -748,7 +776,8 @@ const mapCards = (mapsGenerated.items ?? [])
     randomSkip?.addEventListener('click', chooseRandomMap, {
       signal: bindings.signal,
     });
-    chooseRandomMap();
+    if (!unratedOnly) chooseRandomMap();
+    else if (randomSkip) randomSkip.disabled = true;
     const load = async () => {
       if (loading || busy.size) return;
       loading = true;
@@ -789,6 +818,7 @@ const mapCards = (mapsGenerated.items ?? [])
         if (bindings.signal.aborted) return;
         states.clear();
         ratings.forEach((rating, map) => states.set(map, rating));
+        ratingsReady = true;
         allCards().forEach((card) =>
           render(card, states.get(card.dataset.mapRating!)!),
         );
@@ -797,8 +827,13 @@ const mapCards = (mapsGenerated.items ?? [])
       } catch {
         if (bindings.signal.aborted) return;
         states.clear();
+        ratingsReady = false;
         status.textContent = tc('Ratings unavailable.');
-        retry.hidden = true;
+        retry.hidden = !unratedOnly;
+        if (unratedOnly && !previousMap && randomPreview) {
+          randomPreview.textContent = tc('Ratings unavailable.');
+          if (randomTitle) randomTitle.textContent = tc('Ratings unavailable.');
+        }
         allCards().forEach((card) => {
           card.querySelector<HTMLElement>(
             '[data-rating-summary]',
@@ -811,6 +846,11 @@ const mapCards = (mapsGenerated.items ?? [])
       } finally {
         loading = false;
         retry.disabled = false;
+        if (unratedOnly && ratingsReady) {
+          if (!previousMap || states.get(previousMap)?.userRating !== null)
+            chooseRandomMap();
+          else if (randomSkip) randomSkip.disabled = false;
+        }
       }
     };
     (root ?? grid).addEventListener(
@@ -911,9 +951,11 @@ const mapCards = (mapsGenerated.items ?? [])
             const restoreFocus = card.contains(document.activeElement);
             chooseRandomMap();
             if (restoreFocus)
-              randomPreview
-                .querySelector<HTMLInputElement>('input[name="stars"]')
-                ?.focus();
+              (
+                randomPreview.querySelector<HTMLInputElement>(
+                  'input[name="stars"]',
+                ) ?? randomTitle
+              )?.focus();
           }, 1100);
         }
       } catch {
