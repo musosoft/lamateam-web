@@ -1896,7 +1896,10 @@ body.is-game:has(#live-chat-panel[hidden]) {
 }
 .is-game.motd-home .motd-personal-stats .hero-stats-values {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.4rem 0.75rem;
+  font-size: 0.875em;
+  line-height: 1.25;
+  gap: 0.25em 0.5em;
+  margin-top: 0.35em;
 }
 @media (max-width: 480px) {
   .is-game.motd-home .motd-stats-slot {

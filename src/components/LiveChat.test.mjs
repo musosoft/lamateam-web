@@ -58,6 +58,31 @@ class Element {
   }
 }
 const flush = () => new Promise((resolve) => setImmediate(resolve));
+test("MOTD visual prompt is static rich text, non-interactive and separately described", () => {
+  assert.match(
+    source,
+    /Click <b>Send<\/b> to chat\{' '\}\s*<span class="text-red-500">\s*not <kbd>Enter<\/kbd>\s*<\/span>/,
+  );
+  assert.match(
+    source,
+    /id="chat-game-prompt"[\s\S]*?aria-hidden="true"[\s\S]*?translate="no"/,
+  );
+  assert.match(
+    source,
+    /id="chat-game-instruction"[\s\S]*?Click Send to chat, not Enter\./,
+  );
+  assert.match(
+    source,
+    /<label for="messageInput" class="sr-only">\s*\{t\('Your message'\)\}/,
+  );
+  assert.match(source, /pointer-events: none/);
+  assert.match(source, /input:not\(:placeholder-shown\) \+ \.chat-game-prompt/);
+  assert.match(source, /\.chat-input-wrap \{\s*display: contents/);
+  assert.match(source, /min-width: 0/);
+  assert.match(source, /t\('Say hello to the team…'\)/);
+  assert.doesNotMatch(source, /innerHTML|set:html/);
+});
+
 function setup({
   authenticated = false,
   messages = [],
@@ -88,6 +113,9 @@ function setup({
     "#shoutboxMessages",
     "#shoutbox-status",
     "#shoutbox-title",
+    "#chat-game-prompt",
+    "#chat-game-instruction",
+    ".chat-input-wrap",
   ];
   const nodes = Object.fromEntries(
     selectors.map((selector) => [selector, new Element()]),
@@ -185,7 +213,7 @@ test("Valve preserves a closed sidebar across Astro route changes", async () => 
   await ui.document.emit("astro:before-swap");
   await ui.document.emit("astro:page-load");
   assert.equal(panel.hidden, true);
-  assert.equal(ui.nodes["#messageInput"].placeholder, "Click Send to chat");
+  assert.equal(ui.nodes["#messageInput"].placeholder, " ");
   await ui.nodes["#chat-launcher"].emit("click");
   assert.equal(panel.hidden, false);
 });
@@ -274,15 +302,13 @@ test("guest posting stays disabled and offline loading never claims success", as
   );
 });
 
-test("Valve uses the short placeholder; Enter is guarded but typed spaces and browser Enter are unchanged", async () => {
+test("Valve uses a rich prompt; Enter is guarded but typed spaces and browser Enter are unchanged", async () => {
   for (const userAgent of ["Valve Steam", "Mozilla/5.0"]) {
     const ui = setup({ authenticated: true, userAgent });
     const input = ui.nodes["#messageInput"];
     assert.equal(
       input.placeholder,
-      userAgent === "Valve Steam"
-        ? "Click Send to chat"
-        : "Say hello to the team…",
+      userAgent === "Valve Steam" ? " " : "Say hello to the team…",
     );
     assert.equal(
       ui.nodes["#live-chat-panel"].hidden,
@@ -310,6 +336,57 @@ test("Valve uses the short placeholder; Enter is guarded but typed spaces and br
     );
     await ui.document.emit("astro:before-swap");
     assert.equal(input.listeners.get("keydown").size, 0);
+  }
+});
+
+test("rich prompt tracks text, clearing, focus, drafts and successful send without affecting web", async () => {
+  for (const userAgent of ["Valve Client", "Mozilla/5.0"]) {
+    const ui = setup({
+      authenticated: true,
+      userAgent,
+      post: async () => ({ ok: true }),
+    });
+    const game = userAgent === "Valve Client";
+    const input = ui.nodes["#messageInput"];
+    const prompt = ui.nodes["#chat-game-prompt"];
+    assert.equal(prompt.hidden, !game);
+    assert.equal(ui.nodes["#chat-game-instruction"].hidden, !game);
+    assert.equal(ui.nodes[".chat-input-wrap"].dataset.richPrompt, String(game));
+    if (game) assert.equal(input["aria-describedby"], "chat-game-instruction");
+    input.focus();
+    assert.equal(
+      prompt.hidden,
+      !game,
+      "empty focused input retains instruction",
+    );
+    input.value = " ";
+    await input.emit("input");
+    assert.equal(prompt.hidden, true, "even a typed space hides the overlay");
+    input.value = "";
+    await input.emit("input");
+    assert.equal(prompt.hidden, !game);
+    input.value = "Draft";
+    await input.emit("change");
+    await ui.document.emit("astro:before-swap");
+    await ui.document.emit("astro:page-load");
+    assert.equal(input.value, "Draft");
+    assert.equal(
+      prompt.hidden,
+      true,
+      "persisted drafts never overlap the prompt",
+    );
+    for (const click of ui.nodes["#sendButton"].listeners.get("click"))
+      click({ detail: 1 });
+    await ui.nodes["#shoutboxForm"].emit("submit", { preventDefault() {} });
+    assert.equal(input.value, "");
+    assert.equal(
+      prompt.hidden,
+      !game,
+      "successful send restores the game prompt only",
+    );
+    if (!game) assert.equal(input.placeholder, "Say hello to the team…");
+    await ui.document.emit("astro:before-swap");
+    assert.equal(input.listeners.get("input").size, 0);
   }
 });
 
@@ -345,3 +422,112 @@ test("Valve blocks Enter/Space on Send and implicit submission, while click send
   assert.equal(send.listeners.get("keydown").size, 0);
   assert.equal(send.listeners.get("click").size, 0);
 });
+
+test(
+  "rendered rich prompt fits small MOTDs, clicks through and disappears while typing; web remains plain",
+  {
+    skip: !process.env.LAMATEAM_UI_URL,
+    timeout: 120_000,
+  },
+  async () => {
+    const { chromium } = await import(
+      process.env.LAMATEAM_PLAYWRIGHT_MODULE || "playwright"
+    );
+    const browser = await chromium.launch({
+      headless: true,
+      ...(process.env.CHROMIUM_BIN
+        ? { executablePath: process.env.CHROMIUM_BIN }
+        : {}),
+    });
+    try {
+      for (const userAgent of ["Valve Client", "Mozilla/5.0 Chromium"]) {
+        const context = await browser.newContext({ userAgent });
+        const page = await context.newPage();
+        let posts = 0;
+        await page.route("**/api/shoutbox", (route) => {
+          if (route.request().method() === "POST") posts++;
+          return route.fulfill({ json: [] });
+        });
+        for (const width of [390, 700, 1920]) {
+          await page.setViewportSize({
+            width,
+            height: width === 700 ? 400 : 1080,
+          });
+          await page.goto(
+            `${process.env.LAMATEAM_UI_URL}/?communityid=76561197960265729&name=PromptFixture`,
+          );
+          if (await page.locator("#chat-launcher").isVisible())
+            await page.locator("#chat-launcher").click();
+          const input = page.locator("#messageInput");
+          const prompt = page.locator("#chat-game-prompt");
+          if (userAgent === "Valve Client") {
+            await prompt.waitFor({ state: "visible" });
+            assert.equal(
+              (await prompt.textContent()).replace(/\s+/g, " ").trim(),
+              "Click Send to chat not Enter",
+            );
+            assert.equal(await prompt.locator("b").textContent(), "Send");
+            assert.equal(
+              await prompt.locator(".text-red-500 kbd").textContent(),
+              "Enter",
+            );
+            assert.equal(
+              await input.getAttribute("aria-describedby"),
+              "chat-game-instruction",
+            );
+            const geometry = await prompt.evaluate((node) => {
+              const box = node.getBoundingClientRect();
+              const input = document
+                .querySelector("#messageInput")
+                .getBoundingClientRect();
+              return {
+                fits:
+                  box.left >= input.left &&
+                  box.right <= input.right + 1 &&
+                  box.top >= input.top &&
+                  box.bottom <= input.bottom + 1,
+                pointerEvents: getComputedStyle(node).pointerEvents,
+                red: getComputedStyle(node.querySelector(".text-red-500"))
+                  .color,
+              };
+            });
+            assert.equal(geometry.fits, true);
+            assert.equal(geometry.pointerEvents, "none");
+            assert.equal(geometry.red, "rgb(239, 68, 68)");
+            const box = await prompt.boundingBox();
+            await page.mouse.click(
+              box.x + box.width / 2,
+              box.y + box.height / 2,
+            );
+            assert.equal(
+              await input.evaluate((node) => node === document.activeElement),
+              true,
+            );
+            await input.fill("Hello world");
+            assert.equal(await prompt.isVisible(), false);
+            const before = posts;
+            await input.press("Enter");
+            assert.equal(posts, before);
+            await page.locator("#sendButton").click();
+            await page.waitForFunction(
+              () => document.querySelector("#messageInput").value === "",
+            );
+            await prompt.waitFor({ state: "visible" });
+            assert.equal(posts, before + 1);
+          } else {
+            assert.equal(await prompt.isVisible(), false);
+            assert.equal(
+              await input.getAttribute("placeholder"),
+              "Sign in with Steam to chat",
+            );
+            assert.equal(await input.getAttribute("aria-describedby"), null);
+            assert.equal(await input.isDisabled(), true);
+          }
+        }
+        await context.close();
+      }
+    } finally {
+      await browser.close();
+    }
+  },
+);

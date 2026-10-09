@@ -6,6 +6,7 @@ import { createMapRatingsHandler } from "../../lib/map-ratings";
 import { readSteamSession } from "../../lib/steam-session";
 
 const handle = createMapRatingsHandler({
+  rateLimiter: (env as typeof env & Cloudflare.Env).TRANSLATION_RATE_LIMITER,
   maps: catalog.items.map((item) => item.map),
   database: () => {
     const url = import.meta.env.DEV

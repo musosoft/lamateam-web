@@ -85,16 +85,16 @@ test("game map cards fit two readable columns in a 300px content pane", () => {
   assert.match(maps, /overflow-wrap: anywhere/);
 });
 
-test("game instruction is a short placeholder without a redundant or misleading help row", () => {
+test("game instruction is a rich input prompt without a redundant or misleading help row", () => {
   assert.match(chat, /en: 'Click Send to chat'/);
   assert.match(chat, /data-game-placeholder=\{gamePlaceholder\}/);
-  assert.match(
-    chat,
-    /if \(inGame\) input.placeholder = input.dataset.gamePlaceholder!/,
-  );
+  assert.match(chat, /if \(inGame\) \{\s*input.placeholder = ' '/);
   assert.doesNotMatch(chat, /chat-keyboard-notice|Enter\/Space cannot send/);
   assert.match(chat, /t\('Say hello to the team…'\)/);
-  assert.match(chat, /nextInput.dataset.gamePlaceholder!/);
+  assert.match(
+    chat,
+    /input.placeholder = \/valve\|steam\/i.test\(navigator.userAgent\)\s*\? ' '\s*: nextInput.placeholder/,
+  );
 });
 
 test("welcome, player stats and rating stay in the left main; chat is its sibling", () => {
@@ -232,6 +232,29 @@ test("MOTD panels stretch to equal row height without full-width controls", () =
     /align-self: start/,
   );
   assert.match(home, /\.home-top-row \{\s+display: contents/);
+});
+
+test("MOTD snapshot values are denser without shrinking the heading or website stats", () => {
+  const values = rule(
+    ".is-game.motd-home .motd-personal-stats .hero-stats-values",
+  );
+  assert.match(values, /font-size: 0\.875em/);
+  assert.match(values, /line-height: 1\.25/);
+  assert.match(values, /gap: 0\.25em 0\.5em/);
+  assert.match(values, /margin-top: 0\.35em/);
+  assert.match(
+    rule(".is-game.motd-home .motd-personal-stats"),
+    /font-size: var\(--motd-text\)/,
+  );
+  assert.match(
+    rule(".is-game.motd-home .motd-personal-stats .eyebrow"),
+    /font-size: inherit/,
+  );
+  assert.match(
+    home,
+    /\.hero-stats-values \{\s+display: grid;\s+grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);\s+gap: 0\.5rem 1rem;\s+margin-top: 0\.5rem;/,
+  );
+  assert.doesNotMatch(values, /^\s+(?:color|overflow|height):/m);
 });
 
 test("MOTD rating content aligns right and controls stay in compact top tracks", () => {

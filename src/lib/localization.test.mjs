@@ -219,6 +219,6 @@ test("interaction copy is explicit bundled locale data, never an external transl
   assert.match(maps, /<MapRatings locale=\{locale\}/);
   assert.match(ratings, /JSON\.stringify\(\{\s*\.\.\.clientCopy\(locale\)/);
   assert.match(ratings, /clientTranslator\(root\)/);
-  assert.match(ratings, /fetch\('\/api\/map-ratings'/);
+  assert.match(ratings, /const request =/);
   assert.doesNotMatch(ratings, /api\/translate/);
 });
