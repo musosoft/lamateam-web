@@ -1,7 +1,8 @@
 import type { ImageMetadata } from "astro";
 
 // Eager default imports give Astro the true dimensions/format, including cached
-// PNG data historically saved under a .jpg filename. No public originals.
+// PNG data historically saved under a .jpg filename. Public originals remain
+// available for legacy URLs; rendered thumbnails use the optimized service.
 const assets = import.meta.glob<ImageMetadata>(
   "../assets/map-cache/*.{jpg,jpeg,png,webp,avif}",
   { eager: true, import: "default" },

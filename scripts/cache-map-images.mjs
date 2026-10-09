@@ -7,6 +7,7 @@ const MAP_IMAGE_BASE = "https://stats.lamateam.eu/hlstatsimg/games/css/maps";
 
 const ROOT = process.cwd();
 const CACHE_DIR = path.join(ROOT, "src", "assets", "map-cache");
+const PUBLIC_CACHE_DIR = path.join(ROOT, "public", "assets", "map-cache");
 const OUT_JSON = path.join(ROOT, "src", "data", "maps.generated.json");
 
 function parseCsvLine(line, delimiter) {
@@ -99,14 +100,26 @@ async function downloadImage(url, outPath, timeoutMs = 5000) {
 async function resolveAndCache(mapName) {
   const localName = `${mapName}.jpg`;
   const localPath = path.join(CACHE_DIR, localName);
-  // Retained as a logical catalog identifier for existing consumers, not a
-  // public URL. Render images through getMapImage() and astro:assets instead.
+  const publicFile = path.join(PUBLIC_CACHE_DIR, localName);
+  // Preserve legacy URLs and supplied public images while Astro imports the
+  // mirrored source for optimized thumbnails. Never prune retired map files.
   const publicPath = `/assets/map-cache/${localName}`;
 
   try {
-    await fs.access(localPath);
+    await fs.access(publicFile);
+    await fs.copyFile(publicFile, localPath);
     return { map: mapName, image: publicPath, source: "cache" };
-  } catch {}
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+
+  try {
+    await fs.access(localPath);
+    await fs.copyFile(localPath, publicFile);
+    return { map: mapName, image: publicPath, source: "cache" };
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
 
   for (const base of fallbackMapNames(mapName)) {
     const candidates = [
@@ -117,6 +130,7 @@ async function resolveAndCache(mapName) {
 
     for (const url of candidates) {
       if (await downloadImage(url, localPath)) {
+        await fs.copyFile(localPath, publicFile);
         return { map: mapName, image: publicPath, source: url };
       }
     }
@@ -131,6 +145,7 @@ async function resolveAndCache(mapName) {
 
 async function run() {
   await fs.mkdir(CACHE_DIR, { recursive: true });
+  await fs.mkdir(PUBLIC_CACHE_DIR, { recursive: true });
   await fs.mkdir(path.dirname(OUT_JSON), { recursive: true });
 
   const csvRes = await fetch(MAPS_CSV_URL);
