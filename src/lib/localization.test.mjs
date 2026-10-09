@@ -123,12 +123,16 @@ test("manifest contains exactly thirteen logical pages in eight locales and real
 test("English URLs stay unprefixed, locale navigation keeps query/hash and exempts APIs and dashboards", () => {
   assert.equal(localePath("en", "home"), "/");
   assert.equal(localePath("en", "rules"), "/rules");
-  assert.equal(localePath("cs", "connect"), "/cs/connect/");
+  assert.equal(localePath("cs", "connect"), "/cs/pripojeni/");
   assert.equal(
     localizedHref("/rules?view=full#penalties", "fr"),
-    "/fr/rules/?view=full#penalties",
+    "/fr/regles/?view=full#penalties",
   );
-  assert.equal(localizedHref("/cs/maps/", "de"), "/de/maps/");
+  assert.equal(localizedHref("/cs/maps/", "de"), "/de/karten/");
+  assert.equal(
+    localizedHref("/cs/mapy/?view=full#ratings", "de"),
+    "/de/karten/?view=full#ratings",
+  );
   for (const path of [
     "/api/auth/steam",
     "/stats",
@@ -173,12 +177,24 @@ test("canonical, reciprocal hreflang, x-default and sitemap share the real route
     assert.ok(locs.has(seo.canonical));
   }
   assert.equal(routeSeo("/rules/").canonicalPath, "/rules");
+  for (const locale of locales) {
+    for (const page of pageKinds.filter((p) => p !== "home")) {
+      const legacy = `/${locale}/${page}/`;
+      const canonical = localePath(locale, page);
+      assert.equal(routeSeo(legacy).canonicalPath, canonical);
+      assert.deepEqual(
+        routeSeo(legacy).alternates,
+        routeSeo(canonical).alternates,
+      );
+      assert.ok(!locs.has(`https://lamateam.eu${legacy}`), legacy);
+    }
+  }
 });
 test("server shell localizes copy, accessibility and links, never code, SVGs or user values", () => {
   const html =
     '<nav aria-label="Community"><a href="/rules">Rules</a><button title="Pull down navigation">Menu</button><span translate="no">Rules</span><svg><title>Rules</title></svg><script>const text="Rules"</script></nav>';
   const output = localizeShell(html, "cs");
-  assert.match(output, /href="\/cs\/rules\/"/);
+  assert.match(output, /href="\/cs\/pravidla\/"/);
   assert.ok(output.includes(pageCopy.cs.Rules));
   assert.ok(output.includes(pageCopy.cs["Pull down navigation"]));
   assert.ok(output.includes('<span translate="no">Rules</span>'));
@@ -191,7 +207,7 @@ test("server shell localizes copy, accessibility and links, never code, SVGs or 
 });
 test("language selector keeps designer flag markup but disables the old DOM translation script", () => {
   const html =
-    '<label for="language">Language</label><select id="language" translate="no"><button><selectedcontent></selectedcontent></button><option data-path="/cs/rules/"><svg width="18" height="12"><path d="M0 0"/></svg><span>Čeština</span></option></select><script src="/old-language-selector.js" type="module"></script>';
+    '<label for="language">Language</label><select id="language" translate="no"><button><selectedcontent></selectedcontent></button><option data-path="/cs/pravidla/"><svg width="18" height="12"><path d="M0 0"/></svg><span>Čeština</span></option></select><script src="/old-language-selector.js" type="module"></script>';
   const output = localizeShell(html, "cs", true);
   assert.doesNotMatch(output, /<script/);
   assert.ok(
@@ -205,12 +221,12 @@ test("language selector keeps designer flag markup but disables the old DOM tran
   assert.match(component, /target\.search = location\.search/);
   assert.match(component, /target\.hash = location\.hash/);
   const noScript = localizeShell(
-    '<noscript><nav aria-label="Languages"><a href="/cs/rules/" hreflang="cs" lang="cs">Čeština</a></nav></noscript>',
+    '<noscript><nav aria-label="Languages"><a href="/cs/pravidla/" hreflang="cs" lang="cs">Čeština</a></nav></noscript>',
     "cs",
     true,
   );
   assert.ok(noScript.includes(pageCopy.cs.Languages));
-  assert.ok(noScript.includes('href="/cs/rules/"'));
+  assert.ok(noScript.includes('href="/cs/pravidla/"'));
 });
 test("interaction copy is explicit bundled locale data, never an external translation request", () => {
   assert.equal(Object.keys(clientCopy("uk")).length, interactionKeys.length);

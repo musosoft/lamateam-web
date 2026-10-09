@@ -6,7 +6,7 @@ const MAPS_CSV_URL =
 const MAP_IMAGE_BASE = "https://stats.lamateam.eu/hlstatsimg/games/css/maps";
 
 const ROOT = process.cwd();
-const CACHE_DIR = path.join(ROOT, "public", "assets", "map-cache");
+const CACHE_DIR = path.join(ROOT, "src", "assets", "map-cache");
 const OUT_JSON = path.join(ROOT, "src", "data", "maps.generated.json");
 
 function parseCsvLine(line, delimiter) {
@@ -99,6 +99,8 @@ async function downloadImage(url, outPath, timeoutMs = 5000) {
 async function resolveAndCache(mapName) {
   const localName = `${mapName}.jpg`;
   const localPath = path.join(CACHE_DIR, localName);
+  // Retained as a logical catalog identifier for existing consumers, not a
+  // public URL. Render images through getMapImage() and astro:assets instead.
   const publicPath = `/assets/map-cache/${localName}`;
 
   try {

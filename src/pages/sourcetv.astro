@@ -7,8 +7,9 @@ interface Props {
 }
 const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
 const t = translator(locale);
-import mapsGenerated from '../data/maps.generated.json';
+import { Image } from 'astro:assets';
 import { Icon } from 'astro-icon/components';
+import { getMapImage } from '../lib/map-image-assets';
 import {
   loadSourceTVFiles,
   type SourceTVExecutionContext,
@@ -28,9 +29,6 @@ const {
 Astro.response.headers.set('Cache-Control', 'no-store');
 if (error && demoFiles.length === 0 && !stale && !refreshing)
   Astro.response.status = 503;
-const mapImages = new Map(
-  mapsGenerated.items.map((item) => [item.map, item.image]),
-);
 const demos = demoFiles
   .map((file) => {
     const filename = file.split('/').pop() ?? file;
@@ -42,7 +40,7 @@ const demos = demoFiles
     const date = match
       ? `${match[3]}.${match[2]}.${match[1]} ${match[4]}:${match[5]}`
       : undefined;
-    const image = map ? mapImages.get(map) : undefined;
+    const image = map ? getMapImage(map) : undefined;
     return {
       file,
       filename,
@@ -51,7 +49,7 @@ const demos = demoFiles
       sortDate: match
         ? `${match[1]}${match[2]}${match[3]}${match[4]}${match[5]}`
         : '',
-      image: image?.startsWith('/assets/map-cache/') ? image : undefined,
+      image,
     };
   })
   .sort(
@@ -113,11 +111,11 @@ const demos = demoFiles
                 <td>
                   <div class="demo-map">
                     {demo.image && (
-                      <img
+                      <Image
                         src={demo.image}
                         alt=""
-                        width="64"
-                        height="36"
+                        width={64}
+                        height={36}
                         loading="lazy"
                         decoding="async"
                         onerror="this.hidden=true;"

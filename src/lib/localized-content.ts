@@ -18,6 +18,128 @@ export const pageKinds = [
 export type PageKind = (typeof pageKinds)[number];
 export type SiteLocale = Locale | "en";
 export const allLocales = ["en", ...locales] as const;
+/** Stable public URL contract. English page identifiers remain content keys and
+ * legacy aliases; only these slugs are emitted by navigation and SEO. */
+export const localizedSlugs = {
+  cs: {
+    home: "",
+    connect: "pripojeni",
+    rules: "pravidla",
+    maps: "mapy",
+    commands: "prikazy",
+    money: "penize",
+    hitreg: "registrace-zasahu",
+    fixes: "opravy",
+    speed: "rychlost",
+    sourcetv: "sledovani-hry",
+    admins: "spravci",
+    vip: "vip-vyhody",
+    contact: "kontakt",
+  },
+  sk: {
+    home: "",
+    connect: "pripojenie",
+    rules: "pravidla",
+    maps: "mapy",
+    commands: "prikazy",
+    money: "peniaze",
+    hitreg: "registracia-zasahov",
+    fixes: "opravy",
+    speed: "rychlost",
+    sourcetv: "sledovanie-hry",
+    admins: "spravcovia",
+    vip: "vip-vyhody",
+    contact: "kontakt",
+  },
+  pl: {
+    home: "",
+    connect: "polaczenie",
+    rules: "zasady",
+    maps: "mapy",
+    commands: "komendy",
+    money: "pieniadze",
+    hitreg: "rejestracja-trafien",
+    fixes: "naprawy",
+    speed: "predkosc",
+    sourcetv: "ogladanie-gry",
+    admins: "administratorzy",
+    vip: "korzysci-vip",
+    contact: "kontakt",
+  },
+  hu: {
+    home: "",
+    connect: "csatlakozas",
+    rules: "szabalyok",
+    maps: "palyak",
+    commands: "parancsok",
+    money: "penz",
+    hitreg: "talalatregisztracio",
+    fixes: "javitasok",
+    speed: "sebesseg",
+    sourcetv: "jatekkozvetites",
+    admins: "adminisztratorok",
+    vip: "vip-elonyok",
+    contact: "kapcsolat",
+  },
+  de: {
+    home: "",
+    connect: "verbinden",
+    rules: "regeln",
+    maps: "karten",
+    commands: "befehle",
+    money: "geld",
+    hitreg: "trefferregistrierung",
+    fixes: "fehlerbehebung",
+    speed: "geschwindigkeit",
+    sourcetv: "spieluebertragung",
+    admins: "administratoren",
+    vip: "vip-vorteile",
+    contact: "kontakt",
+  },
+  uk: {
+    home: "",
+    connect: "pidkliuchennia",
+    rules: "pravyla",
+    maps: "karty",
+    commands: "komandy",
+    money: "hroshi",
+    hitreg: "reiestratsiia-vluchan",
+    fixes: "vypravlennia",
+    speed: "shvydkist",
+    sourcetv: "transliatsiia-hry",
+    admins: "administratory",
+    vip: "vip-perevahy",
+    contact: "kontakty",
+  },
+  fr: {
+    home: "",
+    connect: "connexion",
+    rules: "regles",
+    maps: "cartes",
+    commands: "commandes",
+    money: "argent",
+    hitreg: "enregistrement-des-tirs",
+    fixes: "correctifs",
+    speed: "vitesse",
+    sourcetv: "diffusion-du-jeu",
+    admins: "administrateurs",
+    vip: "avantages-vip",
+    contact: "nous-contacter",
+  },
+} as const satisfies Record<Locale, Record<PageKind, string>>;
+
+/** Resolve only a locale's canonical slug or its original English alias. */
+export function pageFromSlug(
+  locale: SiteLocale,
+  slug: string,
+): PageKind | undefined {
+  return pageKinds.find(
+    (page) =>
+      page !== "home" &&
+      (page === slug ||
+        (locale !== "en" && localizedSlugs[locale][page] === slug)),
+  );
+}
 export function localeFromPath(path: string): SiteLocale {
   const candidate = path.split("/")[1];
   return isLocale(candidate) ? candidate : "en";
@@ -28,23 +150,32 @@ export function isLocale(value: string | undefined): value is Locale {
   return locales.some((locale) => locale === value);
 }
 export function equivalentPage(path: string): PageKind | undefined {
-  if (!path.startsWith("/") || path.includes("//")) return undefined;
+  if (!path.startsWith("/") || path.includes("//") || /[?#\\]/.test(path))
+    return undefined;
   const segments = path.split("/").filter(Boolean);
-  if (isLocale(segments[0])) segments.shift();
+  const locale = localeFromPath(path);
+  if (locale !== "en") segments.shift();
   if (segments.length === 0) return "home";
-  if (
-    segments.length === 1 &&
-    segments[0] !== "home" &&
-    pageKinds.some((page) => page === segments[0])
-  )
-    return segments[0] as PageKind;
+  if (segments.length === 1) return pageFromSlug(locale, segments[0]);
 }
 export function localePath(locale: Locale | "en", page: PageKind): string {
   return locale === "en"
     ? page === "home"
       ? "/"
       : `/${page}`
-    : `/${locale}/${page === "home" ? "" : `${page}/`}`;
+    : `/${locale}/${page === "home" ? "" : `${localizedSlugs[locale][page]}/`}`;
+}
+/** Compatibility window: retain all old localized English aliases with a 308.
+ * HTTP requests do not carry fragments; browsers inherit the original fragment
+ * when Location has none. URL callers also retain any available fragment. */
+export function legacyLocaleRedirect(url: URL): string | undefined {
+  const locale = localeFromPath(url.pathname);
+  if (locale === "en") return undefined;
+  const page = equivalentPage(url.pathname);
+  if (!page || page === "home") return undefined;
+  const slug = url.pathname.split("/")[2];
+  if (slug !== page) return undefined;
+  return localePath(locale, page) + url.search + url.hash;
 }
 export const routeManifest = pageKinds.flatMap((page) =>
   allLocales.map((locale) => ({

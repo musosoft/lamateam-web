@@ -10,10 +10,16 @@ import SourceTV from '../sourcetv.astro';
 import Admins from '../admins.astro';
 import Vip from '../vip.astro';
 import Contact from '../contact.astro';
-import { isLocale } from '../../lib/localized-content';
+import Connect from '../connect.astro';
+import {
+  isLocale,
+  pageFromSlug,
+  legacyLocaleRedirect,
+} from '../../lib/localized-content';
 
 export const prerender = false;
 const pages = {
+  connect: Connect,
   rules: Rules,
   maps: Maps,
   commands: Commands,
@@ -27,11 +33,15 @@ const pages = {
   contact: Contact,
 };
 const slug = Astro.params.page;
-if (!isLocale(Astro.params.locale) || !slug || !Object.hasOwn(pages, slug)) {
+const locale = Astro.params.locale;
+if (!isLocale(locale) || !slug) {
   return new Response('Not found', { status: 404 });
 }
-const Page = pages[slug as keyof typeof pages];
-const locale = Astro.params.locale;
+const page = pageFromSlug(locale, slug);
+if (!page || page === 'home') return new Response('Not found', { status: 404 });
+const redirect = legacyLocaleRedirect(Astro.url);
+if (redirect) return Astro.redirect(redirect, 308);
+const Page = pages[page];
 ---
 
 <Page locale={locale} />
