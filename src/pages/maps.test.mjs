@@ -27,6 +27,7 @@ class Element {
     this.textContent = "";
     this.classList = new Set();
     this.attributes = new Set();
+    this.attributeValues = new Map();
   }
   addEventListener(name, callback, options = {}) {
     const set = this.listeners.get(name) ?? new Set();
@@ -46,6 +47,19 @@ class Element {
   }
   append(...nodes) {
     this.children.push(...nodes);
+  }
+  insertBefore(node, reference) {
+    const index =
+      reference === null
+        ? this.children.length
+        : this.children.indexOf(reference);
+    if (index < 0) throw new Error("Insertion reference is not a child");
+    this.children.splice(index, 0, node);
+    return node;
+  }
+  setAttribute(name, value) {
+    this.attributes.add(name);
+    this.attributeValues.set(name, String(value));
   }
   contains(node) {
     return this.children.includes(node);
@@ -101,13 +115,18 @@ function createCard(map) {
     ].map((selector) => [selector, new Element()]),
   );
   fields.form = form;
+  form.append(fields.fieldset);
   form.setAttribute = (name, value) => {
     form[name] = value;
   };
   card.querySelector = (selector) =>
     selector === "input:checked"
       ? (inputs.find((input) => input.checked) ?? null)
-      : fields[selector];
+      : selector === ".random-community-rating"
+        ? form.children.find(
+            (node) => node.className === "random-community-rating",
+          )
+        : fields[selector];
   card.querySelectorAll = (selector) =>
     selector === "[data-star]" ? stars : inputs;
   form.querySelector = card.querySelector;
@@ -171,6 +190,11 @@ function setup({ authenticated = true, unavailable = false, post } = {}) {
     "#random-map-announcement": announcement,
   };
   const document = new Element();
+  document.createElement = (tag) => {
+    const element = new Element();
+    element.tagName = tag.toUpperCase();
+    return element;
+  };
   document.querySelector = (selector) => selectors[selector];
   const calls = [];
   const timers = new Map();
@@ -239,6 +263,15 @@ function setup({ authenticated = true, unavailable = false, post } = {}) {
 
 test("random-map skip exhausts the pool without repeat or a vote", async () => {
   const ui = setup();
+  const card = ui.preview.children[0];
+  const label = card.querySelector(".random-community-rating");
+  assert.equal(label.tagName, "P");
+  assert.equal(label.attributeValues.get("translate"), "no");
+  assert.equal(label.attributeValues.get("data-no-translate"), "");
+  assert.ok(
+    card.form.children.indexOf(label) <
+      card.form.children.indexOf(card.fields.fieldset),
+  );
   await flush();
   const selected = [];
   for (let i = 0; i < 3; i++) {

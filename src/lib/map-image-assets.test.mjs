@@ -27,8 +27,8 @@ const assetDirectory = new URL("src/assets/map-cache/", root);
 test("catalog assets retain identical public originals and optimized source imports", () => {
   const files = readdirSync(assetDirectory);
   const cached = catalog.items.filter((item) => item.source !== "placeholder");
-  assert.equal(cached.length, 96);
-  assert.equal(catalog.items.length - cached.length, 3);
+  assert.equal(cached.length, 98);
+  assert.equal(catalog.items.length - cached.length, 1);
   assert.ok(files.length >= cached.length);
   for (const item of catalog.items) {
     const filename = `${item.map}.jpg`;

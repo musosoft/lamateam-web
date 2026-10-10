@@ -173,11 +173,9 @@ test("home uses a unified hero and sidebar rating widget with locally owned Game
   );
   assert.ok(home.includes("'home-hero'"));
   assert.ok(home.includes("{ 'fl-p-4/12 fl-gap-4/10 fl-mb-5/12': !isGame }"));
-  assert.ok(
-    home.indexOf(
-      "<MapRatings compact locale={locale} />",
-      home.indexOf("<aside"),
-    ) > home.indexOf("<aside"),
+  assert.match(
+    home,
+    /<div class="home-map-rating"[^>]*>\s*<MapRatings compact unratedOnly locale=\{locale\} \/>\s*<\/div>\s*\)\}\s*<div class="community-main">/,
   );
   assert.ok(!home.includes('aria-labelledby="join-overview"'));
   assert.match(css, /main\s*\{[^}]*max-width: 1760px/s);

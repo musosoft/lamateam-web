@@ -78,8 +78,22 @@ test("every locale has a map-specific prompt with a single intact map token", ()
 
 test("selection updates the safe title and hides only the cloned map label", () => {
   const makeCard = (map) => {
+    const fieldset = {};
     const parts = {
-      form: { append() {} },
+      form: {
+        children: [fieldset],
+        append(...nodes) {
+          this.children.push(...nodes);
+        },
+        insertBefore(node, reference) {
+          const index = this.children.indexOf(reference);
+          if (index < 0)
+            throw new Error("Insertion reference is not a form child");
+          this.children.splice(index, 0, node);
+          return node;
+        },
+      },
+      fieldset,
       legend: { classList: { add() {} } },
       ".map-name": {
         hidden: false,
@@ -110,6 +124,20 @@ test("selection updates the safe title and hides only the cloned map label", () 
     loading: false,
     unratedOnly: false,
     ratingsReady: false,
+    inMotd: false,
+    document: {
+      createElement(tag) {
+        return {
+          tagName: tag.toUpperCase(),
+          className: "",
+          textContent: "",
+          attributes: new Map(),
+          setAttribute(name, value) {
+            this.attributes.set(name, String(value));
+          },
+        };
+      },
+    },
     randomPreview: {
       replaceChildren(card) {
         this.card = card;

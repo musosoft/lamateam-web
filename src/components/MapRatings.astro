@@ -96,8 +96,11 @@ const mapCards = (mapsGenerated.items ?? [])
       {t('All maps currently available on the LaMaTeAm server.')}
     </p>
     <p class="fl-mb-3/5 fl-text-sm/base text-gray-400">
-      {t(
-        'Community ratings are anonymous. Sign in with Steam to set or update your own rating.',
+      {t('LaMaTeAm CS:S map ratings are anonymous.')}
+      {!motdPrompt && (
+        <span>
+          {t('Sign in with Steam to rate a map or update your rating.')}
+        </span>
       )}
     </p>
   </div>

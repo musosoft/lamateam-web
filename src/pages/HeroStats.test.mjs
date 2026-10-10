@@ -124,7 +124,7 @@ test("MOTD public fallback is explicitly unverified and never overrides a verifi
   assert.equal(ui.requests, 2);
   assert.equal(ui.request.url, `/api/stats/motd?communityid=${id}`);
   assert.equal(ui.root.hidden, false);
-  assert.match(ui.title.textContent, /Public.*unverified/);
+  assert.equal(ui.title.textContent, "HLSTATSX SNAPSHOT");
   assert.doesNotMatch(ui.title.textContent, /Your/);
   assert.doesNotMatch(ui.request.url, /name|steam_user|session/);
   for (const response of [ok(), { status: 404 }, { status: 503 }]) {

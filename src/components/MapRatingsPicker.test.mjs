@@ -30,7 +30,16 @@ const rating = (map, userRating = null) => ({
 
 function fixture({ unratedOnly = true, loaded = false } = {}) {
   class Form {
-    append() {}
+    children = [];
+    append(...nodes) {
+      this.children.push(...nodes);
+    }
+    insertBefore(node, reference) {
+      const index = this.children.indexOf(reference);
+      if (index < 0) throw new Error("Insertion reference is not a form child");
+      this.children.splice(index, 0, node);
+      return node;
+    }
     closest() {
       return this.card;
     }
@@ -44,6 +53,7 @@ function fixture({ unratedOnly = true, loaded = false } = {}) {
     const form = new Form();
     const parts = {
       form,
+      fieldset: {},
       legend: { classList: { add() {} } },
       ".map-name": { setAttribute() {} },
       "[data-rating-feedback]": { textContent: "", classList: { add() {} } },
@@ -52,11 +62,17 @@ function fixture({ unratedOnly = true, loaded = false } = {}) {
     };
     const card = {
       dataset: { mapRating: map },
-      querySelector: (selector) => parts[selector],
+      querySelector: (selector) =>
+        selector === ".random-community-rating"
+          ? form.children.find(
+              (node) => node.className === "random-community-rating",
+            )
+          : parts[selector],
       cloneNode: () => makeCard(map),
       contains: () => false,
     };
     form.card = card;
+    form.append(parts.fieldset);
     return card;
   };
   const cards = ["rated", "first", "second"].map(makeCard);
@@ -98,7 +114,20 @@ function fixture({ unratedOnly = true, loaded = false } = {}) {
       (r.userRating === null || Number.isInteger(r.userRating)),
     tc: (key, params = {}) => key.replace("{map}", params.map),
     HTMLFormElement: Form,
-    document: { activeElement: null },
+    document: {
+      activeElement: null,
+      createElement(tag) {
+        return {
+          tagName: tag.toUpperCase(),
+          className: "",
+          textContent: "",
+          attributes: new Map(),
+          setAttribute(name, value) {
+            this.attributes.set(name, String(value));
+          },
+        };
+      },
+    },
     window: {
       setTimeout(fn) {
         context.advance = fn;
@@ -160,6 +189,15 @@ test("only desktop homepage explicitly opts in; no selection before a complete l
   assert.equal(ui.ratingsReady, true);
   assert.ok(["first", "second"].includes(ui.previousMap));
   assert.notEqual(ui.previousMap, "rated");
+  const form = ui.randomPreview.card.querySelector("form");
+  const label = ui.randomPreview.card.querySelector(".random-community-rating");
+  assert.equal(label.tagName, "P");
+  assert.equal(label.attributes.get("translate"), "no");
+  assert.equal(label.attributes.get("data-no-translate"), "");
+  assert.ok(
+    form.children.indexOf(label) <
+      form.children.indexOf(ui.randomPreview.card.querySelector("fieldset")),
+  );
 });
 
 test("unrated candidates cycle without repeats; community counts never exclude them", () => {
