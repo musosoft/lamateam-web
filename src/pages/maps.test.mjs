@@ -10,6 +10,7 @@ const source = readFileSync(
   new URL("../components/MapRatings.astro", import.meta.url),
   "utf8",
 );
+const mapsPage = readFileSync(new URL("./maps.astro", import.meta.url), "utf8");
 const script = stripTypeScriptTypes(
   source
     .match(/<script>([\s\S]*?)<\/script>/)[1]
@@ -106,6 +107,23 @@ const response = (data, status = 200) => ({
   json: async () => data,
 });
 const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+test("maps page passes community identity only to the in-game rating UI", () => {
+  assert.match(
+    mapsPage,
+    /isGameUserAgent\(Astro\.request\.headers\.get\('user-agent'\)\)/,
+  );
+  assert.match(mapsPage, /Astro\.url\.searchParams\.get\('communityid'\)/);
+  assert.match(mapsPage, /Astro\.cookies\.get\('communityid'\)\?\.value/);
+  assert.match(
+    mapsPage,
+    /const communityId = isGame \? rawCommunityId\.slice\(0, 32\) : ''/,
+  );
+  assert.match(mapsPage, /motdPrompt=\{isGame\}/);
+  assert.match(mapsPage, /communityId=\{communityId\}/);
+  assert.doesNotMatch(mapsPage, /<MapRatings[^>]*compact|unratedOnly/s);
+});
+
 function setup({ authenticated = true, unavailable = false, post } = {}) {
   const root = new Element();
   root.dataset.copy = JSON.stringify({
