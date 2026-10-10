@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-10T12:01:45.523Z",
+  "generatedAt": "2026-10-10T19:08:52.396Z",
   "total": 99,
-  "ok": 96,
+  "ok": 98,
   "items": [
     {
       "map": "$2000$",
@@ -220,8 +220,8 @@
     },
     {
       "map": "de_grit3",
-      "image": "/assets/map-placeholder.svg",
-      "source": "placeholder"
+      "image": "/assets/map-cache/de_grit3.jpg",
+      "source": "cache"
     },
     {
       "map": "de_hiekka_v3",
@@ -310,8 +310,8 @@
     },
     {
       "map": "de_playboydolls_2010_b8",
-      "image": "/assets/map-placeholder.svg",
-      "source": "placeholder"
+      "image": "/assets/map-cache/de_playboydolls_2010_b8.jpg",
+      "source": "cache"
     },
     {
       "map": "de_port",
