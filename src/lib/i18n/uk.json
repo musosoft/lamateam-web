@@ -1,4 +1,9 @@
 {
+  "Your rating · {rating} / 5": "Ваша оцінка · {rating} / 5",
+  "Your rating · Not rated yet.": "Ваша оцінка · Ще не оцінено.",
+  "{count} ratings": "Кількість оцінок: {count}",
+  "Community rating · {average} / 5": "Оцінка спільноти · {average} / 5",
+  "All maps rated. Thanks!": "Усі мапи оцінено. Дякуємо!",
   "Know {map}? Rate it.": "Знаєш {map}? Оціни її.",
   "Never played": "Ніколи не грав/ла",
   "In-game chat: do not press Space or Enter to send. Click Send; keyboard submission may close the MOTD.": "Чат у грі: не надсилайте пробілом або Enter. Натисніть Надіслати; надсилання клавіатурою може закрити MOTD.",

@@ -83,6 +83,31 @@ test("MOTD visual prompt is static rich text, non-interactive and separately des
   assert.doesNotMatch(source, /innerHTML|set:html/);
 });
 
+test("rich placeholder does not size the compose row or shrink the input", () => {
+  assert.match(
+    source,
+    /\.chat-input-wrap\[data-rich-prompt='true'\] \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1fr\);\s*position: relative;\s*flex: 1 1 0%;\s*width: 0;\s*min-width: 0/,
+  );
+  assert.match(
+    source,
+    /\.chat-input-wrap\[data-rich-prompt='true'\] #messageInput \{\s*display: block;\s*width: 100%;\s*height: 100%/,
+  );
+  assert.match(
+    source,
+    /\.chat-game-prompt \{\s*position: absolute;\s*inset-inline: 0;/,
+  );
+  const styles = readFileSync(
+    new URL("../assets/tailwind.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(styles, /\.chat-compose \{\s*display: flex;/);
+  assert.match(
+    styles,
+    /\.is-game \.chat-compose input,\s*\.is-game \.chat-compose button \{\s*min-height: clamp\(44px/,
+  );
+  assert.match(source, /\.chat-input-wrap \{\s*display: contents;/);
+});
+
 function setup({
   authenticated = false,
   messages = [],
@@ -487,11 +512,25 @@ test(
                   box.top >= input.top &&
                   box.bottom <= input.bottom + 1,
                 pointerEvents: getComputedStyle(node).pointerEvents,
+                available: (() => {
+                  const form = node.closest("form");
+                  const css = getComputedStyle(form);
+                  const width =
+                    form.getBoundingClientRect().width -
+                    parseFloat(css.paddingLeft) -
+                    parseFloat(css.paddingRight) -
+                    parseFloat(css.columnGap) -
+                    document
+                      .querySelector("#sendButton")
+                      .getBoundingClientRect().width;
+                  return Math.abs(input.width - width) < 2;
+                })(),
                 red: getComputedStyle(node.querySelector(".text-red-500"))
                   .color,
               };
             });
             assert.equal(geometry.fits, true);
+            assert.equal(geometry.available, true);
             assert.equal(geometry.pointerEvents, "none");
             assert.equal(geometry.red, "rgb(239, 68, 68)");
             const box = await prompt.boundingBox();

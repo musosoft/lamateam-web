@@ -108,6 +108,8 @@ test("selection updates the safe title and hides only the cloned map label", () 
     busy: new Set(),
     thankingMap: undefined,
     loading: false,
+    unratedOnly: false,
+    ratingsReady: false,
     randomPreview: {
       replaceChildren(card) {
         this.card = card;
@@ -149,7 +151,7 @@ test("selection updates the safe title and hides only the cloned map label", () 
     ratings,
     /randomSkip\?\.addEventListener\('click', chooseRandomMap/,
   );
-  assert.match(ratings, /chooseRandomMap\(\);\s*const load/);
+  assert.match(ratings, /if \(!unratedOnly\) chooseRandomMap\(\)/);
   assert.match(ratings, /const restoreFocus[\s\S]*?chooseRandomMap\(\)/);
 });
 

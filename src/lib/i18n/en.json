@@ -1,4 +1,9 @@
 {
+  "Your rating · {rating} / 5": "Your rating · {rating} / 5",
+  "Your rating · Not rated yet.": "Your rating · Not rated yet.",
+  "{count} ratings": "{count} ratings",
+  "Community rating · {average} / 5": "Community rating · {average} / 5",
+  "All maps rated. Thanks!": "All maps rated. Thanks!",
   "Know {map}? Rate it.": "Know {map}? Rate it.",
   "Never played": "Never played",
   "In-game chat: do not press Space or Enter to send. Click Send; keyboard submission may close the MOTD.": "In-game chat: do not press Space or Enter to send. Click Send; keyboard submission may close the MOTD.",

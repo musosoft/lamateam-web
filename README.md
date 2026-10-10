@@ -16,6 +16,37 @@ Key commands:
 - `pnpm run check`: astro check + build + typecheck + wrangler dry-run deploy
 - `pnpm run deploy`: build + typecheck + `wrangler deploy`
 
+## Runtime image optimization
+
+SSR images use Astro's `cloudflare-binding` service and the Worker `IMAGES`
+binding declared in Wrangler. Map thumbnails retain bounded responsive WebP
+variants (up to 640px); the source assets are served through `ASSETS`.
+Original map files also remain available at `/assets/map-cache/` for existing
+links. The cache script preserves supplied public images and mirrors them into
+`src/assets/map-cache/` for Astro imports; page thumbnails still use `/_image`,
+not direct originals. Files absent from the current catalog are not pruned.
+Do not replace this with `cloudflare` (requires the zone's `/cdn-cgi/image`
+service) or `compile` alone (passes originals through on on-demand pages).
+
+After building, start `pnpm exec wrangler dev --config dist/server/wrangler.json
+--ip 127.0.0.1 --port 8796`, then run:
+
+```sh
+MAP_IMAGE_PREVIEW_URL=http://127.0.0.1:8796 node --test tests/map-image-runtime.test.mjs
+```
+
+The test checks real rendered image URLs, HTTP responses, WebP bytes and decoded
+widths. Local Images emulation does not prove production account entitlement or
+quota: repeat the smoke test against the deployed domain as a release gate.
+Cloudflare Images Free includes 5,000 unique transformations per month; exhausted
+quota can reject new variants. If the binding cannot be used in production,
+pre-generate bounded WebP variants and serve them as static assets rather than
+falling back to oversized originals.
+
+References: [Astro image services](https://docs.astro.build/en/guides/integrations-guide/cloudflare/#imageservice),
+[Images binding](https://developers.cloudflare.com/images/optimization/binding/),
+[Images quotas](https://developers.cloudflare.com/images/pricing/).
+
 ## Agent Guide
 
 This section is for agentic LLM/code agents working in this repo.

@@ -24,7 +24,7 @@ const source = readFileSync(
 );
 const assetDirectory = new URL("src/assets/map-cache/", root);
 
-test("catalog assets live in src; placeholders remain absent and no originals live in public", () => {
+test("catalog assets retain identical public originals and optimized source imports", () => {
   const files = readdirSync(assetDirectory);
   const cached = catalog.items.filter((item) => item.source !== "placeholder");
   assert.equal(cached.length, 96);
@@ -42,7 +42,12 @@ test("catalog assets live in src; placeholders remain absent and no originals li
       assert.ok(readFileSync(new URL(filename, assetDirectory)).length > 512);
     }
   }
-  assert.equal(existsSync(new URL("public/assets/map-cache", root)), false);
+  for (const filename of files) {
+    assert.deepEqual(
+      readFileSync(new URL(`public/assets/map-cache/${filename}`, root)),
+      readFileSync(new URL(filename, assetDirectory)),
+    );
+  }
   assert.match(source, /import\.meta\.glob<ImageMetadata>/);
   assert.match(source, /eager: true, import: "default"/);
 });
@@ -81,11 +86,32 @@ test("registry resolves exact basenames and responsive widths respect source dim
   ])
     assert.equal(helper.getMapImage(name), undefined);
   assert.deepEqual(helper.getMapImageWidths(image), [160, 240, 320, 480, 640]);
-  assert.deepEqual(helper.getMapImageWidths(tiny), [160, 200]);
+  assert.deepEqual(helper.getMapImageWidths(tiny), [132]);
   assert.deepEqual(helper.getMapImageWidths({ ...tiny, width: 80 }), [80]);
+  assert.deepEqual(helper.getMapImageWidths({ ...tiny, width: 320 }), [132]);
+  for (const [width, height] of [
+    [640, 480],
+    [872, 656],
+    [218, 164],
+    [5760, 3600],
+    [5120, 4336],
+    [200, 100],
+    [100, 200],
+  ]) {
+    const input = { ...image, width, height };
+    const target = helper.getMapImageDimensions(input);
+    assert.ok(target.width <= width && target.height <= height);
+    assert.ok(target.width <= 640 && target.height <= 480);
+    assert.equal(target.width / target.height, 4 / 3);
+    for (const candidate of helper.getMapImageWidths(input)) {
+      assert.equal(candidate % 4, 0);
+      assert.ok(candidate <= target.width);
+      assert.ok((candidate * 3) / 4 <= height);
+    }
+  }
   assert.deepEqual(
-    helper.getMapImageWidths({ ...tiny, width: 320 }),
-    [160, 240, 320],
+    helper.getMapImageDimensions({ ...image, width: 218, height: 164 }),
+    { width: 216, height: 162 },
   );
 });
 
@@ -114,7 +140,16 @@ test("cache script writes fresh sources to src, keeps catalog contract and prese
   assert.deepEqual(readFileSync(path.join(cache, "cached.jpg")), original);
   assert.equal(readFileSync(path.join(cache, "fresh.jpg")).length, 700);
   assert.equal(existsSync(path.join(cache, "missing.jpg")), false);
-  assert.equal(existsSync(path.join(dir, "public")), false);
+  const publicCache = path.join(dir, "public/assets/map-cache");
+  assert.deepEqual(
+    readFileSync(path.join(publicCache, "cached.jpg")),
+    original,
+  );
+  assert.deepEqual(
+    readFileSync(path.join(publicCache, "fresh.jpg")),
+    readFileSync(path.join(cache, "fresh.jpg")),
+  );
+  assert.equal(existsSync(path.join(publicCache, "missing.jpg")), false);
   const generated = JSON.parse(
     readFileSync(path.join(dir, "src/data/maps.generated.json"), "utf8"),
   );
@@ -127,5 +162,26 @@ test("cache script writes fresh sources to src, keeps catalog contract and prese
       { map: "fresh", image: "/assets/map-cache/fresh.jpg" },
       { map: "missing", image: "/assets/map-placeholder.svg" },
     ],
+  );
+
+  // Newly supplied public images replace stale imported copies, without
+  // deleting public assets absent from the spreadsheet or downloading again.
+  const replacement = Buffer.alloc(750, 3);
+  writeFileSync(path.join(publicCache, "cached.jpg"), replacement);
+  writeFileSync(path.join(publicCache, "retired.jpg"), original);
+  const rerun = spawnSync(
+    process.execPath,
+    ["--import", setup, new URL("scripts/cache-map-images.mjs", root).pathname],
+    { cwd: dir, encoding: "utf8" },
+  );
+  assert.equal(rerun.status, 0, rerun.stderr);
+  assert.deepEqual(readFileSync(path.join(cache, "cached.jpg")), replacement);
+  assert.deepEqual(
+    readFileSync(path.join(publicCache, "cached.jpg")),
+    replacement,
+  );
+  assert.deepEqual(
+    readFileSync(path.join(publicCache, "retired.jpg")),
+    original,
   );
 });

@@ -34,7 +34,9 @@ test("only the game instance passes community ID; both request methods share an 
     home,
     /<MapRatings\s+compact\s+motdPrompt\s+locale=\{locale\}\s+communityId=\{rawCommunityId.length <= 32 \? rawCommunityId : ''\}/,
   );
-  assert.ok(home.includes("<MapRatings compact locale={locale} />"));
+  assert.ok(
+    home.includes("<MapRatings compact unratedOnly locale={locale} />"),
+  );
   for (const id of ["76561197960265729", "[U:1:12345]", "a&name=Injected"]) {
     const endpoint = new URL(setup(true, id).endpoint, "https://example.test");
     assert.equal(endpoint.searchParams.get("communityid"), id);

@@ -10,6 +10,7 @@ const source = readFileSync(
   new URL("../components/MapRatings.astro", import.meta.url),
   "utf8",
 );
+const mapsPage = readFileSync(new URL("./maps.astro", import.meta.url), "utf8");
 const script = stripTypeScriptTypes(
   source
     .match(/<script>([\s\S]*?)<\/script>/)[1]
@@ -73,12 +74,27 @@ function createCard(map) {
     input.closest = (selector) => (selector === "form" ? form : card);
     return input;
   });
+  const stars = [1, 2, 3, 4, 5].map((value) => {
+    const star = new Element();
+    star.dataset.star = String(value);
+    const symbol = new Element();
+    symbol.style = {
+      setProperty(name, fill) {
+        this[name] = fill;
+      },
+    };
+    star.querySelector = (selector) =>
+      selector === ".star-symbol" ? symbol : null;
+    return star;
+  });
   const fields = Object.fromEntries(
     [
       "fieldset",
       ".rating-save",
       "[data-rating-sign-in]",
       "[data-rating-summary]",
+      "[data-rating-count]",
+      "[data-community-summary]",
       ".rating-stars",
       "[data-rating-feedback]",
       "img",
@@ -92,7 +108,8 @@ function createCard(map) {
     selector === "input:checked"
       ? (inputs.find((input) => input.checked) ?? null)
       : fields[selector];
-  card.querySelectorAll = () => inputs;
+  card.querySelectorAll = (selector) =>
+    selector === "[data-star]" ? stars : inputs;
   form.querySelector = card.querySelector;
   card.form = form;
   card.inputs = inputs;
@@ -106,12 +123,33 @@ const response = (data, status = 200) => ({
   json: async () => data,
 });
 const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+test("maps page passes community identity only to the in-game rating UI", () => {
+  assert.match(
+    mapsPage,
+    /isGameUserAgent\(Astro\.request\.headers\.get\('user-agent'\)\)/,
+  );
+  assert.match(mapsPage, /Astro\.url\.searchParams\.get\('communityid'\)/);
+  assert.match(mapsPage, /Astro\.cookies\.get\('communityid'\)\?\.value/);
+  assert.match(
+    mapsPage,
+    /const communityId = isGame \? rawCommunityId\.slice\(0, 32\) : ''/,
+  );
+  assert.match(mapsPage, /motdPrompt=\{isGame\}/);
+  assert.match(mapsPage, /communityId=\{communityId\}/);
+  assert.doesNotMatch(mapsPage, /<MapRatings[^>]*compact|unratedOnly/s);
+});
+
 function setup({ authenticated = true, unavailable = false, post } = {}) {
   const root = new Element();
   root.dataset.copy = JSON.stringify({
     ...clientCopy("en"),
     Rate: "Rate",
     "Thanks for rating!": "Thanks for rating!",
+    "Your rating · {rating} / 5": "Your rating · {rating} / 5",
+    "Your rating · Not rated yet.": "Your rating · Not rated yet.",
+    "{count} ratings": "{count} ratings",
+    "Community rating · {average} / 5": "Community rating · {average} / 5",
   });
   const grid = new Element();
   const preview = new Element();
@@ -267,10 +305,7 @@ test("random-map save shares the gallery flow and locks duplicate/skip actions",
     random.fields["[data-rating-summary]"].textContent,
     gallery.fields["[data-rating-summary]"].textContent,
   );
-  assert.match(
-    random.fields["[data-rating-summary]"].textContent,
-    /11 ratings/,
-  );
+  assert.match(random.fields["[data-rating-count]"].textContent, /11 ratings/);
   assert.equal(gallery.inputs[4].checked, true);
   assert.equal(random.fields.fieldset.disabled, true);
   assert.equal(ui.skip.disabled, true);

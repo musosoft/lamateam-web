@@ -101,7 +101,7 @@ test("welcome, player stats and rating stay in the left main; chat is its siblin
   const main = home.slice(home.indexOf("<Layout"), home.indexOf("<style>"));
   assert.match(main, /Welcome to LaMaTeAm\./);
   assert.match(main, /data-hero-stats/);
-  assert.match(main, /<MapRatings compact locale=\{locale\}/);
+  assert.match(main, /<MapRatings\s+compact\s+motdPrompt\s+locale=\{locale\}/);
   assert.doesNotMatch(main, /<LiveChat/);
   assert.ok(layout.indexOf("<LiveChat />") > layout.indexOf("</main>"));
   assert.match(rule(".is-game.motd-home main"), /min-height: 0/);

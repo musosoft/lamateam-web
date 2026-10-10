@@ -1,4 +1,9 @@
 {
+  "Your rating · {rating} / 5": "Értékelésed · {rating} / 5",
+  "Your rating · Not rated yet.": "Értékelésed · Még nem értékelted.",
+  "{count} ratings": "Értékelések száma: {count}",
+  "Community rating · {average} / 5": "Közösségi értékelés · {average} / 5",
+  "All maps rated. Thanks!": "Minden pályát értékeltél. Köszönjük!",
   "Know {map}? Rate it.": "Ismered ezt: {map}? Értékeld.",
   "Never played": "Még nem játszottam",
   "In-game chat: do not press Space or Enter to send. Click Send; keyboard submission may close the MOTD.": "Játékon belüli csevegés: ne küldj a Szóköz vagy Enter billentyűvel. Kattints a Küldés gombra; a billentyűzetes küldés bezárhatja az MOTD-t.",

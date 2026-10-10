@@ -6,6 +6,7 @@
   "assets": {
     "directory": "dist/client",
   },
+  "images": { "binding": "IMAGES" },
   "routes": [
     {
       "custom_domain": true,
