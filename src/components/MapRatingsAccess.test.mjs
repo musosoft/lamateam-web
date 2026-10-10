@@ -8,7 +8,7 @@ const source = read("./MapRatings.astro");
 const home = read("../pages/index.astro");
 const access = source.slice(
   source.indexOf("const inMotd ="),
-  source.indexOf("const motdTitle ="),
+  source.indexOf("const randomTitle ="),
 );
 const controls = source.slice(
   source.indexOf("const controls ="),

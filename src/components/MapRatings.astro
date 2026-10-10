@@ -22,53 +22,35 @@ const thanks = {
 }[locale];
 import { Image } from 'astro:assets';
 import mapsGenerated from '../data/maps.generated.json';
+import {
+  getMapImage,
+  getMapImageWidths,
+  MAP_IMAGE_MAX_WIDTH,
+} from '../lib/map-image-assets';
 
 const MAP_PLACEHOLDER = '/assets/map-placeholder.svg';
-// Measured local cache dimensions. Public images remain unprocessed; never
-// stretch the small HLstatsX thumbnails or infer sizes by fetching remotely.
-const mediumMaps = new Set([
-  'awp_india_v2',
-  'cs_assault_lama3',
-  'cs_compound',
-  'cs_havana',
-  'cs_italy',
-  'cs_militia',
-  'cs_office',
-  'de_aztec',
-  'de_cbble',
-  'de_dust_small_lt2025',
-  'de_dust',
-  'de_dust2',
-  'de_chateau',
-  'de_inferno',
-  'de_nuke',
-  'de_piranesi',
-  'de_port',
-  'de_prodigy',
-  'de_tides',
-  'de_train',
-]);
-const largerMaps: Record<string, [number, number]> = {
-  de_arabic2_lt: [1280, 1084],
-  de_paris_subway2: [1440, 900],
-  knas_Sandland_CSS: [640, 480],
-};
 const mapCards = (mapsGenerated.items ?? [])
   .filter((item) => item.map !== 'min_players')
   .map((item) => {
-    const sourceImage = item.image.startsWith('/assets/map-cache/')
-      ? item.image
-      : MAP_PLACEHOLDER;
-    const [width, height] =
-      sourceImage === MAP_PLACEHOLDER
-        ? [640, 360]
-        : (largerMaps[item.map] ??
-          (mediumMaps.has(item.map) ? [218, 164] : [160, 120]));
+    const image = getMapImage(item.map);
+    const sourceImage = image ?? MAP_PLACEHOLDER;
+    const width = image ? Math.min(image.width, MAP_IMAGE_MAX_WIDTH) : 640;
+    const height = image
+      ? Math.round((width / image.width) * image.height)
+      : 360;
     return {
       name: item.map,
       sourceImage,
-      width,
-      height,
+      imageProps: image
+        ? {
+            src: image,
+            width,
+            height,
+            widths: getMapImageWidths(image),
+            sizes: '(max-width: 750px) 90vw, 320px',
+            format: 'webp' as const,
+          }
+        : { src: MAP_PLACEHOLDER, width, height },
     };
   });
 ---
@@ -87,7 +69,7 @@ const mapCards = (mapsGenerated.items ?? [])
     ...clientCopy(locale),
     Rate: t('Rate'),
     'Thanks for rating!': thanks,
-    'Know map {map}?': t('Know map {map}?'),
+    'Know {map}? Rate it.': t('Know {map}? Rate it.'),
   })}
 >
   <div class="map-ratings-intro" hidden={compact}>
@@ -121,12 +103,8 @@ const mapCards = (mapsGenerated.items ?? [])
     hidden={!compact || mapCards.length === 0}
   >
     <div class="random-map-prompt">
-      <h2
-        id="random-map-title"
-        translate={motdPrompt ? 'no' : undefined}
-        data-no-translate={motdPrompt ? '' : undefined}
-      >
-        {motdPrompt ? t('Loading a map…') : t('Know this map? Rate it.')}
+      <h2 id="random-map-title" translate="no" data-no-translate>
+        {t('Loading a map…')}
       </h2>
       <p
         id="random-map-announcement"
@@ -153,7 +131,7 @@ const mapCards = (mapsGenerated.items ?? [])
         <article class="rated-map-card" data-map-rating={map.name}>
           <div class="map-thumbnail">
             <Image
-              src={map.sourceImage}
+              {...map.imageProps}
               alt={
                 map.sourceImage === MAP_PLACEHOLDER
                   ? t('Preview unavailable for {map}').replace(
@@ -162,8 +140,6 @@ const mapCards = (mapsGenerated.items ?? [])
                     )
                   : t('{map} map preview').replace('{map}', map.name)
               }
-              width={map.width}
-              height={map.height}
               loading={!compact && index < 4 ? 'eager' : 'lazy'}
               fetchpriority={!compact && index === 0 ? 'high' : 'auto'}
               decoding="async"
@@ -182,7 +158,7 @@ const mapCards = (mapsGenerated.items ?? [])
             </p>
             <form class="map-rating-form" data-rating-form>
               <fieldset disabled>
-                <legend>
+                <legend class="sr-only">
                   {t('Rate')}{' '}
                   <span translate="no" data-no-translate>
                     {map.name}
@@ -341,6 +317,7 @@ const mapCards = (mapsGenerated.items ?? [])
   .random-map-prompt h2 {
     font-size: clamp(1rem, 0.85rem + 0.4vw, 1.3rem);
     font-weight: 700;
+    overflow-wrap: anywhere;
   }
   .random-map-prompt p {
     margin-top: 0.4rem;
@@ -609,9 +586,7 @@ const mapCards = (mapsGenerated.items ?? [])
     const canRate = (rating?: Rating) =>
       rating?.canRate === true &&
       (inMotd ? !!communityId : rating.authenticated === true);
-    const motdTitle = root?.hasAttribute('data-motd-map-prompt')
-      ? root.querySelector<HTMLElement>('#random-map-title')
-      : null;
+    const randomTitle = root?.querySelector<HTMLElement>('#random-map-title');
     const randomPreview = document.querySelector<HTMLElement>(
       '#random-map-preview',
     );
@@ -750,6 +725,7 @@ const mapCards = (mapsGenerated.items ?? [])
         (card.querySelector('form')! as ParentNode).append(randomSkip);
       // Keep the accessible fieldset name, not a duplicate visible heading.
       card.querySelector('legend')?.classList.add('sr-only');
+      card.querySelector<HTMLElement>('.map-name')?.setAttribute('hidden', '');
       const map = card.dataset.mapRating!;
       previousMap = map;
       card.querySelector<HTMLElement>('[data-rating-feedback]')!.textContent =
@@ -760,7 +736,8 @@ const mapCards = (mapsGenerated.items ?? [])
         image.fetchPriority = 'auto';
       }
       randomPreview.replaceChildren(card);
-      if (motdTitle) motdTitle.textContent = tc('Know map {map}?', { map });
+      if (randomTitle)
+        randomTitle.textContent = tc('Know {map}? Rate it.', { map });
       const rating = states.get(map);
       card.querySelector<HTMLElement>('[data-rating-summary]')!.hidden =
         !rating;

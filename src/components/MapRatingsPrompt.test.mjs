@@ -7,7 +7,7 @@ const component = read("./MapRatings.astro");
 const home = read("../pages/index.astro");
 const locales = ["en", "cs", "sk", "pl", "hu", "de", "uk", "fr"];
 
-test("only the game rating instance opts into a selected-card prompt", () => {
+test("all selected-card prompts follow the map while only the game opts into MOTD identity", () => {
   assert.match(
     home,
     /isGame && \([\s\S]*?<MapRatings\s+compact\s+motdPrompt\s+locale=\{locale\}/,
@@ -18,16 +18,16 @@ test("only the game rating instance opts into a selected-card prompt", () => {
   );
   assert.ok(home.includes("<MapRatings compact locale={locale} />"));
   assert.match(component, /motdPrompt = false/);
+  assert.match(component, /\{t\('Loading a map…'\)\}/);
   assert.match(
     component,
-    /motdPrompt \? t\('Loading a map…'\) : t\('Know this map\? Rate it\.'\)/,
+    /id="random-map-title" translate="no" data-no-translate/,
   );
-  assert.match(component, /translate=\{motdPrompt \? 'no' : undefined\}/);
   assert.match(component, /root\?\.hasAttribute\('data-motd-map-prompt'\)/);
   assert.match(component, /const map = card\.dataset\.mapRating!/);
   assert.match(
     component,
-    /randomPreview\.replaceChildren\(card\);\s+if \(motdTitle\) motdTitle\.textContent = tc\('Know map \{map\}\?', \{ map \}\);/,
+    /randomPreview\.replaceChildren\(card\);\s+if \(randomTitle\)\s+randomTitle\.textContent = tc\('Know \{map\}\? Rate it\.', \{ map \}\);/,
   );
   assert.match(
     component,
@@ -47,13 +47,12 @@ test("only the game rating instance opts into a selected-card prompt", () => {
 test("every supported locale supplies a prompt with an unchanged map placeholder", () => {
   for (const locale of locales) {
     const copy = JSON.parse(read(`../lib/i18n/${locale}.json`));
-    assert.equal(copy["Know map {map}?"].split("{map}").length, 2, locale);
-    assert.ok(copy["Know this map? Rate it."], locale);
+    assert.equal(copy["Know {map}? Rate it."].split("{map}").length, 2, locale);
   }
 });
 
 test(
-  "selected-card MOTD heading follows initial selection, skip and saved-rating advance; web keeps its title",
+  "selected-card web and MOTD headings follow initial selection, skip and saved-rating advance",
   {
     skip: !process.env.LAMATEAM_UI_URL,
     timeout: 120_000,
@@ -136,9 +135,11 @@ test(
                 .locator("#random-map-title")
                 .textContent()
                 .then((text) => text.trim()),
-              userAgent === "Valve Client"
-                ? copy["Know map {map}?"].replace("{map}", map)
-                : copy["Know this map? Rate it."],
+              copy["Know {map}? Rate it."].replace("{map}", map),
+            );
+            assert.equal(
+              await page.locator("#random-map-preview .map-name").isVisible(),
+              false,
             );
             return map;
           };

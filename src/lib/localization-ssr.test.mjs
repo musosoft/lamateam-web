@@ -5,6 +5,10 @@ import {
   routeManifest,
   allLocales,
   untranslatedPublicRoutes,
+  locales,
+  pageKinds,
+  localePath,
+  equivalentPage,
 } from "./localized-content.ts";
 import { pageCopy } from "./page-copy.ts";
 import { routeSeo } from "./locale-seo.ts";
@@ -101,6 +105,18 @@ test(
               /api\/translate|data-translation-status/,
               path,
             );
+            for (const node of nodes.filter((n) => n.tagName === "a")) {
+              const href = attr(node, "href");
+              if (!href?.startsWith("/") || href.startsWith("//")) continue;
+              const target = new URL(href, "https://lamateam.eu");
+              const linkedPage = equivalentPage(target.pathname);
+              if (linkedPage && !attr(node, "hreflang"))
+                assert.equal(
+                  target.pathname,
+                  localePath(locale, linkedPage),
+                  `${path}: stale internal link ${href}`,
+                );
+            }
             if (locale !== "en")
               for (const key of Object.keys(pageCopy.en)) {
                 if (key.length > 12 && pageCopy[locale][key] !== key)
@@ -136,10 +152,45 @@ test(
     for (const path of [
       "/xx/",
       "/cs/unknown/",
+      "/cs/regles/",
+      "/cs/home/",
+      "/cs/mapy/extra/",
       ...untranslatedPublicRoutes.map((p) => `/cs${p}/`),
     ]) {
       const response = await fetch(new URL(path, base));
       assert.equal(response.status, 404, path);
+    }
+  },
+);
+
+test(
+  "every old localized English URL redirects permanently to its canonical translated page with the query intact",
+  { skip: !base, timeout: 180_000 },
+  async () => {
+    for (const locale of locales) {
+      await Promise.all(
+        pageKinds
+          .filter((page) => page !== "home")
+          .map(async (page) => {
+            for (const trailing of ["", "/"]) {
+              const response = await fetch(
+                new URL(
+                  `/${locale}/${page}${trailing}?view=full&next=%2Fmaps`,
+                  base,
+                ),
+                { redirect: "manual" },
+              );
+              assert.equal(
+                response.status,
+                308,
+                `${locale}/${page}${trailing}`,
+              );
+              const target = new URL(response.headers.get("location"), base);
+              assert.equal(target.pathname, localePath(locale, page));
+              assert.equal(target.search, "?view=full&next=%2Fmaps");
+            }
+          }),
+      );
     }
   },
 );

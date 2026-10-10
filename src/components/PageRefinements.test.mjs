@@ -50,8 +50,8 @@ test("money legend precedes the tables inside their existing panel; CT alignment
 test("SourceTV retains status/download affordances with smaller thumbnails and full-width layout", () => {
   const source = page("sourcetv");
   for (const text of [
-    'width="64"',
-    'height="36"',
+    "width={64}",
+    "height={36}",
     'class="demo-map-link"',
     "t('Download')",
     "No demos available yet.",
