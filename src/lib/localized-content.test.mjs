@@ -10,6 +10,10 @@ import {
   pageKinds,
   routeManifest,
   untranslatedPublicRoutes,
+  allLocales,
+  localizedSlugs,
+  pageFromSlug,
+  legacyLocaleRedirect,
 } from "./localized-content.ts";
 import { GET as sitemap } from "../pages/sitemap.xml.ts";
 import { GET as robots } from "../pages/robots.txt.ts";
@@ -66,7 +70,7 @@ test("sitemap and robots agree on origin, exclude APIs and untranslated locale d
 });
 test("static pages, route-scoped metadata and privacy-safe selector remain wired", () => {
   const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
-  for (const page of ["index", "connect"]) {
+  for (const page of ["index"]) {
     const source = read(`../pages/[locale]/${page}.astro`);
     assert.match(source, /prerender = false/);
     assert.match(
@@ -75,6 +79,15 @@ test("static pages, route-scoped metadata and privacy-safe selector remain wired
     );
     assert.match(source, /isLocale\(/);
   }
+  const connect = read("../pages/[locale]/connect.astro");
+  assert.match(connect, /isLocale\(locale\)/);
+  assert.match(connect, /legacyLocaleRedirect\(Astro.url\)/);
+  assert.match(connect, /Astro.redirect\(redirect, 308\)/);
+  const route = read("../pages/[locale]/[page].astro");
+  assert.match(route, /pageFromSlug\(locale, slug\)/);
+  assert.match(route, /legacyLocaleRedirect\(Astro.url\)/);
+  assert.match(route, /Astro.redirect\(redirect, 308\)/);
+  assert.match(route, /import Connect from '\.\.\/connect.astro'/);
   const layout = read("../layouts/Layout.astro");
   assert.match(layout, /equivalentPage\(currentPath\)/);
   assert.match(layout, /hreflang="x-default"/);
@@ -85,4 +98,88 @@ test("static pages, route-scoped metadata and privacy-safe selector remain wired
   assert.match(selector, /data-no-translate/);
   assert.match(selector, /#shoutboxMessages/);
   assert.match(selector, /request !== generation/);
+});
+
+test("translated slug contract is complete, URL-safe, unique and does not shadow aliases or reserved routes", () => {
+  const reserved = new Set([
+    "api",
+    "stats",
+    "bans",
+    "banlist",
+    "sitemap.xml",
+    "robots.txt",
+    "dashboard",
+    "auth",
+    "login",
+    "logout",
+    "assets",
+    "_astro",
+    ...allLocales,
+  ]);
+  for (const locale of locales) {
+    assert.deepEqual(
+      Object.keys(localizedSlugs[locale]).sort(),
+      [...pageKinds].sort(),
+    );
+    assert.equal(localizedSlugs[locale].home, "");
+    const slugs = pageKinds
+      .filter((page) => page !== "home")
+      .map((page) => localizedSlugs[locale][page]);
+    assert.equal(new Set(slugs).size, 12, locale);
+    for (const page of pageKinds.filter((page) => page !== "home")) {
+      const slug = localizedSlugs[locale][page];
+      assert.match(slug, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+      assert.ok(!reserved.has(slug), `${locale}: reserved ${slug}`);
+      assert.ok(
+        !pageKinds.includes(slug),
+        `${locale}: English alias collision ${slug}`,
+      );
+      assert.equal(pageFromSlug(locale, slug), page);
+      assert.equal(pageFromSlug(locale, page), page);
+      assert.equal(equivalentPage(`/${locale}/${page}/`), page);
+      assert.equal(equivalentPage(`/${locale}/${slug}`), page);
+      assert.equal(equivalentPage(`/${slug}`), undefined);
+    }
+    assert.equal(pageFromSlug(locale, "unknown"), undefined);
+    assert.equal(pageFromSlug(locale, "home"), undefined);
+  }
+  for (const page of pageKinds) {
+    assert.equal(localePath("en", page), page === "home" ? "/" : `/${page}`);
+  }
+});
+
+test("legacy localized English aliases permanently migrate without losing URL state; canonical routes do not loop", () => {
+  for (const locale of locales) {
+    for (const page of pageKinds) {
+      const canonical = localePath(locale, page);
+      assert.equal(
+        legacyLocaleRedirect(new URL(canonical, siteUrl())),
+        undefined,
+      );
+      if (page === "home") continue;
+      for (const trailing of ["", "/"]) {
+        const legacy = `/${locale}/${page}${trailing}?view=full&next=%2Fmaps#section`;
+        assert.equal(
+          legacyLocaleRedirect(new URL(legacy, siteUrl())),
+          `${canonical}?view=full&next=%2Fmaps#section`,
+        );
+      }
+    }
+  }
+  for (const path of [
+    "/rules",
+    "/en/rules",
+    "/xx/rules",
+    "/cs/unknown",
+    "/cs/stats",
+    "/api/maps",
+    "/cs/rules/extra",
+    "/cs//rules/",
+  ]) {
+    assert.equal(
+      legacyLocaleRedirect(new URL(path, siteUrl())),
+      undefined,
+      path,
+    );
+  }
 });

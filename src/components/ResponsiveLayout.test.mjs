@@ -144,6 +144,9 @@ test("SourceTV sorts date keys newest-first without giving it a different main g
   assert.ok(page.includes("b.sortDate.localeCompare(a.sortDate)"));
   assert.ok(!page.includes("main:has(.sourcetv-page)"));
   assert.ok(page.includes("t('SourceTV Demos')"));
+  assert.ok(page.includes("getMapImage(map)"));
+  assert.ok(page.includes("<Image"));
+  assert.ok(!page.includes("/assets/map-cache/"));
 });
 
 test("desktop type is fluid while MOTD has compact overrides; widgets and footer stay compact", () => {

@@ -1,0 +1,152 @@
+{
+  "page": "https://strategywiki.org/wiki/Counter-Strike:_Source/Weapons",
+  "retrieved": "2026-10-10",
+  "attribution": "Counter-Strike: Source game imagery \u00a9 Valve, hosted by StrategyWiki. See individual source file pages for usage notices. Local copies used for identification in a non-commercial game guide.",
+  "assets": [
+    {
+      "file": "Css_glock16.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/d/dc/Css_glock16.png/300px-Css_glock16.png",
+      "source": "https://strategywiki.org/wiki/File:Css_glock16.png"
+    },
+    {
+      "file": "Css_usp.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/8/83/Css_usp.png/300px-Css_usp.png",
+      "source": "https://strategywiki.org/wiki/File:Css_usp.png"
+    },
+    {
+      "file": "Css_p228.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/4/42/Css_p228.png/300px-Css_p228.png",
+      "source": "https://strategywiki.org/wiki/File:Css_p228.png"
+    },
+    {
+      "file": "Css_deagle.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/5/52/Css_deagle.png/300px-Css_deagle.png",
+      "source": "https://strategywiki.org/wiki/File:Css_deagle.png"
+    },
+    {
+      "file": "Css_es57.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/f/fa/Css_es57.png/300px-Css_es57.png",
+      "source": "https://strategywiki.org/wiki/File:Css_es57.png"
+    },
+    {
+      "file": "Css_beretta.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/1/1d/Css_beretta.png/300px-Css_beretta.png",
+      "source": "https://strategywiki.org/wiki/File:Css_beretta.png"
+    },
+    {
+      "file": "Css_mac10.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/5/58/Css_mac10.png/300px-Css_mac10.png",
+      "source": "https://strategywiki.org/wiki/File:Css_mac10.png"
+    },
+    {
+      "file": "Css_tmp.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/8/85/Css_tmp.png/300px-Css_tmp.png",
+      "source": "https://strategywiki.org/wiki/File:Css_tmp.png"
+    },
+    {
+      "file": "Css_mp5.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/0/04/Css_mp5.png/300px-Css_mp5.png",
+      "source": "https://strategywiki.org/wiki/File:Css_mp5.png"
+    },
+    {
+      "file": "Css_ump.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/b/b3/Css_ump.png/300px-Css_ump.png",
+      "source": "https://strategywiki.org/wiki/File:Css_ump.png"
+    },
+    {
+      "file": "Css_p90.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/f/f5/Css_p90.png/300px-Css_p90.png",
+      "source": "https://strategywiki.org/wiki/File:Css_p90.png"
+    },
+    {
+      "file": "Css_m3.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/2/2c/Css_m3.png/300px-Css_m3.png",
+      "source": "https://strategywiki.org/wiki/File:Css_m3.png"
+    },
+    {
+      "file": "Css_xm1014.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/1/18/Css_xm1014.png/300px-Css_xm1014.png",
+      "source": "https://strategywiki.org/wiki/File:Css_xm1014.png"
+    },
+    {
+      "file": "Css_galil.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/4/4e/Css_galil.png/300px-Css_galil.png",
+      "source": "https://strategywiki.org/wiki/File:Css_galil.png"
+    },
+    {
+      "file": "Css_famas.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/c/c1/Css_famas.png/300px-Css_famas.png",
+      "source": "https://strategywiki.org/wiki/File:Css_famas.png"
+    },
+    {
+      "file": "Css_ak47.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/7/75/Css_ak47.png/300px-Css_ak47.png",
+      "source": "https://strategywiki.org/wiki/File:Css_ak47.png"
+    },
+    {
+      "file": "Css_m4a1.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/5/5c/Css_m4a1.png/300px-Css_m4a1.png",
+      "source": "https://strategywiki.org/wiki/File:Css_m4a1.png"
+    },
+    {
+      "file": "Css_sg-552.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/9/91/Css_sg-552.png/300px-Css_sg-552.png",
+      "source": "https://strategywiki.org/wiki/File:Css_sg-552.png"
+    },
+    {
+      "file": "Css_aug.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/9/9e/Css_aug.png/300px-Css_aug.png",
+      "source": "https://strategywiki.org/wiki/File:Css_aug.png"
+    },
+    {
+      "file": "Css_m249.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/6/66/Css_m249.png/300px-Css_m249.png",
+      "source": "https://strategywiki.org/wiki/File:Css_m249.png"
+    },
+    {
+      "file": "Css_scout.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/a/a7/Css_scout.png/300px-Css_scout.png",
+      "source": "https://strategywiki.org/wiki/File:Css_scout.png"
+    },
+    {
+      "file": "Css_sg-1.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/7/74/Css_sg-1.png/300px-Css_sg-1.png",
+      "source": "https://strategywiki.org/wiki/File:Css_sg-1.png"
+    },
+    {
+      "file": "Css_sg-550.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/0/09/Css_sg-550.png/300px-Css_sg-550.png",
+      "source": "https://strategywiki.org/wiki/File:Css_sg-550.png"
+    },
+    {
+      "file": "Css_awp.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/b/b4/Css_awp.png/300px-Css_awp.png",
+      "source": "https://strategywiki.org/wiki/File:Css_awp.png"
+    },
+    {
+      "file": "Css_flashbang.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/e/e3/Css_flashbang.png",
+      "source": "https://strategywiki.org/wiki/File:Css_flashbang.png"
+    },
+    {
+      "file": "Css_smoke.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/f/f1/Css_smoke.png",
+      "source": "https://strategywiki.org/wiki/File:Css_smoke.png"
+    },
+    {
+      "file": "Css_frag.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/2/2a/Css_frag.png/300px-Css_frag.png",
+      "source": "https://strategywiki.org/wiki/File:Css_frag.png"
+    },
+    {
+      "file": "Css_knives.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/a/a2/Css_knives.png/300px-Css_knives.png",
+      "source": "https://strategywiki.org/wiki/File:Css_knives.png"
+    },
+    {
+      "file": "Css_c4.png",
+      "url": "https://cdn.wikimg.net/en/strategywiki/images/thumb/0/03/Css_c4.png/300px-Css_c4.png",
+      "source": "https://strategywiki.org/wiki/File:Css_c4.png"
+    }
+  ]
+}

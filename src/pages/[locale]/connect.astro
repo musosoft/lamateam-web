@@ -1,9 +1,9 @@
 ---
-import Connect from '../connect.astro';
-import { isLocale } from '../../lib/localized-content';
+import { isLocale, legacyLocaleRedirect } from '../../lib/localized-content';
 export const prerender = false;
 const locale = Astro.params.locale;
 if (!isLocale(locale)) return new Response('Not found', { status: 404 });
+const redirect = legacyLocaleRedirect(Astro.url);
+if (!redirect) return new Response('Not found', { status: 404 });
+return Astro.redirect(redirect, 308);
 ---
-
-<Connect locale={locale} />
