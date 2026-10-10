@@ -10,6 +10,7 @@ const source = readFileSync(
   new URL("../components/MapRatings.astro", import.meta.url),
   "utf8",
 );
+const mapsPage = readFileSync(new URL("./maps.astro", import.meta.url), "utf8");
 const script = stripTypeScriptTypes(
   source
     .match(/<script>([\s\S]*?)<\/script>/)[1]
@@ -26,6 +27,7 @@ class Element {
     this.textContent = "";
     this.classList = new Set();
     this.attributes = new Set();
+    this.attributeValues = new Map();
   }
   addEventListener(name, callback, options = {}) {
     const set = this.listeners.get(name) ?? new Set();
@@ -45,6 +47,19 @@ class Element {
   }
   append(...nodes) {
     this.children.push(...nodes);
+  }
+  insertBefore(node, reference) {
+    const index =
+      reference === null
+        ? this.children.length
+        : this.children.indexOf(reference);
+    if (index < 0) throw new Error("Insertion reference is not a child");
+    this.children.splice(index, 0, node);
+    return node;
+  }
+  setAttribute(name, value) {
+    this.attributes.add(name);
+    this.attributeValues.set(name, String(value));
   }
   contains(node) {
     return this.children.includes(node);
@@ -73,26 +88,47 @@ function createCard(map) {
     input.closest = (selector) => (selector === "form" ? form : card);
     return input;
   });
+  const stars = [1, 2, 3, 4, 5].map((value) => {
+    const star = new Element();
+    star.dataset.star = String(value);
+    const symbol = new Element();
+    symbol.style = {
+      setProperty(name, fill) {
+        this[name] = fill;
+      },
+    };
+    star.querySelector = (selector) =>
+      selector === ".star-symbol" ? symbol : null;
+    return star;
+  });
   const fields = Object.fromEntries(
     [
       "fieldset",
       ".rating-save",
       "[data-rating-sign-in]",
       "[data-rating-summary]",
+      "[data-rating-count]",
+      "[data-community-summary]",
       ".rating-stars",
       "[data-rating-feedback]",
       "img",
     ].map((selector) => [selector, new Element()]),
   );
   fields.form = form;
+  form.append(fields.fieldset);
   form.setAttribute = (name, value) => {
     form[name] = value;
   };
   card.querySelector = (selector) =>
     selector === "input:checked"
       ? (inputs.find((input) => input.checked) ?? null)
-      : fields[selector];
-  card.querySelectorAll = () => inputs;
+      : selector === ".random-community-rating"
+        ? form.children.find(
+            (node) => node.className === "random-community-rating",
+          )
+        : fields[selector];
+  card.querySelectorAll = (selector) =>
+    selector === "[data-star]" ? stars : inputs;
   form.querySelector = card.querySelector;
   card.form = form;
   card.inputs = inputs;
@@ -106,12 +142,33 @@ const response = (data, status = 200) => ({
   json: async () => data,
 });
 const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+test("maps page passes community identity only to the in-game rating UI", () => {
+  assert.match(
+    mapsPage,
+    /isGameUserAgent\(Astro\.request\.headers\.get\('user-agent'\)\)/,
+  );
+  assert.match(mapsPage, /Astro\.url\.searchParams\.get\('communityid'\)/);
+  assert.match(mapsPage, /Astro\.cookies\.get\('communityid'\)\?\.value/);
+  assert.match(
+    mapsPage,
+    /const communityId = isGame \? rawCommunityId\.slice\(0, 32\) : ''/,
+  );
+  assert.match(mapsPage, /motdPrompt=\{isGame\}/);
+  assert.match(mapsPage, /communityId=\{communityId\}/);
+  assert.doesNotMatch(mapsPage, /<MapRatings[^>]*compact|unratedOnly/s);
+});
+
 function setup({ authenticated = true, unavailable = false, post } = {}) {
   const root = new Element();
   root.dataset.copy = JSON.stringify({
     ...clientCopy("en"),
     Rate: "Rate",
     "Thanks for rating!": "Thanks for rating!",
+    "Your rating · {rating} / 5": "Your rating · {rating} / 5",
+    "Your rating · Not rated yet.": "Your rating · Not rated yet.",
+    "{count} ratings": "{count} ratings",
+    "Community rating · {average} / 5": "Community rating · {average} / 5",
   });
   const grid = new Element();
   const preview = new Element();
@@ -133,6 +190,11 @@ function setup({ authenticated = true, unavailable = false, post } = {}) {
     "#random-map-announcement": announcement,
   };
   const document = new Element();
+  document.createElement = (tag) => {
+    const element = new Element();
+    element.tagName = tag.toUpperCase();
+    return element;
+  };
   document.querySelector = (selector) => selectors[selector];
   const calls = [];
   const timers = new Map();
@@ -201,6 +263,15 @@ function setup({ authenticated = true, unavailable = false, post } = {}) {
 
 test("random-map skip exhausts the pool without repeat or a vote", async () => {
   const ui = setup();
+  const card = ui.preview.children[0];
+  const label = card.querySelector(".random-community-rating");
+  assert.equal(label.tagName, "P");
+  assert.equal(label.attributeValues.get("translate"), "no");
+  assert.equal(label.attributeValues.get("data-no-translate"), "");
+  assert.ok(
+    card.form.children.indexOf(label) <
+      card.form.children.indexOf(card.fields.fieldset),
+  );
   await flush();
   const selected = [];
   for (let i = 0; i < 3; i++) {
@@ -267,10 +338,7 @@ test("random-map save shares the gallery flow and locks duplicate/skip actions",
     random.fields["[data-rating-summary]"].textContent,
     gallery.fields["[data-rating-summary]"].textContent,
   );
-  assert.match(
-    random.fields["[data-rating-summary]"].textContent,
-    /11 ratings/,
-  );
+  assert.match(random.fields["[data-rating-count]"].textContent, /11 ratings/);
   assert.equal(gallery.inputs[4].checked, true);
   assert.equal(random.fields.fieldset.disabled, true);
   assert.equal(ui.skip.disabled, true);

@@ -3,7 +3,7 @@ import type { CopyKey } from "./page-copy";
 
 export const guideDescriptions = {
   rules: "LaMaTeAm CS:S server rules — prohibited actions and penalties.",
-  maps: "Browse the LaMaTeAm CS:S map collection and community ratings. Sign in with Steam to rate a map.",
+  maps: "Explore the LaMaTeAm CS:S map collection, view community ratings and rate your favorite Counter-Strike: Source maps.",
   commands:
     "Useful LaMaTeAm CS:S player commands for map voting, statistics, demos and server information.",
   money:

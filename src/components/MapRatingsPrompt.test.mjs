@@ -7,6 +7,56 @@ const component = read("./MapRatings.astro");
 const home = read("../pages/index.astro");
 const locales = ["en", "cs", "sk", "pl", "hu", "de", "uk", "fr"];
 
+test("ratings intro keeps anonymous copy in MOTD and Steam instructions only on the web", () => {
+  const intro = component.slice(
+    component.indexOf('<div class="map-ratings-intro"'),
+    component.indexOf("<div class:list={['ratings-notice"),
+  );
+  assert.match(intro, /\{t\('LaMaTeAm CS:S map ratings are anonymous\.'\)\}/);
+  assert.match(
+    intro,
+    /!motdPrompt && \(\s*<span>\s*\{t\('Sign in with Steam to rate a map or update your rating\.'\)\}\s*<\/span>\s*\)/,
+  );
+  for (const locale of locales) {
+    const copy = JSON.parse(read(`../lib/i18n/${locale}.json`));
+    assert.ok(
+      copy["LaMaTeAm CS:S map ratings are anonymous."].includes(
+        "LaMaTeAm CS:S",
+      ),
+      locale,
+    );
+    assert.ok(
+      copy["Sign in with Steam to rate a map or update your rating."].includes(
+        "Steam",
+      ),
+      locale,
+    );
+    const description =
+      copy[
+        "Explore the LaMaTeAm CS:S map collection, view community ratings and rate your favorite Counter-Strike: Source maps."
+      ];
+    assert.ok(description.includes("LaMaTeAm CS:S"), locale);
+    assert.ok(description.includes("Counter-Strike: Source"), locale);
+    assert.equal(
+      copy[
+        "Community ratings are anonymous. Sign in with Steam to set or update your own rating."
+      ],
+      undefined,
+      locale,
+    );
+  }
+});
+
+test("every public HLstatsX snapshot label omits the unverified-player suffix", () => {
+  const titles = home.slice(
+    home.indexOf("const publicTitles ="),
+    home.indexOf("const render =", home.indexOf("const publicTitles =")),
+  );
+  for (const locale of locales) {
+    assert.ok(titles.includes(`${locale}: 'HLSTATSX SNAPSHOT'`), locale);
+  }
+});
+
 test("all selected-card prompts follow the map while only the game opts into MOTD identity", () => {
   assert.match(
     home,
@@ -16,7 +66,9 @@ test("all selected-card prompts follow the map while only the game opts into MOT
     (home.match(/<MapRatings\s+compact\s+motdPrompt/g) || []).length,
     1,
   );
-  assert.ok(home.includes("<MapRatings compact locale={locale} />"));
+  assert.ok(
+    home.includes("<MapRatings compact unratedOnly locale={locale} />"),
+  );
   assert.match(component, /motdPrompt = false/);
   assert.match(component, /\{t\('Loading a map…'\)\}/);
   assert.match(

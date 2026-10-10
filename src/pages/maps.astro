@@ -1,12 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { translator, clientCopy } from '../lib/page-copy';
+import { translator } from '../lib/page-copy';
 import { localeFromPath, type SiteLocale } from '../lib/localized-content';
+import { isGameUserAgent } from '../lib/motd-locale';
 interface Props {
   locale?: SiteLocale;
 }
 const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
 const t = translator(locale);
+const isGame = isGameUserAgent(Astro.request.headers.get('user-agent'));
+const rawCommunityId =
+  Astro.url.searchParams.get('communityid') ||
+  Astro.cookies.get('communityid')?.value ||
+  '';
+const communityId = isGame ? rawCommunityId.slice(0, 32) : '';
 import MapRatings from '../components/MapRatings.astro';
 ---
 
@@ -21,6 +28,6 @@ import MapRatings from '../components/MapRatings.astro';
         {t('Server Maps')}
       </h1>
     </header>
-    <MapRatings locale={locale} />
+    <MapRatings locale={locale} motdPrompt={isGame} communityId={communityId} />
   </section>
 </Layout>

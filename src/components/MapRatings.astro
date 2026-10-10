@@ -6,8 +6,10 @@ interface Props {
   compact?: boolean;
   motdPrompt?: boolean;
   communityId?: string;
+  unratedOnly?: boolean;
 }
 const { compact = false, motdPrompt = false, communityId = '' } = Astro.props;
+const unratedOnly = compact && !motdPrompt && Astro.props.unratedOnly === true;
 const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
 const t = translator(locale);
 const thanks = {
@@ -24,20 +26,30 @@ import { Image } from 'astro:assets';
 import mapsGenerated from '../data/maps.generated.json';
 import {
   getMapImage,
+  getMapImageDimensions,
   getMapImageWidths,
+  MAP_IMAGE_MAX_HEIGHT,
   MAP_IMAGE_MAX_WIDTH,
 } from '../lib/map-image-assets';
 
 const MAP_PLACEHOLDER = '/assets/map-placeholder.svg';
+// Match the full-width home preview, 260px auto-fit catalog tracks, and the
+// much smaller in-game previews. DPR selection remains bounded by our widths.
+const imageSizes = motdPrompt
+  ? compact
+    ? '120px'
+    : '(max-width: 850px) 25vw, 180px'
+  : compact
+    ? '(min-width: 1000px) 280px, calc(100vw - 3rem)'
+    : '(max-width: 599px) calc(100vw - 4rem), (max-width: 899px) calc(50vw - 3rem), (max-width: 1199px) calc(33vw - 2.5rem), (max-width: 1499px) calc(25vw - 2rem), 320px';
 const mapCards = (mapsGenerated.items ?? [])
   .filter((item) => item.map !== 'min_players')
   .map((item) => {
     const image = getMapImage(item.map);
     const sourceImage = image ?? MAP_PLACEHOLDER;
-    const width = image ? Math.min(image.width, MAP_IMAGE_MAX_WIDTH) : 640;
-    const height = image
-      ? Math.round((width / image.width) * image.height)
-      : 360;
+    const { width, height } = image
+      ? getMapImageDimensions(image)
+      : { width: MAP_IMAGE_MAX_WIDTH, height: MAP_IMAGE_MAX_HEIGHT };
     return {
       name: item.map,
       sourceImage,
@@ -47,7 +59,8 @@ const mapCards = (mapsGenerated.items ?? [])
             width,
             height,
             widths: getMapImageWidths(image),
-            sizes: '(max-width: 750px) 90vw, 320px',
+            sizes: imageSizes,
+            fit: 'cover' as const,
             format: 'webp' as const,
           }
         : { src: MAP_PLACEHOLDER, width, height },
@@ -65,11 +78,17 @@ const mapCards = (mapsGenerated.items ?? [])
   data-locale={locale}
   data-motd-map-prompt={motdPrompt ? '' : undefined}
   data-motd-community-id={motdPrompt ? communityId : undefined}
+  data-unrated-only={unratedOnly ? '' : undefined}
   data-copy={JSON.stringify({
     ...clientCopy(locale),
     Rate: t('Rate'),
     'Thanks for rating!': thanks,
     'Know {map}? Rate it.': t('Know {map}? Rate it.'),
+    'All maps rated. Thanks!': t('All maps rated. Thanks!'),
+    'Your rating · {rating} / 5': t('Your rating · {rating} / 5'),
+    'Your rating · Not rated yet.': t('Your rating · Not rated yet.'),
+    '{count} ratings': t('{count} ratings'),
+    'Community rating · {average} / 5': t('Community rating · {average} / 5'),
   })}
 >
   <div class="map-ratings-intro" hidden={compact}>
@@ -77,12 +96,15 @@ const mapCards = (mapsGenerated.items ?? [])
       {t('All maps currently available on the LaMaTeAm server.')}
     </p>
     <p class="fl-mb-3/5 fl-text-sm/base text-gray-400">
-      {t(
-        'Community ratings are anonymous. Sign in with Steam to set or update your own rating.',
+      {t('LaMaTeAm CS:S map ratings are anonymous.')}
+      {!motdPrompt && (
+        <span>
+          {t('Sign in with Steam to rate a map or update your rating.')}
+        </span>
       )}
     </p>
   </div>
-  <div class="ratings-notice fl-mb-3/5 sr-only">
+  <div class:list={['ratings-notice fl-mb-3/5', { 'sr-only': !unratedOnly }]}>
     <p id="map-ratings-status" role="status" aria-live="polite">
       {mapCards.length
         ? t('Loading map ratings…')
@@ -103,7 +125,7 @@ const mapCards = (mapsGenerated.items ?? [])
     hidden={!compact || mapCards.length === 0}
   >
     <div class="random-map-prompt">
-      <h2 id="random-map-title" translate="no" data-no-translate>
+      <h2 id="random-map-title" translate="no" data-no-translate tabindex="-1">
         {t('Loading a map…')}
       </h2>
       <p
@@ -153,49 +175,64 @@ const mapCards = (mapsGenerated.items ?? [])
             <h2 class="map-name" translate="no" data-no-translate>
               {map.name}
             </h2>
-            <p class="rating-summary" data-rating-summary data-no-translate>
-              {t('Ratings not loaded.')}
-            </p>
             <form class="map-rating-form" data-rating-form>
+              <div class="rating-details">
+                <div class="rating-actions">
+                  <a
+                    href="/api/auth/steam"
+                    data-astro-reload
+                    class="rating-sign-in"
+                    data-rating-sign-in
+                    hidden
+                  >
+                    {t('Sign in with Steam to rate.')}
+                  </a>
+                </div>
+                <p class="rating-summary" data-rating-summary data-no-translate>
+                  {t('Ratings not loaded.')}
+                </p>
+              </div>
               <fieldset disabled>
                 <legend class="sr-only">
                   {t('Rate')}{' '}
                   <span translate="no" data-no-translate>
                     {map.name}
                   </span>
+                  <span data-community-summary></span>
                 </legend>
-                <div class="rating-stars" data-stars="0">
-                  {[1, 2, 3, 4, 5].map((stars) => (
-                    <label
-                      class="rating-star"
-                      data-star={stars}
-                      title={t('{count} stars').replace(
-                        '{count}',
-                        String(stars),
-                      )}
-                    >
-                      <input type="radio" name="stars" value={stars} required />
-                      <span class="star-symbol" aria-hidden="true">
-                        ★
-                      </span>
-                      <span class="sr-only">
-                        {t('{count} stars').replace('{count}', String(stars))}
-                      </span>
-                    </label>
-                  ))}
+                <div class="rating-overview">
+                  <div class="rating-stars" data-stars="0">
+                    {[1, 2, 3, 4, 5].map((stars) => (
+                      <label
+                        class="rating-star"
+                        data-star={stars}
+                        title={t('{count} stars').replace(
+                          '{count}',
+                          String(stars),
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="stars"
+                          value={stars}
+                          required
+                        />
+                        <span class="star-symbol" aria-hidden="true">
+                          ★
+                        </span>
+                        <span class="sr-only">
+                          {t('{count} stars').replace('{count}', String(stars))}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <span
+                    class="rating-count"
+                    data-rating-count
+                    data-no-translate
+                  ></span>
                 </div>
               </fieldset>
-              <div class="rating-actions">
-                <a
-                  href="/api/auth/steam"
-                  data-astro-reload
-                  class="rating-sign-in"
-                  data-rating-sign-in
-                  hidden
-                >
-                  {t('Sign in with Steam')}
-                </a>
-              </div>
               <p
                 class="rating-feedback"
                 data-rating-feedback
@@ -296,23 +333,22 @@ const mapCards = (mapsGenerated.items ?? [])
     }
   }
   .random-map-widget :global(.map-thumbnail) {
-    min-height: 0;
-    height: auto;
-    padding: 0.35rem;
+    padding: 0;
     background: none;
   }
   .random-map-widget :global(.map-thumbnail img) {
     width: 100%;
-    height: auto;
+    height: 100%;
     max-width: 100%;
     max-height: none;
-    object-fit: contain;
+    object-fit: cover;
   }
   .random-map-widget :global(.map-card-content) {
     padding: 0.5rem;
+    container: rating-content / inline-size;
   }
   .random-map-widget :global(.map-rating-form fieldset) {
-    margin-top: 0.25rem;
+    margin-top: 0;
   }
   .random-map-prompt h2 {
     font-size: clamp(1rem, 0.85rem + 0.4vw, 1.3rem);
@@ -336,19 +372,18 @@ const mapCards = (mapsGenerated.items ?? [])
     margin-top: 0.5rem;
   }
   .random-map-widget :global(.map-rating-form) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    column-gap: 0.5rem;
+    gap: 0.25rem 0.5rem;
   }
   .random-map-widget :global(fieldset) {
-    grid-column: 1;
-    grid-row: 1;
+    flex: 0 1 auto;
+    max-width: 100%;
   }
   .random-map-widget :global(#random-map-skip) {
-    grid-column: 2;
-    grid-row: 1;
-    max-width: 10ch;
+    flex: 0 0 auto;
+    white-space: nowrap;
     padding-inline: 0.5rem;
     background: transparent;
     border: 0;
@@ -364,18 +399,127 @@ const mapCards = (mapsGenerated.items ?? [])
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
-  .random-map-widget :global(.rating-actions),
+  .random-map-widget :global(.rating-details) {
+    flex: 0 1 auto;
+  }
   .random-map-widget :global(.rating-feedback) {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
+  }
+  .random-map-widget :global(.rating-feedback:empty) {
+    display: none;
+  }
+  .random-map-widget :global(.rating-overview) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0;
+  }
+  .random-map-widget :global(.rating-count) {
+    white-space: nowrap;
   }
   .random-map-widget :global(.rating-stars) {
     gap: 0;
   }
   .random-map-widget :global(.rating-star) {
+    min-width: 44px;
+    flex: 0 0 auto;
+  }
+  /* The homepage owns a full grid track, not the narrow monitor sidebar.
+     Bound the preview and give the complete rating row its own track. */
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-details) {
+    display: contents;
+  }
+  .map-ratings-compact:not([data-motd-map-prompt])
+    :global(.rating-actions:has(> [data-rating-sign-in][hidden])) {
+    display: none;
+  }
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-card-content) {
+    display: block;
     min-width: 0;
-    flex: 1;
+    padding: 0.75rem 0 0;
+  }
+  /* Reserve the crop independently of the image's intrinsic size or loading
+     state. Controls live in the next card row, never in the image box. */
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(.rated-map-card) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-thumbnail) {
+    position: relative;
+    min-width: 0;
+    aspect-ratio: 4 / 3;
+  }
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-thumbnail img) {
+    position: absolute;
+    inset: 0;
+  }
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-rating-form) {
+    justify-content: flex-start;
+  }
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(#random-map-skip) {
+    align-self: flex-start;
+  }
+  .map-ratings-compact:not([data-motd-map-prompt]) .random-map-actions:empty {
+    display: none;
+  }
+  .random-map-widget :global(.random-community-rating) {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-star) {
+    min-width: 44px;
+  }
+  @media (min-width: 1000px) {
+    .map-ratings-compact:not([data-motd-map-prompt]) .random-map-widget {
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 0.75rem 1.5rem;
+    }
+    .map-ratings-compact:not([data-motd-map-prompt]) .random-map-prompt {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .map-ratings-compact:not([data-motd-map-prompt]) #random-map-preview,
+    .map-ratings-compact:not([data-motd-map-prompt]) :global(.rated-map-card) {
+      display: contents;
+    }
+    .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-thumbnail) {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .map-ratings-compact:not([data-motd-map-prompt])
+      :global(.map-card-content) {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      padding: 0;
+    }
+    .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-rating-form) {
+      column-gap: 1rem;
+      align-items: flex-start;
+    }
+    .map-ratings-compact:not([data-motd-map-prompt])
+      :global(.random-community-rating),
+    .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-summary) {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+    }
+  }
+  @media (max-width: 999px) {
+    .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-actions),
+    .map-ratings-compact:not([data-motd-map-prompt])
+      :global(.random-community-rating),
+    .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-summary) {
+      flex-basis: 100%;
+    }
+    .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-rating-form) {
+      align-items: flex-start;
+    }
   }
   @media (max-width: 750px) {
+    .random-map-widget :global(.rating-details) {
+      flex-basis: 100%;
+    }
     .random-map-widget {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -400,24 +544,31 @@ const mapCards = (mapsGenerated.items ?? [])
     border-color: #60a5fa90;
   }
   .map-thumbnail {
-    min-height: 190px;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0.5rem;
+    padding: 0;
     background: radial-gradient(ellipse, #233853, #0c1422);
   }
   .map-thumbnail :global(img) {
     display: block;
     width: 100%;
-    height: auto;
-    max-height: 200px;
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
     border-radius: 4px;
+  }
+  /* Override the legacy MOTD contain/max-height rule without changing its grid. */
+  :global(.is-game.motd-home) .random-map-widget :global(.map-thumbnail img) {
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
   }
   .map-card-content {
     padding: 0.75rem;
     border-top: 1px solid var(--edge);
+    container: rating-content / inline-size;
   }
   .map-name {
     font-size: 0.95rem;
@@ -425,14 +576,14 @@ const mapCards = (mapsGenerated.items ?? [])
     overflow-wrap: anywhere;
   }
   .rating-summary {
-    margin-top: 0.5rem;
+    margin: 0;
     font-size: 0.8rem;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
   .map-rating-form fieldset {
     border: 0;
-    margin: 0.75rem 0 0;
+    margin: 0.25rem 0 0;
     padding: 0;
     min-width: 0;
   }
@@ -444,6 +595,17 @@ const mapCards = (mapsGenerated.items ?? [])
   .rating-stars {
     display: flex;
     gap: 0.125rem;
+  }
+  .rating-overview {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
+  }
+  .rating-count {
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
   }
   :global(.is-game) .rated-map-grid {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
@@ -478,6 +640,18 @@ const mapCards = (mapsGenerated.items ?? [])
     cursor: pointer;
     border-radius: 4px;
   }
+  /* Catalog tracks start at 260px: five 44px targets plus a count do
+     not fit. Only fine-pointer desktop users get compact star targets. */
+  @container rating-content (min-width: 14rem) {
+    @media (min-width: 751px) and (hover: hover) and (pointer: fine) {
+      .rating-stars {
+        gap: 0;
+      }
+      .rating-star {
+        min-width: 28px;
+      }
+    }
+  }
   .rating-star input {
     position: absolute;
     width: 1px;
@@ -486,25 +660,17 @@ const mapCards = (mapsGenerated.items ?? [])
   }
   .star-symbol {
     font-size: 1.8rem;
-    color: #879ab6;
+    color: transparent;
+    background: linear-gradient(
+      to right,
+      #ffb41e var(--star-fill, 0%),
+      #879ab6 var(--star-fill, 0%)
+    );
+    background-clip: text;
   }
   .rating-star:has(input:focus-visible) {
     outline: 2px solid var(--accent);
     outline-offset: 1px;
-  }
-  .rating-star:hover .star-symbol,
-  .rating-star input:checked + .star-symbol {
-    color: #ffb41e;
-  }
-  .rating-stars[data-stars='1'] [data-star='1'] .star-symbol,
-  .rating-stars[data-stars='2'] [data-star='1'] .star-symbol,
-  .rating-stars[data-stars='2'] [data-star='2'] .star-symbol,
-  .rating-stars[data-stars='3'] [data-star='1'] .star-symbol,
-  .rating-stars[data-stars='3'] [data-star='2'] .star-symbol,
-  .rating-stars[data-stars='3'] [data-star='3'] .star-symbol,
-  .rating-stars[data-stars='4'] .rating-star:not([data-star='5']) .star-symbol,
-  .rating-stars[data-stars='5'] .star-symbol {
-    color: #ffb41e;
   }
   fieldset:disabled .rating-star {
     cursor: default;
@@ -515,7 +681,15 @@ const mapCards = (mapsGenerated.items ?? [])
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    margin-top: 0.25rem;
+    margin: 0;
+  }
+  .map-rating-form {
+    margin-top: 0.35rem;
+  }
+  .rating-details {
+    min-width: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
   }
   .rating-save,
   .ratings-retry {
@@ -546,10 +720,12 @@ const mapCards = (mapsGenerated.items ?? [])
     display: none;
   }
   .rating-feedback {
-    min-height: 1.5em;
     margin-top: 0.35rem;
     font-size: 0.75rem;
     color: var(--muted);
+  }
+  .rating-feedback:empty {
+    margin: 0;
   }
   .ratings-notice {
     display: flex;
@@ -577,6 +753,8 @@ const mapCards = (mapsGenerated.items ?? [])
     const root = document.querySelector<HTMLElement>('#map-ratings-root');
     const tc = clientTranslator(root);
     const inMotd = root?.hasAttribute('data-motd-map-prompt') === true;
+    const unratedOnly =
+      !inMotd && root?.hasAttribute('data-unrated-only') === true;
     const communityId = inMotd
       ? root?.dataset.motdCommunityId?.trim() || ''
       : '';
@@ -602,6 +780,7 @@ const mapCards = (mapsGenerated.items ?? [])
     const bindings = new AbortController();
     const requests = new Set<AbortController>();
     const states = new Map<string, Rating>();
+    let ratingsReady = false;
     const busy = new Set<string>();
     let advanceTimer: number | undefined;
     let thankingMap: string | undefined;
@@ -674,27 +853,47 @@ const mapCards = (mapsGenerated.items ?? [])
           .mapRating;
       if (randomSkip)
         randomSkip.disabled =
-          !!randomMap && (busy.has(randomMap) || thankingMap === randomMap);
+          (unratedOnly && (!ratingsReady || loading)) ||
+          (!!randomMap && (busy.has(randomMap) || thankingMap === randomMap));
+    };
+    const showStars = (card: HTMLElement, value: number) => {
+      card.querySelector<HTMLElement>('.rating-stars')!.dataset.stars =
+        String(value);
+      card.querySelectorAll<HTMLElement>('[data-star]').forEach((star) => {
+        const fill = Math.max(
+          0,
+          Math.min(1, value - Number(star.dataset.star) + 1),
+        );
+        star
+          .querySelector<HTMLElement>('.star-symbol')!
+          .style.setProperty('--star-fill', `${fill * 100}%`);
+      });
     };
     const render = (card: HTMLElement, rating: Rating) => {
       const summary = card.querySelector<HTMLElement>('[data-rating-summary]')!;
-      summary.hidden = false;
+      summary.hidden = rating.authenticated !== true;
       summary.textContent =
+        rating.userRating === null
+          ? tc('Your rating · Not rated yet.')
+          : tc('Your rating · {rating} / 5', { rating: rating.userRating });
+      card.querySelector<HTMLElement>('[data-rating-count]')!.textContent =
         rating.count === 0
           ? tc('No ratings yet.')
-          : tc('{average} / 5 · {count} ratings', {
-              average: rating.average!.toFixed(1),
-              count: rating.count,
-            });
+          : tc('{count} ratings', { count: rating.count });
+      card.querySelector<HTMLElement>('[data-community-summary]')!.textContent =
+        ` · ${rating.average === null ? tc('No ratings yet.') : tc('Community rating · {average} / 5', { average: rating.average.toFixed(1) })}`;
+      const communityLabel = card.querySelector<HTMLElement>(
+        '.random-community-rating',
+      );
+      if (communityLabel)
+        communityLabel.textContent = `${tc('Rate')} ${rating.map}${card.querySelector<HTMLElement>('[data-community-summary]')!.textContent}`;
       card
         .querySelectorAll<HTMLInputElement>('input[name="stars"]')
         .forEach(
           (input) =>
             (input.checked = Number(input.value) === rating.userRating),
         );
-      card.querySelector<HTMLElement>('.rating-stars')!.dataset.stars = String(
-        rating.userRating ?? 0,
-      );
+      showStars(card, rating.average ?? 0);
       controls(card, rating);
     };
     let loading = false;
@@ -704,13 +903,33 @@ const mapCards = (mapsGenerated.items ?? [])
       if (
         !randomPreview ||
         !randomAnnouncement ||
+        (unratedOnly && (!ratingsReady || loading)) ||
         busy.has(previousMap ?? '') ||
         thankingMap !== undefined ||
         !cards.length
       )
         return;
+      const candidates = unratedOnly
+        ? cards.filter(
+            (card) => states.get(card.dataset.mapRating!)?.userRating === null,
+          )
+        : cards;
+      if (unratedOnly) {
+        pool = pool.filter((card) => candidates.includes(card));
+        if (!candidates.length) {
+          pool = [];
+          previousMap = undefined;
+          randomPreview.replaceChildren();
+          if (randomTitle)
+            randomTitle.textContent = tc('All maps rated. Thanks!');
+          randomAnnouncement.textContent = tc('All maps rated. Thanks!');
+          if (randomSkip) randomSkip.hidden = true;
+          return;
+        }
+      }
+      if (randomSkip) randomSkip.hidden = false;
       if (!pool.length) {
-        pool = [...cards];
+        pool = [...candidates];
         for (let i = pool.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -726,6 +945,16 @@ const mapCards = (mapsGenerated.items ?? [])
       // Keep the accessible fieldset name, not a duplicate visible heading.
       card.querySelector('legend')?.classList.add('sr-only');
       card.querySelector<HTMLElement>('.map-name')?.setAttribute('hidden', '');
+      if (!inMotd) {
+        const label = document.createElement('p');
+        label.className = 'random-community-rating';
+        label.setAttribute('translate', 'no');
+        label.setAttribute('data-no-translate', '');
+        card.querySelector('form')!.insertBefore(
+          label,
+          card.querySelector('fieldset'),
+        );
+      }
       const map = card.dataset.mapRating!;
       previousMap = map;
       card.querySelector<HTMLElement>('[data-rating-feedback]')!.textContent =
@@ -748,7 +977,8 @@ const mapCards = (mapsGenerated.items ?? [])
     randomSkip?.addEventListener('click', chooseRandomMap, {
       signal: bindings.signal,
     });
-    chooseRandomMap();
+    if (!unratedOnly) chooseRandomMap();
+    else if (randomSkip) randomSkip.disabled = true;
     const load = async () => {
       if (loading || busy.size) return;
       loading = true;
@@ -789,16 +1019,22 @@ const mapCards = (mapsGenerated.items ?? [])
         if (bindings.signal.aborted) return;
         states.clear();
         ratings.forEach((rating, map) => states.set(map, rating));
+        ratingsReady = true;
         allCards().forEach((card) =>
           render(card, states.get(card.dataset.mapRating!)!),
         );
-        status.textContent = `${tc('Rate')} · 1–5 ★`;
+        status.textContent = '';
         retry.hidden = true;
       } catch {
         if (bindings.signal.aborted) return;
         states.clear();
+        ratingsReady = false;
         status.textContent = tc('Ratings unavailable.');
-        retry.hidden = true;
+        retry.hidden = !unratedOnly;
+        if (unratedOnly && !previousMap && randomPreview) {
+          randomPreview.textContent = tc('Ratings unavailable.');
+          if (randomTitle) randomTitle.textContent = tc('Ratings unavailable.');
+        }
         allCards().forEach((card) => {
           card.querySelector<HTMLElement>(
             '[data-rating-summary]',
@@ -811,6 +1047,11 @@ const mapCards = (mapsGenerated.items ?? [])
       } finally {
         loading = false;
         retry.disabled = false;
+        if (unratedOnly && ratingsReady) {
+          if (!previousMap || states.get(previousMap)?.userRating !== null)
+            chooseRandomMap();
+          else if (randomSkip) randomSkip.disabled = false;
+        }
       }
     };
     (root ?? grid).addEventListener(
@@ -819,13 +1060,36 @@ const mapCards = (mapsGenerated.items ?? [])
         if (!(event.target instanceof HTMLInputElement)) return;
         const card = event.target.closest<HTMLElement>('[data-map-rating]');
         if (!card) return;
-        card.querySelector<HTMLElement>('.rating-stars')!.dataset.stars =
-          event.target.value;
+        showStars(card, Number(event.target.value));
         const form = event.target.closest<HTMLFormElement>('form');
         if (form) void saveRating({ target: form, preventDefault() {} });
       },
       { signal: bindings.signal },
     );
+    const previewStars = (event: Event) => {
+      if (!(event.target instanceof Element)) return;
+      const star = event.target.closest<HTMLElement>('[data-star]');
+      const card = star?.closest<HTMLElement>('[data-map-rating]');
+      if (
+        !star ||
+        !card ||
+        card.querySelector<HTMLFieldSetElement>('fieldset')!.disabled
+      )
+        return;
+      const leaving = event.type === 'pointerout' || event.type === 'focusout';
+      const related = (event as PointerEvent | FocusEvent).relatedTarget;
+      if (leaving && related instanceof Node && star.contains(related)) return;
+      showStars(
+        card,
+        leaving
+          ? (states.get(card.dataset.mapRating!)?.average ?? 0)
+          : Number(star.dataset.star),
+      );
+    };
+    for (const type of ['pointerover', 'pointerout', 'focusin', 'focusout'])
+      (root ?? grid).addEventListener(type, previewStars, {
+        signal: bindings.signal,
+      });
     const saveRating = async (event: {
       target: EventTarget | null;
       preventDefault(): void;
@@ -911,9 +1175,11 @@ const mapCards = (mapsGenerated.items ?? [])
             const restoreFocus = card.contains(document.activeElement);
             chooseRandomMap();
             if (restoreFocus)
-              randomPreview
-                .querySelector<HTMLInputElement>('input[name="stars"]')
-                ?.focus();
+              (
+                randomPreview.querySelector<HTMLInputElement>(
+                  'input[name="stars"]',
+                ) ?? randomTitle
+              )?.focus();
           }, 1100);
         }
       } catch {

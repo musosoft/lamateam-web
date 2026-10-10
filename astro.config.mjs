@@ -18,7 +18,10 @@ export default defineConfig({
       enabled: true,
     },
     mode: "directory",
-    imageService: "cloudflare",
+    // SSR thumbnails must transform inside the Worker, not through the
+    // zone-level /cdn-cgi/image service (unavailable on our production domain).
+    // `compile` alone would pass oversized originals through on SSR pages.
+    imageService: "cloudflare-binding",
   }),
   integrations: [icon()],
   vite: {

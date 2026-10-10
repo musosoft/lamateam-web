@@ -172,6 +172,11 @@ const pages = [
   description="Join LaMaTeAm CS:S — a fair EU classic rotation server with quiet-hours-friendly bots."
 >
   <div class="community-grid fl-gap-3/8">
+    {!isGame && (
+      <div class="home-map-rating" data-no-translate>
+        <MapRatings compact unratedOnly locale={locale} />
+      </div>
+    )}
     <div class="community-main">
       <div class:list={['home-top-row', { 'motd-top-row': isGame }]}>
         <header
@@ -343,11 +348,6 @@ const pages = [
         class="community-side flex flex-col fl-gap-3/6"
         aria-label={t('Available maps and ratings')}
       >
-        {!isGame && (
-          <div class="contents" data-no-translate>
-            <MapRatings compact locale={locale} />
-          </div>
-        )}
         {!isGame && (
           <>
             <section
@@ -667,6 +667,9 @@ const pages = [
     }
 
     @media (min-width: 1000px) {
+      .home-map-rating {
+        grid-column: 1 / -1;
+      }
       .community-grid {
         grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
         column-gap: clamp(1.5rem, 3vw, 3rem);
@@ -851,14 +854,14 @@ const pages = [
       );
       let publicSnapshot = false;
       const publicTitles = {
-        en: 'Public HLstatsX snapshot · unverified player',
-        cs: 'Veřejné statistiky HLstatsX · neověřený hráč',
-        sk: 'Verejné štatistiky HLstatsX · neoverený hráč',
-        pl: 'Publiczne statystyki HLstatsX · niezweryfikowany gracz',
-        hu: 'Nyilvános HLstatsX statisztika · nem ellenőrzött játékos',
-        de: 'Öffentliche HLstatsX-Statistik · unbestätigter Spieler',
-        uk: 'Публічна статистика HLstatsX · неперевірений гравець',
-        fr: 'Statistiques HLstatsX publiques · joueur non vérifié',
+        en: 'HLSTATSX SNAPSHOT',
+        cs: 'HLSTATSX SNAPSHOT',
+        sk: 'HLSTATSX SNAPSHOT',
+        pl: 'HLSTATSX SNAPSHOT',
+        hu: 'HLSTATSX SNAPSHOT',
+        de: 'HLSTATSX SNAPSHOT',
+        uk: 'HLSTATSX SNAPSHOT',
+        fr: 'HLSTATSX SNAPSHOT',
       };
       const render = () => {
         if (!stats || controller.signal.aborted) return;
