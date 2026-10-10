@@ -61,7 +61,7 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
 test("MOTD visual prompt is static rich text, non-interactive and separately described", () => {
   assert.match(
     source,
-    /Click <b>Send<\/b> to chat\{' '\}\s*<span class="text-red-500">\s*not <kbd>Enter<\/kbd>\s*<\/span>/,
+    /Click <b>Send<\/b> to chat,\{' '\}\s*<span class="text-red-500">\s*not <kbd>Enter ↵<\/kbd>\s*<\/span>/,
   );
   assert.match(
     source,
@@ -81,6 +81,21 @@ test("MOTD visual prompt is static rich text, non-interactive and separately des
   assert.match(source, /min-width: 0/);
   assert.match(source, /t\('Say hello to the team…'\)/);
   assert.doesNotMatch(source, /innerHTML|set:html/);
+});
+
+test("MOTD Enter indicator has a compact, warning-colored keyboard keycap", () => {
+  assert.match(
+    source,
+    /\.chat-game-prompt \.text-red-500 \{\s*color: #ef4444;\s*white-space: nowrap;/,
+  );
+  const keycap = source.match(/\.chat-game-prompt kbd \{([^}]+)\}/)[1];
+  assert.match(keycap, /display: inline-block/);
+  assert.match(keycap, /border: 1px solid currentColor/);
+  assert.match(keycap, /border-radius: 0\.25rem/);
+  assert.match(keycap, /background: #17212b/);
+  assert.match(keycap, /box-shadow: 0 2px 0 #0b1118/);
+  assert.match(keycap, /font: inherit/);
+  assert.match(keycap, /white-space: nowrap/);
 });
 
 test("rich placeholder does not size the compose row or shrink the input", () => {
@@ -476,7 +491,7 @@ test(
         for (const width of [390, 700, 1920]) {
           await page.setViewportSize({
             width,
-            height: width === 700 ? 400 : 1080,
+            height: width === 700 ? 400 : width === 390 ? 600 : 1080,
           });
           await page.goto(
             `${process.env.LAMATEAM_UI_URL}/?communityid=76561197960265729&name=PromptFixture`,
@@ -489,12 +504,12 @@ test(
             await prompt.waitFor({ state: "visible" });
             assert.equal(
               (await prompt.textContent()).replace(/\s+/g, " ").trim(),
-              "Click Send to chat not Enter",
+              "Click Send to chat, not Enter ↵",
             );
             assert.equal(await prompt.locator("b").textContent(), "Send");
             assert.equal(
               await prompt.locator(".text-red-500 kbd").textContent(),
-              "Enter",
+              "Enter ↵",
             );
             assert.equal(
               await input.getAttribute("aria-describedby"),
@@ -505,6 +520,11 @@ test(
               const input = document
                 .querySelector("#messageInput")
                 .getBoundingClientRect();
+              const key = node.querySelector("kbd");
+              const keyBox = key.getBoundingClientRect();
+              const keyStyle = getComputedStyle(key);
+              const textRange = document.createRange();
+              textRange.selectNodeContents(node);
               return {
                 fits:
                   box.left >= input.left &&
@@ -527,12 +547,41 @@ test(
                 })(),
                 red: getComputedStyle(node.querySelector(".text-red-500"))
                   .color,
+                keycap: {
+                  border: keyStyle.borderTopWidth,
+                  borderStyle: keyStyle.borderTopStyle,
+                  color: keyStyle.color,
+                  shadow: keyStyle.boxShadow,
+                  fits:
+                    keyBox.left >= input.left &&
+                    keyBox.right <= input.right &&
+                    keyBox.top >= input.top &&
+                    keyBox.bottom + 2 <= input.bottom,
+                },
+                textFits: [...textRange.getClientRects()].every(
+                  (rect) =>
+                    rect.left >= input.left &&
+                    rect.right <= input.right + 1 &&
+                    rect.top >= input.top &&
+                    rect.bottom <= input.bottom + 1,
+                ),
               };
             });
             assert.equal(geometry.fits, true);
             assert.equal(geometry.available, true);
             assert.equal(geometry.pointerEvents, "none");
             assert.equal(geometry.red, "rgb(239, 68, 68)");
+            assert.equal(geometry.keycap.border, "1px");
+            assert.equal(geometry.keycap.borderStyle, "solid");
+            assert.equal(geometry.keycap.color, geometry.red);
+            assert.notEqual(geometry.keycap.shadow, "none");
+            assert.equal(geometry.keycap.fits, true);
+            assert.equal(geometry.textFits, true);
+            if (process.env.LAMATEAM_UI_SCREENSHOT_DIR) {
+              await page.screenshot({
+                path: `${process.env.LAMATEAM_UI_SCREENSHOT_DIR}/motd-enter-keycap-${width}.png`,
+              });
+            }
             const box = await prompt.boundingBox();
             await page.mouse.click(
               box.x + box.width / 2,

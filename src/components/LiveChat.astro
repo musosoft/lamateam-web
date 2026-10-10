@@ -161,9 +161,9 @@ const playerAvatar = steamID
           translate="no"
           hidden={!isGame}
         >
-          Click <b>Send</b> to chat{' '}
+          Click <b>Send</b> to chat,{' '}
           <span class="text-red-500">
-            not <kbd>Enter</kbd>
+            not <kbd>Enter ↵</kbd>
           </span>
         </span>
       </div>
@@ -241,9 +241,19 @@ const playerAvatar = steamID
   }
   .chat-game-prompt .text-red-500 {
     color: #ef4444;
+    white-space: nowrap;
   }
   .chat-game-prompt kbd {
+    display: inline-block;
+    padding: 0.0625rem 0.25rem;
+    border: 1px solid currentColor;
+    border-radius: 0.25rem;
+    background: #17212b;
+    box-shadow: 0 2px 0 #0b1118;
     font: inherit;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
   }
 </style>
 <script>
