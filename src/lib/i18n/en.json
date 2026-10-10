@@ -1,4 +1,8 @@
 {
+  "Your rating · {rating} / 5": "Your rating · {rating} / 5",
+  "Your rating · Not rated yet.": "Your rating · Not rated yet.",
+  "{count} ratings": "{count} ratings",
+  "Community rating · {average} / 5": "Community rating · {average} / 5",
   "All maps rated. Thanks!": "All maps rated. Thanks!",
   "Know {map}? Rate it.": "Know {map}? Rate it.",
   "Never played": "Never played",

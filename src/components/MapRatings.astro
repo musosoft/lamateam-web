@@ -74,6 +74,10 @@ const mapCards = (mapsGenerated.items ?? [])
     'Thanks for rating!': thanks,
     'Know {map}? Rate it.': t('Know {map}? Rate it.'),
     'All maps rated. Thanks!': t('All maps rated. Thanks!'),
+    'Your rating · {rating} / 5': t('Your rating · {rating} / 5'),
+    'Your rating · Not rated yet.': t('Your rating · Not rated yet.'),
+    '{count} ratings': t('{count} ratings'),
+    'Community rating · {average} / 5': t('Community rating · {average} / 5'),
   })}
 >
   <div class="map-ratings-intro" hidden={compact}>
@@ -167,26 +171,39 @@ const mapCards = (mapsGenerated.items ?? [])
                   <span translate="no" data-no-translate>
                     {map.name}
                   </span>
+                  <span data-community-summary></span>
                 </legend>
-                <div class="rating-stars" data-stars="0">
-                  {[1, 2, 3, 4, 5].map((stars) => (
-                    <label
-                      class="rating-star"
-                      data-star={stars}
-                      title={t('{count} stars').replace(
-                        '{count}',
-                        String(stars),
-                      )}
-                    >
-                      <input type="radio" name="stars" value={stars} required />
-                      <span class="star-symbol" aria-hidden="true">
-                        ★
-                      </span>
-                      <span class="sr-only">
-                        {t('{count} stars').replace('{count}', String(stars))}
-                      </span>
-                    </label>
-                  ))}
+                <div class="rating-overview">
+                  <div class="rating-stars" data-stars="0">
+                    {[1, 2, 3, 4, 5].map((stars) => (
+                      <label
+                        class="rating-star"
+                        data-star={stars}
+                        title={t('{count} stars').replace(
+                          '{count}',
+                          String(stars),
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="stars"
+                          value={stars}
+                          required
+                        />
+                        <span class="star-symbol" aria-hidden="true">
+                          ★
+                        </span>
+                        <span class="sr-only">
+                          {t('{count} stars').replace('{count}', String(stars))}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <span
+                    class="rating-count"
+                    data-rating-count
+                    data-no-translate
+                  ></span>
                 </div>
               </fieldset>
               <div class="rating-actions">
@@ -449,6 +466,17 @@ const mapCards = (mapsGenerated.items ?? [])
     display: flex;
     gap: 0.125rem;
   }
+  .rating-overview {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
+  }
+  .rating-count {
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
   :global(.is-game) .rated-map-grid {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
     gap: var(--motd-space);
@@ -490,25 +518,17 @@ const mapCards = (mapsGenerated.items ?? [])
   }
   .star-symbol {
     font-size: 1.8rem;
-    color: #879ab6;
+    color: transparent;
+    background: linear-gradient(
+      to right,
+      #ffb41e var(--star-fill, 0%),
+      #879ab6 var(--star-fill, 0%)
+    );
+    background-clip: text;
   }
   .rating-star:has(input:focus-visible) {
     outline: 2px solid var(--accent);
     outline-offset: 1px;
-  }
-  .rating-star:hover .star-symbol,
-  .rating-star input:checked + .star-symbol {
-    color: #ffb41e;
-  }
-  .rating-stars[data-stars='1'] [data-star='1'] .star-symbol,
-  .rating-stars[data-stars='2'] [data-star='1'] .star-symbol,
-  .rating-stars[data-stars='2'] [data-star='2'] .star-symbol,
-  .rating-stars[data-stars='3'] [data-star='1'] .star-symbol,
-  .rating-stars[data-stars='3'] [data-star='2'] .star-symbol,
-  .rating-stars[data-stars='3'] [data-star='3'] .star-symbol,
-  .rating-stars[data-stars='4'] .rating-star:not([data-star='5']) .star-symbol,
-  .rating-stars[data-stars='5'] .star-symbol {
-    color: #ffb41e;
   }
   fieldset:disabled .rating-star {
     cursor: default;
@@ -684,25 +704,39 @@ const mapCards = (mapsGenerated.items ?? [])
           (unratedOnly && (!ratingsReady || loading)) ||
           (!!randomMap && (busy.has(randomMap) || thankingMap === randomMap));
     };
+    const showStars = (card: HTMLElement, value: number) => {
+      card.querySelector<HTMLElement>('.rating-stars')!.dataset.stars =
+        String(value);
+      card.querySelectorAll<HTMLElement>('[data-star]').forEach((star) => {
+        const fill = Math.max(
+          0,
+          Math.min(1, value - Number(star.dataset.star) + 1),
+        );
+        star
+          .querySelector<HTMLElement>('.star-symbol')!
+          .style.setProperty('--star-fill', `${fill * 100}%`);
+      });
+    };
     const render = (card: HTMLElement, rating: Rating) => {
       const summary = card.querySelector<HTMLElement>('[data-rating-summary]')!;
       summary.hidden = false;
       summary.textContent =
+        rating.userRating === null
+          ? tc('Your rating · Not rated yet.')
+          : tc('Your rating · {rating} / 5', { rating: rating.userRating });
+      card.querySelector<HTMLElement>('[data-rating-count]')!.textContent =
         rating.count === 0
           ? tc('No ratings yet.')
-          : tc('{average} / 5 · {count} ratings', {
-              average: rating.average!.toFixed(1),
-              count: rating.count,
-            });
+          : tc('{count} ratings', { count: rating.count });
+      card.querySelector<HTMLElement>('[data-community-summary]')!.textContent =
+        ` · ${rating.average === null ? tc('No ratings yet.') : tc('Community rating · {average} / 5', { average: rating.average.toFixed(1) })}`;
       card
         .querySelectorAll<HTMLInputElement>('input[name="stars"]')
         .forEach(
           (input) =>
             (input.checked = Number(input.value) === rating.userRating),
         );
-      card.querySelector<HTMLElement>('.rating-stars')!.dataset.stars = String(
-        rating.userRating ?? 0,
-      );
+      showStars(card, rating.average ?? 0);
       controls(card, rating);
     };
     let loading = false;
@@ -822,7 +856,7 @@ const mapCards = (mapsGenerated.items ?? [])
         allCards().forEach((card) =>
           render(card, states.get(card.dataset.mapRating!)!),
         );
-        status.textContent = `${tc('Rate')} · 1–5 ★`;
+        status.textContent = '';
         retry.hidden = true;
       } catch {
         if (bindings.signal.aborted) return;
@@ -859,13 +893,36 @@ const mapCards = (mapsGenerated.items ?? [])
         if (!(event.target instanceof HTMLInputElement)) return;
         const card = event.target.closest<HTMLElement>('[data-map-rating]');
         if (!card) return;
-        card.querySelector<HTMLElement>('.rating-stars')!.dataset.stars =
-          event.target.value;
+        showStars(card, Number(event.target.value));
         const form = event.target.closest<HTMLFormElement>('form');
         if (form) void saveRating({ target: form, preventDefault() {} });
       },
       { signal: bindings.signal },
     );
+    const previewStars = (event: Event) => {
+      if (!(event.target instanceof Element)) return;
+      const star = event.target.closest<HTMLElement>('[data-star]');
+      const card = star?.closest<HTMLElement>('[data-map-rating]');
+      if (
+        !star ||
+        !card ||
+        card.querySelector<HTMLFieldSetElement>('fieldset')!.disabled
+      )
+        return;
+      const leaving = event.type === 'pointerout' || event.type === 'focusout';
+      const related = (event as PointerEvent | FocusEvent).relatedTarget;
+      if (leaving && related instanceof Node && star.contains(related)) return;
+      showStars(
+        card,
+        leaving
+          ? (states.get(card.dataset.mapRating!)?.average ?? 0)
+          : Number(star.dataset.star),
+      );
+    };
+    for (const type of ['pointerover', 'pointerout', 'focusin', 'focusout'])
+      (root ?? grid).addEventListener(type, previewStars, {
+        signal: bindings.signal,
+      });
     const saveRating = async (event: {
       target: EventTarget | null;
       preventDefault(): void;

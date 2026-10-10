@@ -1,4 +1,8 @@
 {
+  "Your rating · {rating} / 5": "Votre note · {rating} / 5",
+  "Your rating · Not rated yet.": "Votre note · Pas encore noté.",
+  "{count} ratings": "Nombre de notes : {count}",
+  "Community rating · {average} / 5": "Note de la communauté · {average} / 5",
   "All maps rated. Thanks!": "Toutes les cartes sont notées. Merci !",
   "Know {map}? Rate it.": "Tu connais {map} ? Note-la.",
   "Never played": "Jamais joué",

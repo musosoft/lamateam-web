@@ -1,4 +1,8 @@
 {
+  "Your rating · {rating} / 5": "Értékelésed · {rating} / 5",
+  "Your rating · Not rated yet.": "Értékelésed · Még nem értékelted.",
+  "{count} ratings": "Értékelések száma: {count}",
+  "Community rating · {average} / 5": "Közösségi értékelés · {average} / 5",
   "All maps rated. Thanks!": "Minden pályát értékeltél. Köszönjük!",
   "Know {map}? Rate it.": "Ismered ezt: {map}? Értékeld.",
   "Never played": "Még nem játszottam",

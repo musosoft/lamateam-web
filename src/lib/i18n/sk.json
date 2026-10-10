@@ -1,4 +1,8 @@
 {
+  "Your rating · {rating} / 5": "Tvoje hodnotenie · {rating} / 5",
+  "Your rating · Not rated yet.": "Tvoje hodnotenie · Zatiaľ nehodnotené.",
+  "{count} ratings": "Počet hodnotení: {count}",
+  "Community rating · {average} / 5": "Hodnotenie komunity · {average} / 5",
   "All maps rated. Thanks!": "Všetky mapy sú ohodnotené. Vďaka!",
   "Know {map}? Rate it.": "Poznáš {map}? Ohodnoť ju.",
   "Never played": "Nikdy som nehral/a",
