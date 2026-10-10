@@ -34,6 +34,36 @@ test(
     assert.equal(page.status, 200);
     const html = await page.text();
     const images = html.match(/<img\b[^>]*>/g) ?? [];
+    const thumbnails = images.filter((image) =>
+      image.includes("data-map-image"),
+    );
+    assert.equal(thumbnails.length, 98);
+    for (const thumbnail of thumbnails) {
+      const attributes = Object.fromEntries(
+        [...thumbnail.matchAll(/([\w-]+)="([^"]*)"/g)].map(([, key, value]) => [
+          key,
+          value.replaceAll("&amp;", "&"),
+        ]),
+      );
+      assert.equal(Number(attributes.width) / Number(attributes.height), 4 / 3);
+      if (attributes.src.includes("map-placeholder.svg")) continue;
+      const candidates = [
+        attributes.src,
+        ...attributes.srcset
+          .split(", ")
+          .map((candidate) => candidate.replace(/\s+\d+w$/, "")),
+      ];
+      for (const candidate of candidates) {
+        const url = new URL(candidate, origin);
+        assert.equal(url.pathname, "/_image");
+        const width = Number(url.searchParams.get("w"));
+        const height = Number(url.searchParams.get("h"));
+        assert.ok(width > 0 && width <= 640);
+        assert.ok(height > 0 && height <= 480);
+        assert.equal(width / height, 4 / 3);
+        assert.equal(url.searchParams.get("fit"), "cover");
+      }
+    }
     const thumbnail = images.find((image) => image.includes("_2000_"));
     assert.ok(thumbnail, "real $2000$ map thumbnail must be rendered");
     assert.ok(!thumbnail.includes("/cdn-cgi/image/"), thumbnail);
@@ -55,6 +85,10 @@ test(
       assert.equal(url.pathname, "/_image");
       const requestedWidth = Number(url.searchParams.get("w"));
       assert.ok(requestedWidth > 0 && requestedWidth <= 640, url.href);
+      const requestedHeight = Number(url.searchParams.get("h"));
+      assert.ok(requestedHeight > 0 && requestedHeight <= 480, url.href);
+      assert.equal(requestedWidth / requestedHeight, 4 / 3);
+      assert.equal(url.searchParams.get("fit"), "cover");
       const image = await fetch(url);
       assert.equal(image.status, 200, url.href);
       assert.equal(image.headers.get("content-type"), "image/webp");
@@ -68,6 +102,8 @@ test(
       assert.equal(metadata.width, requestedWidth);
       assert.equal(metadata.height, Number(url.searchParams.get("h")));
       assert.ok(metadata.width <= 640);
+      assert.ok(metadata.height <= 480);
+      assert.equal(metadata.width / metadata.height, 4 / 3);
     }
   },
 );

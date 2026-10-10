@@ -24,20 +24,26 @@ test("hero belongs to the main grid column before the community content", () => 
   );
 });
 
-test("random map uses full available width and intrinsic height without small caps", () => {
+test("random map fills a consistent 4:3 frame without small height caps", () => {
   const maps = read("./MapRatings.astro");
   const image = maps.match(
     /\.random-map-widget :global\(\.map-thumbnail img\)\s*\{([^}]+)\}/,
   )[1];
   for (const rule of [
     "width: 100%",
-    "height: auto",
+    "height: 100%",
     "max-height: none",
-    "object-fit: contain",
+    "object-fit: cover",
   ])
     assert.ok(image.includes(rule), rule);
   assert.ok(!maps.includes("max-height: 115px"));
   assert.ok(!maps.includes("max-height: 165px"));
+  assert.match(maps, /\.map-thumbnail\s*\{\s*aspect-ratio: 4 \/ 3;/);
+  assert.match(maps, /fit: 'cover' as const/);
+  assert.doesNotMatch(
+    maps,
+    /object-fit: contain|min-height: 190px|max-height: 200px/,
+  );
 });
 
 test("footer picker is centered and copyright shares the footer text scale", () => {
@@ -469,8 +475,8 @@ test(
           );
         }
         assert.ok(
-          Math.abs(result.image.width / result.image.height - 1.6) < 0.01,
-          "intrinsic aspect ratio",
+          Math.abs(result.image.width / result.image.height - 4 / 3) < 0.01,
+          "consistent cropped aspect ratio even for a non-4:3 source",
         );
         if (!motd) {
           assert.equal(result.surface, result.panel);

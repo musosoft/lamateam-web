@@ -86,11 +86,32 @@ test("registry resolves exact basenames and responsive widths respect source dim
   ])
     assert.equal(helper.getMapImage(name), undefined);
   assert.deepEqual(helper.getMapImageWidths(image), [160, 240, 320, 480, 640]);
-  assert.deepEqual(helper.getMapImageWidths(tiny), [160, 200]);
+  assert.deepEqual(helper.getMapImageWidths(tiny), [132]);
   assert.deepEqual(helper.getMapImageWidths({ ...tiny, width: 80 }), [80]);
+  assert.deepEqual(helper.getMapImageWidths({ ...tiny, width: 320 }), [132]);
+  for (const [width, height] of [
+    [640, 480],
+    [872, 656],
+    [218, 164],
+    [5760, 3600],
+    [5120, 4336],
+    [200, 100],
+    [100, 200],
+  ]) {
+    const input = { ...image, width, height };
+    const target = helper.getMapImageDimensions(input);
+    assert.ok(target.width <= width && target.height <= height);
+    assert.ok(target.width <= 640 && target.height <= 480);
+    assert.equal(target.width / target.height, 4 / 3);
+    for (const candidate of helper.getMapImageWidths(input)) {
+      assert.equal(candidate % 4, 0);
+      assert.ok(candidate <= target.width);
+      assert.ok((candidate * 3) / 4 <= height);
+    }
+  }
   assert.deepEqual(
-    helper.getMapImageWidths({ ...tiny, width: 320 }),
-    [160, 240, 320],
+    helper.getMapImageDimensions({ ...image, width: 218, height: 164 }),
+    { width: 216, height: 162 },
   );
 });
 

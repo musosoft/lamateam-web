@@ -26,20 +26,30 @@ import { Image } from 'astro:assets';
 import mapsGenerated from '../data/maps.generated.json';
 import {
   getMapImage,
+  getMapImageDimensions,
   getMapImageWidths,
+  MAP_IMAGE_MAX_HEIGHT,
   MAP_IMAGE_MAX_WIDTH,
 } from '../lib/map-image-assets';
 
 const MAP_PLACEHOLDER = '/assets/map-placeholder.svg';
+// Match the full-width home preview, 260px auto-fit catalog tracks, and the
+// much smaller in-game previews. DPR selection remains bounded by our widths.
+const imageSizes = motdPrompt
+  ? compact
+    ? '120px'
+    : '(max-width: 850px) 25vw, 180px'
+  : compact
+    ? '(min-width: 1000px) 400px, calc(100vw - 3rem)'
+    : '(max-width: 599px) calc(100vw - 4rem), (max-width: 899px) calc(50vw - 3rem), (max-width: 1199px) calc(33vw - 2.5rem), (max-width: 1499px) calc(25vw - 2rem), 320px';
 const mapCards = (mapsGenerated.items ?? [])
   .filter((item) => item.map !== 'min_players')
   .map((item) => {
     const image = getMapImage(item.map);
     const sourceImage = image ?? MAP_PLACEHOLDER;
-    const width = image ? Math.min(image.width, MAP_IMAGE_MAX_WIDTH) : 640;
-    const height = image
-      ? Math.round((width / image.width) * image.height)
-      : 360;
+    const { width, height } = image
+      ? getMapImageDimensions(image)
+      : { width: MAP_IMAGE_MAX_WIDTH, height: MAP_IMAGE_MAX_HEIGHT };
     return {
       name: item.map,
       sourceImage,
@@ -49,7 +59,8 @@ const mapCards = (mapsGenerated.items ?? [])
             width,
             height,
             widths: getMapImageWidths(image),
-            sizes: '(max-width: 750px) 90vw, 320px',
+            sizes: imageSizes,
+            fit: 'cover' as const,
             format: 'webp' as const,
           }
         : { src: MAP_PLACEHOLDER, width, height },
@@ -161,10 +172,23 @@ const mapCards = (mapsGenerated.items ?? [])
             <h2 class="map-name" translate="no" data-no-translate>
               {map.name}
             </h2>
-            <p class="rating-summary" data-rating-summary data-no-translate>
-              {t('Ratings not loaded.')}
-            </p>
             <form class="map-rating-form" data-rating-form>
+              <div class="rating-details">
+                <div class="rating-actions">
+                  <a
+                    href="/api/auth/steam"
+                    data-astro-reload
+                    class="rating-sign-in"
+                    data-rating-sign-in
+                    hidden
+                  >
+                    {t('Sign in with Steam')}
+                  </a>
+                </div>
+                <p class="rating-summary" data-rating-summary data-no-translate>
+                  {t('Ratings not loaded.')}
+                </p>
+              </div>
               <fieldset disabled>
                 <legend class="sr-only">
                   {t('Rate')}{' '}
@@ -206,17 +230,6 @@ const mapCards = (mapsGenerated.items ?? [])
                   ></span>
                 </div>
               </fieldset>
-              <div class="rating-actions">
-                <a
-                  href="/api/auth/steam"
-                  data-astro-reload
-                  class="rating-sign-in"
-                  data-rating-sign-in
-                  hidden
-                >
-                  {t('Sign in with Steam')}
-                </a>
-              </div>
               <p
                 class="rating-feedback"
                 data-rating-feedback
@@ -317,20 +330,19 @@ const mapCards = (mapsGenerated.items ?? [])
     }
   }
   .random-map-widget :global(.map-thumbnail) {
-    min-height: 0;
-    height: auto;
-    padding: 0.35rem;
+    padding: 0;
     background: none;
   }
   .random-map-widget :global(.map-thumbnail img) {
     width: 100%;
-    height: auto;
+    height: 100%;
     max-width: 100%;
     max-height: none;
-    object-fit: contain;
+    object-fit: cover;
   }
   .random-map-widget :global(.map-card-content) {
     padding: 0.5rem;
+    container: rating-content / inline-size;
   }
   .random-map-widget :global(.map-rating-form fieldset) {
     margin-top: 0.25rem;
@@ -364,11 +376,11 @@ const mapCards = (mapsGenerated.items ?? [])
   }
   .random-map-widget :global(fieldset) {
     grid-column: 1;
-    grid-row: 1;
+    grid-row: 2;
   }
   .random-map-widget :global(#random-map-skip) {
     grid-column: 2;
-    grid-row: 1;
+    grid-row: 2;
     max-width: 10ch;
     padding-inline: 0.5rem;
     background: transparent;
@@ -385,9 +397,12 @@ const mapCards = (mapsGenerated.items ?? [])
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
-  .random-map-widget :global(.rating-actions),
+  .random-map-widget :global(.rating-details),
   .random-map-widget :global(.rating-feedback) {
     grid-column: 1 / -1;
+  }
+  .random-map-widget :global(.rating-details) {
+    grid-row: 1;
   }
   .random-map-widget :global(.rating-stars) {
     gap: 0;
@@ -395,6 +410,41 @@ const mapCards = (mapsGenerated.items ?? [])
   .random-map-widget :global(.rating-star) {
     min-width: 0;
     flex: 1;
+  }
+  @container rating-content (min-width: 300px) {
+    @media (min-width: 751px) {
+      .random-map-widget :global(.map-rating-form) {
+        grid-template-columns: minmax(0, 1fr) auto;
+        column-gap: 0.75rem;
+      }
+      .random-map-widget :global(.rating-details) {
+        grid-column: 1;
+        grid-row: 1;
+      }
+      .random-map-widget :global(fieldset) {
+        grid-column: 2;
+        grid-row: 1;
+      }
+      .random-map-widget :global(.map-rating-form fieldset) {
+        margin-top: 0;
+      }
+      .random-map-widget :global(#random-map-skip) {
+        grid-column: 2;
+        grid-row: 2;
+        justify-self: end;
+      }
+      .random-map-widget :global(.rating-sign-in) {
+        min-height: 24px;
+      }
+      .random-map-widget :global(.rating-star) {
+        min-width: 28px;
+      }
+      .random-map-widget :global(.rating-overview) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+      }
+    }
   }
   @media (max-width: 750px) {
     .random-map-widget {
@@ -421,20 +471,26 @@ const mapCards = (mapsGenerated.items ?? [])
     border-color: #60a5fa90;
   }
   .map-thumbnail {
-    min-height: 190px;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0.5rem;
+    padding: 0;
     background: radial-gradient(ellipse, #233853, #0c1422);
   }
   .map-thumbnail :global(img) {
     display: block;
     width: 100%;
-    height: auto;
-    max-height: 200px;
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
     border-radius: 4px;
+  }
+  /* Override the legacy MOTD contain/max-height rule without changing its grid. */
+  :global(.is-game.motd-home) .random-map-widget :global(.map-thumbnail img) {
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
   }
   .map-card-content {
     padding: 0.75rem;
@@ -446,14 +502,14 @@ const mapCards = (mapsGenerated.items ?? [])
     overflow-wrap: anywhere;
   }
   .rating-summary {
-    margin-top: 0.5rem;
+    margin: 0;
     font-size: 0.8rem;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
   .map-rating-form fieldset {
     border: 0;
-    margin: 0.75rem 0 0;
+    margin: 0.25rem 0 0;
     padding: 0;
     min-width: 0;
   }
@@ -539,7 +595,15 @@ const mapCards = (mapsGenerated.items ?? [])
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    margin-top: 0.25rem;
+    margin: 0;
+  }
+  .map-rating-form {
+    margin-top: 0.35rem;
+  }
+  .rating-details {
+    min-width: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
   }
   .rating-save,
   .ratings-retry {
@@ -570,10 +634,12 @@ const mapCards = (mapsGenerated.items ?? [])
     display: none;
   }
   .rating-feedback {
-    min-height: 1.5em;
     margin-top: 0.35rem;
     font-size: 0.75rem;
     color: var(--muted);
+  }
+  .rating-feedback:empty {
+    margin: 0;
   }
   .ratings-notice {
     display: flex;
