@@ -13,44 +13,56 @@ const locale =
   }) ?? localeFromPath(Astro.url.pathname);
 const t = translator(locale);
 const gamePrompt = {
-  en: { beforeSend: 'Click ', afterSend: ' to chat, ', warning: 'not ' },
+  en: {
+    beforeSend: 'Click ',
+    afterSend: ' to chat, ',
+    warning: 'not ',
+    enterKey: 'Enter',
+  },
   cs: {
-    beforeSend: 'Zprávu do chatu odešleš kliknutím na ',
+    beforeSend: 'Chat: klikni na ',
     afterSend: ', ',
-    warning: 'ne klávesou ',
+    warning: 'ne ',
+    enterKey: 'Enter',
   },
   sk: {
     beforeSend: 'Správu do chatu odošleš kliknutím na ',
-    afterSend: ', ',
+    afterSend: ' a ',
     warning: 'nie klávesom ',
+    enterKey: 'Enter',
   },
   pl: {
-    beforeSend: 'Wiadomość na czacie wyślesz, klikając ',
-    afterSend: ', ',
-    warning: 'a nie naciskając ',
+    beforeSend: 'Na czacie wiadomość wyślesz przyciskiem ',
+    afterSend: ' zamiast klawisza ',
+    warning: '',
+    enterKey: 'Enter',
   },
   hu: {
     beforeSend: 'A csevegéshez használd a ',
     afterSend: ' gombot, ',
     warning: 'ne az ',
+    enterKey: 'Enter',
   },
   de: {
     beforeSend: 'Zum Chatten klicke auf ',
-    afterSend: ', ',
+    afterSend: ' und ',
     warning: 'nicht auf ',
+    enterKey: 'Enter',
   },
   uk: {
-    beforeSend: 'Щоб надіслати повідомлення в чат, натисни «',
-    afterSend: '», ',
-    warning: 'а не ',
+    beforeSend: 'Щоб надіслати повідомлення в чат, натисни кнопку ',
+    afterSend: ' замість клавіші ',
+    warning: '',
+    enterKey: 'Enter',
   },
   fr: {
-    beforeSend: 'Pour envoyer un message dans le chat, cliquez sur ',
-    afterSend: ', ',
-    warning: 'pas sur ',
+    beforeSend: 'Pour écrire dans le chat, cliquez sur le bouton ',
+    afterSend: ' plutôt que sur la touche ',
+    warning: '',
+    enterKey: 'Entrée',
   },
 }[locale];
-const gameInstruction = `${gamePrompt.beforeSend}${t('Send')}${gamePrompt.afterSend}${gamePrompt.warning}Enter.`;
+const gameInstruction = `${gamePrompt.beforeSend}${t('Send')}${gamePrompt.afterSend}${gamePrompt.warning}${gamePrompt.enterKey}.`;
 const gamePlaceholder = {
   en: 'Click Send to chat',
   cs: 'Klikněte na Odeslat',
@@ -203,9 +215,9 @@ const playerAvatar = steamID
           {gamePrompt.beforeSend}
           <b>{t('Send')}</b>
           {gamePrompt.afterSend}
-          <span class="text-red-500">
+          <span class="text-red-400">
             {gamePrompt.warning}
-            <kbd>Enter ↵</kbd>
+            <kbd>{gamePrompt.enterKey} ↵</kbd>
           </span>
         </span>
       </div>
@@ -281,8 +293,8 @@ const playerAvatar = steamID
   .chat-input-wrap input:not(:placeholder-shown) + .chat-game-prompt {
     display: none;
   }
-  .chat-game-prompt .text-red-500 {
-    color: #ef4444;
+  .chat-game-prompt .text-red-400 {
+    color: #f87171;
     white-space: nowrap;
   }
   .chat-game-prompt kbd {
