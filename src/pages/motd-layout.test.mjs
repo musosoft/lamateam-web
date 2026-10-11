@@ -133,8 +133,14 @@ test("narrow MOTDs keep chat on the right without crushing rating or composer", 
     /\.live-chat-panel \.shoutbox-feed \{[^}]*overflow-y: auto/s,
   );
   assert.match(css, /\.chat-compose \{[^}]*flex-shrink: 0/s);
-  assert.match(chat, /let saved = inGame \|\| shell.dataset.defaultOpen/);
-  assert.match(chat, /setOpen\(saved \|\| linkedToChat/);
+  assert.match(
+    chat,
+    /let saved = inGame \|\| \(desktop && shell\.dataset\.defaultOpen === 'true'\)/,
+  );
+  assert.match(
+    chat,
+    /setOpen\(saved \|\| linkedToChat, \(inGame && saved\) \|\| linkedToChat\)/,
+  );
 });
 
 test("MOTD reuses the complete canonical server rules without changing web content", () => {
@@ -282,13 +288,25 @@ test("MOTD guides use established copy without display-identity stats or an empt
     home.indexOf("isGame && <ServerRules"),
   );
   assert.match(info, /data-no-translate>\{communityIntro\}/);
-  assert.match(info, /\['Statistics', 'Maps', 'Commands'\]/);
+  assert.match(
+    home,
+    /const motdGuideTitles = \['Statistics', 'Maps', 'Commands', 'Banlist'\]/,
+  );
+  assert.match(home, /title: 'Statistics',[\s\S]*?link: '\/stats'/);
+  assert.match(
+    home,
+    /page\.title === 'Banlist' \? \{ \.\.\.page, link: `\/bans\$\{motdQuery\}` \}/,
+  );
+  assert.match(
+    home,
+    /grid-template-columns: repeat\(auto-fit, minmax\(min\(100%, 9em\), 1fr\)\)/,
+  );
   assert.doesNotMatch(info, /SourceTV/);
   assert.match(home, /title: 'SourceTV'/);
   assert.match(home, /!isGame && \([\s\S]*class="desktop-community/);
   assert.match(info, /\{page.description\}/);
   assert.doesNotMatch(info, /data-hero-stats|motd-info panel/);
-  assert.match(home, /https:\/\/stats\.lamateam\.eu\//);
+  assert.match(home, /stats: 'https:\/\/stats\.lamateam\.eu\/'/);
   assert.match(rule(".is-game.motd-home .motd-info"), /padding: 0/);
   for (const selector of [
     ".motd-info",
