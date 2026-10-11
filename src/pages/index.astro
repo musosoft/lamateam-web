@@ -153,7 +153,7 @@ const pages = [
   {
     title: 'Statistics',
     description: 'HLstatsX statistics.',
-    link: 'https://stats.lamateam.eu/',
+    link: '/stats',
     icon: 'mdi:chart-bar',
   },
 ].map((page) => ({
@@ -163,6 +163,16 @@ const pages = [
       ? `${page.link}${motdQuery}`
       : page.link,
 }));
+const motdGuideTitles = ['Statistics', 'Maps', 'Commands', 'Banlist'];
+const motdGuides = pages
+  .filter((page) => motdGuideTitles.includes(page.title))
+  .sort(
+    (a, b) =>
+      motdGuideTitles.indexOf(a.title) - motdGuideTitles.indexOf(b.title),
+  )
+  .map((page) =>
+    page.title === 'Banlist' ? { ...page, link: `/bans${motdQuery}` } : page,
+  );
 ---
 
 <Layout
@@ -288,24 +298,15 @@ const pages = [
         <section class="motd-info" aria-label={t('Statistics')}>
           <p data-no-translate>{communityIntro}</p>
           <nav class="motd-guide-links" aria-label={t('Statistics')}>
-            {pages
-              .filter((page) =>
-                ['Statistics', 'Maps', 'Commands'].includes(page.title),
-              )
-              .sort(
-                (a, b) =>
-                  ['Statistics', 'Maps', 'Commands'].indexOf(a.title) -
-                  ['Statistics', 'Maps', 'Commands'].indexOf(b.title),
-              )
-              .map((page) => (
-                <a href={page.link}>
-                  <Icon name={page.icon} class="h-5 w-5" />
-                  <span class="guide-label">
-                    <strong>{page.title}</strong>
-                    <span class="guide-description">{page.description}</span>
-                  </span>
-                </a>
-              ))}
+            {motdGuides.map((page) => (
+              <a href={page.link}>
+                <Icon name={page.icon} class="h-5 w-5" />
+                <span class="guide-label">
+                  <strong>{page.title}</strong>
+                  <span class="guide-description">{page.description}</span>
+                </span>
+              </a>
+            ))}
           </nav>
         </section>
       )}
@@ -723,7 +724,7 @@ const pages = [
       font-size: var(--motd-text);
     }
     :global(.is-game.motd-home) .motd-guide-links {
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 14em), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 9em), 1fr));
       gap: var(--motd-space);
     }
     :global(.is-game.motd-home) .guide-description {
