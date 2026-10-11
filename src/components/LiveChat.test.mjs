@@ -63,18 +63,21 @@ test("MOTD visual prompt is static rich text, non-interactive and separately des
     source,
     /\{gamePrompt\.beforeSend\}\s*<b>\{t\('Send'\)\}<\/b>\s*\{gamePrompt\.afterSend\}/,
   );
-  assert.match(source, /\{gamePrompt\.warning\}\s*<kbd>Enter ↵<\/kbd>/);
+  assert.match(
+    source,
+    /\{gamePrompt\.warning\}\s*<kbd>\{gamePrompt\.enterKey\} ↵<\/kbd>/,
+  );
   assert.match(source, /const gameInstruction = `\$\{gamePrompt\.beforeSend\}/);
   for (const fragment of [
-    "beforeSend: 'Zprávu do chatu odešleš kliknutím na '",
-    "warning: 'ne klávesou '",
+    "beforeSend: 'Chat: klikni na '",
+    "warning: 'ne '",
     "beforeSend: 'Správu do chatu odošleš kliknutím na '",
     "warning: 'nie klávesom '",
-    "beforeSend: 'Wiadomość na czacie wyślesz, klikając '",
+    "beforeSend: 'Na czacie wiadomość wyślesz przyciskiem '",
     "beforeSend: 'A csevegéshez használd a '",
     "beforeSend: 'Zum Chatten klicke auf '",
-    "beforeSend: 'Щоб надіслати повідомлення в чат, натисни «'",
-    "beforeSend: 'Pour envoyer un message dans le chat, cliquez sur '",
+    "beforeSend: 'Щоб надіслати повідомлення в чат, натисни кнопку '",
+    "beforeSend: 'Pour écrire dans le chat, cliquez sur le bouton '",
   ])
     assert.ok(source.includes(fragment), fragment);
   assert.match(
@@ -97,7 +100,7 @@ test("MOTD visual prompt is static rich text, non-interactive and separately des
 test("MOTD Enter indicator has a compact, warning-colored keyboard keycap", () => {
   assert.match(
     source,
-    /\.chat-game-prompt \.text-red-500 \{\s*color: #ef4444;\s*white-space: nowrap;/,
+    /\.chat-game-prompt \.text-red-400 \{\s*color: #f87171;\s*white-space: nowrap;/,
   );
   const keycap = source.match(/\.chat-game-prompt kbd \{([^}]+)\}/)[1];
   assert.match(keycap, /display: inline-block/);
@@ -544,7 +547,7 @@ test(
             );
             assert.equal(await prompt.locator("b").textContent(), "Send");
             assert.equal(
-              await prompt.locator(".text-red-500 kbd").textContent(),
+              await prompt.locator(".text-red-400 kbd").textContent(),
               "Enter ↵",
             );
             assert.equal(
@@ -581,7 +584,7 @@ test(
                       .getBoundingClientRect().width;
                   return Math.abs(input.width - width) < 2;
                 })(),
-                red: getComputedStyle(node.querySelector(".text-red-500"))
+                red: getComputedStyle(node.querySelector(".text-red-400"))
                   .color,
                 keycap: {
                   border: keyStyle.borderTopWidth,
