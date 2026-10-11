@@ -69,15 +69,14 @@ test("MOTD visual prompt is static rich text, non-interactive and separately des
   );
   assert.match(source, /const gameInstruction = `\$\{gamePrompt\.beforeSend\}/);
   for (const fragment of [
+    "beforeSend: 'Chat: click '",
     "beforeSend: 'Chat: klikni na '",
     "warning: 'ne '",
-    "beforeSend: 'Správu do chatu odošleš kliknutím na '",
-    "warning: 'nie klávesom '",
-    "beforeSend: 'Na czacie wiadomość wyślesz przyciskiem '",
-    "beforeSend: 'A csevegéshez használd a '",
-    "beforeSend: 'Zum Chatten klicke auf '",
-    "beforeSend: 'Щоб надіслати повідомлення в чат, натисни кнопку '",
-    "beforeSend: 'Pour écrire dans le chat, cliquez sur le bouton '",
+    "beforeSend: 'Czat: kliknij '",
+    "beforeSend: 'Chat: kattints a '",
+    "beforeSend: 'Chat: klicke auf '",
+    "beforeSend: 'Чат: натисни «'",
+    "beforeSend: 'Chat : cliquez sur '",
   ])
     assert.ok(source.includes(fragment), fragment);
   assert.match(
