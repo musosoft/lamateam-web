@@ -27,7 +27,11 @@ const evaluate = new Function(
   ) + "\nreturn { endpoint, canRate, controls };",
 );
 const setup = (motd, id = "") =>
-  evaluate({ hasAttribute: () => motd, dataset: { motdCommunityId: id } });
+  evaluate({
+    hasAttribute: () => motd,
+    dataset: { motdCommunityId: id },
+    querySelector: () => null,
+  });
 
 test("only the game instance passes community ID; both request methods share an encoded endpoint without names", () => {
   assert.match(
@@ -58,6 +62,9 @@ test("only the game instance passes community ID; both request methods share an 
 });
 
 test("MOTD permission is explicit and unverified; desktop remains verified-only with its sign-in affordance", () => {
+  assert.match(source, /data-rating-sign-in-note hidden/);
+  assert.match(source, /if \(signInNote\) signInNote\.hidden = authenticated;/);
+  assert.match(source, /if \(signInNote\) signInNote\.hidden = false;/);
   for (const [motd, id, rating, enabled, signInVisible] of [
     [
       true,
