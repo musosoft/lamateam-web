@@ -12,6 +12,45 @@ const locale =
     country: Astro.request.cf?.country as string | undefined,
   }) ?? localeFromPath(Astro.url.pathname);
 const t = translator(locale);
+const gamePrompt = {
+  en: { beforeSend: 'Click ', afterSend: ' to chat, ', warning: 'not ' },
+  cs: {
+    beforeSend: 'Zprávu do chatu odešleš kliknutím na ',
+    afterSend: ', ',
+    warning: 'ne klávesou ',
+  },
+  sk: {
+    beforeSend: 'Správu do chatu odošleš kliknutím na ',
+    afterSend: ', ',
+    warning: 'nie klávesom ',
+  },
+  pl: {
+    beforeSend: 'Wiadomość na czacie wyślesz, klikając ',
+    afterSend: ', ',
+    warning: 'a nie naciskając ',
+  },
+  hu: {
+    beforeSend: 'A csevegéshez használd a ',
+    afterSend: ' gombot, ',
+    warning: 'ne az ',
+  },
+  de: {
+    beforeSend: 'Zum Chatten klicke auf ',
+    afterSend: ', ',
+    warning: 'nicht auf ',
+  },
+  uk: {
+    beforeSend: 'Щоб надіслати повідомлення в чат, натисни «',
+    afterSend: '», ',
+    warning: 'а не ',
+  },
+  fr: {
+    beforeSend: 'Pour envoyer un message dans le chat, cliquez sur ',
+    afterSend: ', ',
+    warning: 'pas sur ',
+  },
+}[locale];
+const gameInstruction = `${gamePrompt.beforeSend}${t('Send')}${gamePrompt.afterSend}${gamePrompt.warning}Enter.`;
 const gamePlaceholder = {
   en: 'Click Send to chat',
   cs: 'Klikněte na Odeslat',
@@ -87,7 +126,7 @@ const playerAvatar = steamID
   data-player-name={playerName}
   data-player-avatar={playerAvatar}
   data-authenticated={String(isAuthenticated)}
-  data-default-open={String(isGame)}
+  data-default-open={String(!isGame)}
   data-session-render={Astro.isPrerendered ? 'static' : 'request'}
   data-locale={locale}
   data-copy={JSON.stringify(chatCopy(locale))}
@@ -161,9 +200,12 @@ const playerAvatar = steamID
           translate="no"
           hidden={!isGame}
         >
-          Click <b>Send</b> to chat,{' '}
+          {gamePrompt.beforeSend}
+          <b>{t('Send')}</b>
+          {gamePrompt.afterSend}
           <span class="text-red-500">
-            not <kbd>Enter ↵</kbd>
+            {gamePrompt.warning}
+            <kbd>Enter ↵</kbd>
           </span>
         </span>
       </div>
@@ -183,7 +225,7 @@ const playerAvatar = steamID
       data-no-translate
       translate="no"
     >
-      Click Send to chat, not Enter.
+      {gameInstruction}
     </p>
     <p
       id="shoutbox-status"
@@ -339,7 +381,9 @@ const playerAvatar = steamID
       { signal },
     );
     const requests = new Set<AbortController>();
-    const preference = 'lamateam-chat-open';
+    // Older versions persisted their closed-by-default state, so use a fresh
+    // key to let existing desktop visitors receive the new default once.
+    const preference = 'lamateam-chat-open-v2';
     const authenticated = shell.dataset.authenticated === 'true';
     let posting = false;
     let reading = false;
@@ -484,9 +528,10 @@ const playerAvatar = steamID
       }
       if (open) void fetchMessages();
     };
-    // First-time game visitors start open; an explicit close survives route
-    // transitions instead of unexpectedly restoring the sidebar track.
-    let saved = inGame || shell.dataset.defaultOpen === 'true';
+    // First-time desktop and game visitors start open. Respect an explicit
+    // close across route transitions rather than restoring the panel.
+    const desktop = window.matchMedia('(min-width: 768px)').matches;
+    let saved = inGame || (desktop && shell.dataset.defaultOpen === 'true');
     try {
       const stored = localStorage.getItem(preference);
       if (stored !== null) saved = stored === 'true';

@@ -98,7 +98,7 @@ const mapCards = (mapsGenerated.items ?? [])
     <p class="fl-mb-3/5 fl-text-sm/base text-gray-400">
       {t('LaMaTeAm CS:S map ratings are anonymous.')}
       {!motdPrompt && (
-        <span>
+        <span data-rating-sign-in-note hidden>
           {t('Sign in with Steam to rate a map or update your rating.')}
         </span>
       )}
@@ -727,6 +727,9 @@ const mapCards = (mapsGenerated.items ?? [])
     const canRate = (rating?: Rating) =>
       rating?.canRate === true &&
       (inMotd ? !!communityId : rating.authenticated === true);
+    const signInNote = root?.querySelector<HTMLElement>(
+      '[data-rating-sign-in-note]',
+    );
     const randomTitle = root?.querySelector<HTMLElement>('#random-map-title');
     const randomPreview = document.querySelector<HTMLElement>(
       '#random-map-preview',
@@ -968,6 +971,7 @@ const mapCards = (mapsGenerated.items ?? [])
           throw new Error('Invalid ratings');
         const authenticated = data.authenticated;
         const allowed = data.canRate;
+        if (signInNote) signInNote.hidden = authenticated;
         const ratings = new Map<string, Rating>(
           data.ratings.map((rating) => [
             rating.map,
@@ -1102,6 +1106,7 @@ const mapCards = (mapsGenerated.items ?? [])
               render(other, previous);
             }
           });
+          if (signInNote) signInNote.hidden = false;
           feedback.textContent = inMotd
             ? tc('Ratings unavailable.')
             : tc('Sign in with Steam to save your rating.');

@@ -59,6 +59,16 @@ test("raw locale dictionaries preserve exact keys and game/network terminology",
     assert.ok(dictionary["T Penalties"].includes("T"), locale);
   }
 });
+test("Czech and Slovak rule copy names flashbangs and automatic team balancing clearly", () => {
+  const teamFlashes =
+    "❌ intentional team attacks, teamkills, team flashes, blocking teammates, or obstructing their view";
+  const balanceAbuse =
+    "❌ repeatedly joining the stronger team (balance abuse)";
+  assert.match(pageCopy.cs[teamFlashes], /flashbangy/);
+  assert.match(pageCopy.sk[teamFlashes], /flashbangmi/);
+  assert.match(pageCopy.cs[balanceAbuse], /automatického vyrovnávání týmů/);
+  assert.match(pageCopy.sk[balanceAbuse], /automatického vyrovnávania tímov/);
+});
 test("complete typed static-copy dictionaries have exact key and placeholder parity", () => {
   const keys = Object.keys(pageCopy.en).sort();
   assert.ok(keys.length > 300);

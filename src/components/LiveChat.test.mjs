@@ -61,16 +61,27 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
 test("MOTD visual prompt is static rich text, non-interactive and separately described", () => {
   assert.match(
     source,
-    /Click <b>Send<\/b> to chat,\{' '\}\s*<span class="text-red-500">\s*not <kbd>Enter ↵<\/kbd>\s*<\/span>/,
+    /\{gamePrompt\.beforeSend\}\s*<b>\{t\('Send'\)\}<\/b>\s*\{gamePrompt\.afterSend\}/,
   );
+  assert.match(source, /\{gamePrompt\.warning\}\s*<kbd>Enter ↵<\/kbd>/);
+  assert.match(source, /const gameInstruction = `\$\{gamePrompt\.beforeSend\}/);
+  for (const fragment of [
+    "beforeSend: 'Zprávu do chatu odešleš kliknutím na '",
+    "warning: 'ne klávesou '",
+    "beforeSend: 'Správu do chatu odošleš kliknutím na '",
+    "warning: 'nie klávesom '",
+    "beforeSend: 'Wiadomość na czacie wyślesz, klikając '",
+    "beforeSend: 'A csevegéshez használd a '",
+    "beforeSend: 'Zum Chatten klicke auf '",
+    "beforeSend: 'Щоб надіслати повідомлення в чат, натисни «'",
+    "beforeSend: 'Pour envoyer un message dans le chat, cliquez sur '",
+  ])
+    assert.ok(source.includes(fragment), fragment);
   assert.match(
     source,
     /id="chat-game-prompt"[\s\S]*?aria-hidden="true"[\s\S]*?translate="no"/,
   );
-  assert.match(
-    source,
-    /id="chat-game-instruction"[\s\S]*?Click Send to chat, not Enter\./,
-  );
+  assert.match(source, /id="chat-game-instruction"[\s\S]*?\{gameInstruction\}/);
   assert.match(
     source,
     /<label for="messageInput" class="sr-only">\s*\{t\('Your message'\)\}/,
@@ -129,6 +140,8 @@ function setup({
   post,
   get,
   userAgent = "Mozilla/5.0",
+  desktop = false,
+  storageValues = [],
 } = {}) {
   const document = new Element();
   document.visibilityState = "visible";
@@ -141,7 +154,7 @@ function setup({
     steamId: "fixture-user",
     playerName: "Fixture",
     playerAvatar: "/assets/default-avatar.webp",
-    defaultOpen: "false",
+    defaultOpen: "true",
   };
   const selectors = [
     "#live-chat-panel",
@@ -186,7 +199,7 @@ function setup({
     return node;
   };
   document.createDocumentFragment = () => new Element();
-  const storage = new Map();
+  const storage = new Map(storageValues);
   const intervals = new Set();
   const calls = [];
   const context = {
@@ -202,6 +215,7 @@ function setup({
       setItem: (key, value) => storage.set(key, value),
     },
     window: {
+      matchMedia: () => ({ matches: desktop }),
       setTimeout,
       clearTimeout,
       setInterval: (callback) => {
@@ -232,11 +246,11 @@ test("close/reopen persists preference and restores keyboard focus", async () =>
   await flush();
   assert.equal(panel.hidden, false);
   assert.equal(ui.document.activeElement, ui.nodes["#shoutbox-title"]);
-  assert.equal(ui.storage.get("lamateam-chat-open"), "true");
+  assert.equal(ui.storage.get("lamateam-chat-open-v2"), "true");
   await panel.emit("keydown", { key: "Escape", stopPropagation() {} });
   assert.equal(panel.hidden, true);
   assert.equal(ui.document.activeElement, ui.nodes["#chat-launcher"]);
-  assert.equal(ui.storage.get("lamateam-chat-open"), "false");
+  assert.equal(ui.storage.get("lamateam-chat-open-v2"), "false");
   await ui.document.emit("astro:before-swap");
   await ui.document.emit("astro:page-load");
   assert.equal(panel.hidden, true);
@@ -244,12 +258,34 @@ test("close/reopen persists preference and restores keyboard focus", async () =>
   assert.equal(ui.nodes["#shoutboxForm"].listeners.get("submit").size, 1);
 });
 
+test("desktop first visits open chat; mobile stays closed and explicit close persists", async () => {
+  assert.match(source, /data-default-open=\{String\(!isGame\)\}/);
+  assert.match(source, /window\.matchMedia\('\(min-width: 768px\)'\)/);
+  const desktop = setup({
+    desktop: true,
+    storageValues: [["lamateam-chat-open", "false"]],
+  });
+  const panel = desktop.nodes["#live-chat-panel"];
+  assert.equal(panel.hidden, false);
+  await flush();
+  assert.equal(desktop.calls.length, 1);
+  await desktop.nodes[".chat-close"].emit("click");
+  assert.equal(desktop.storage.get("lamateam-chat-open-v2"), "false");
+  await desktop.document.emit("astro:before-swap");
+  await desktop.document.emit("astro:page-load");
+  assert.equal(panel.hidden, true);
+
+  const mobile = setup({ desktop: false });
+  assert.equal(mobile.nodes["#live-chat-panel"].hidden, true);
+  assert.equal(mobile.calls.length, 0);
+});
+
 test("Valve preserves a closed sidebar across Astro route changes", async () => {
   const ui = setup({ userAgent: "Valve Client" });
   const panel = ui.nodes["#live-chat-panel"];
   assert.equal(panel.hidden, false);
   await ui.nodes[".chat-close"].emit("click");
-  assert.equal(ui.storage.get("lamateam-chat-open"), "false");
+  assert.equal(ui.storage.get("lamateam-chat-open-v2"), "false");
   await ui.document.emit("astro:before-swap");
   await ui.document.emit("astro:page-load");
   assert.equal(panel.hidden, true);
