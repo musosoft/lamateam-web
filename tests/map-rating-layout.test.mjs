@@ -86,7 +86,7 @@ test("anonymous cards show only the Steam rating prompt; signed-in summaries rem
   assert.equal(summary.textContent, "Your rating · 4 / 5");
 });
 
-test("home picker has a full-width desktop track with a compact stars/count subgroup", () => {
+test("home picker occupies the desktop hero's right track above the sidebar", () => {
   const home = readFileSync(
     new URL("../src/pages/index.astro", import.meta.url),
     "utf8",
@@ -95,7 +95,18 @@ test("home picker has a full-width desktop track with a compact stars/count subg
     home,
     /class="home-map-rating"[\s\S]*?<MapRatings compact unratedOnly/,
   );
-  assert.match(home, /\.home-map-rating\s*\{\s*grid-column: 1 \/ -1;/);
+  const desktop = home.slice(home.indexOf("@media (min-width: 1000px) {"));
+  assert.match(desktop, /\.home-map-rating\s*\{\s*grid-area: rating;/);
+  assert.match(
+    desktop,
+    /:global\(body:not\(\.is-game\)\) \.community-grid\s*\{\s*grid-template-areas: 'main rating' 'main side';\s*grid-template-rows: auto 1fr;/,
+  );
+  assert.match(desktop, /\.community-main\s*\{\s*grid-area: main;/);
+  assert.match(desktop, /\.community-side\s*\{\s*grid-area: side;/);
+  assert.ok(
+    home.indexOf('class="home-map-rating"') <
+      home.indexOf('class="community-main"'),
+  );
   assert.match(styles, /container: rating-content \/ inline-size;/);
   assert.match(
     styles,
@@ -122,14 +133,11 @@ test("home picker has a full-width desktop track with a compact stars/count subg
     styles,
     /flex-direction: column;\s*align-items: flex-start;/,
   );
-  assert.match(
-    styles,
-    /@media \(min-width: 1000px\)[\s\S]*grid-template-columns: 280px minmax\(0, 1fr\);/,
-  );
+  assert.doesNotMatch(styles, /grid-template-columns: 280px minmax\(0, 1fr\);/);
   assert.match(styles, /:global\(\.random-community-rating\)/);
   assert.match(
     styles,
-    /:global\(\.map-card-content\)\s*\{[^}]*grid-column: 1 \/ -1;[^}]*grid-row: 2;/,
+    /:global\(\.rated-map-card\)\s*\{[^}]*grid-template-rows: auto auto;/,
   );
   assert.match(
     styles,
@@ -144,7 +152,7 @@ test("home picker has a full-width desktop track with a compact stars/count subg
 test("small viewports wrap the prompt as a full-width group without shrinking targets", () => {
   assert.match(
     styles,
-    /@media \(max-width: 999px\)[\s\S]*:global\(\.rating-actions\)[\s\S]*flex-basis: 100%;/,
+    /\.map-ratings-compact:not\(\[data-motd-map-prompt\]\) :global\(\.rating-actions\),[\s\S]*?flex-basis: 100%;/,
   );
   assert.match(styles, /\.rating-sign-in\s*\{[^}]*min-height: 44px;/);
   assert.match(styles, /\.ratings-retry\s*\{[^}]*min-height: 44px;/);
@@ -217,7 +225,7 @@ test(
     mkdirSync(artifacts, { recursive: true });
     const measurements = [];
     try {
-      for (const width of [1440, 1280, 768, 390, 320]) {
+      for (const width of [1920, 1440, 1280, 1000, 999, 768, 390, 320]) {
         for (const authenticated of [false, true]) {
           const context = await browser.newContext({
             viewport: { width, height: 1000 },
@@ -317,6 +325,57 @@ test(
             console.log(JSON.stringify({ width, ...result }));
             measurements.push({ width, authenticated, ...result });
             assert.equal(result.overflow, false, `${width}: page overflow`);
+            const layout = await page.evaluate(() => {
+              const box = (selector) => {
+                const r = document
+                  .querySelector(selector)
+                  .getBoundingClientRect();
+                return {
+                  x: r.x,
+                  y: r.y,
+                  right: r.right,
+                  bottom: r.bottom,
+                  width: r.width,
+                };
+              };
+              return {
+                picker: box(".home-map-rating"),
+                hero: box(".home-hero"),
+                main: box(".community-main"),
+                side: box(".community-side"),
+              };
+            });
+            if (width >= 1000) {
+              assert.ok(
+                layout.picker.x >= layout.main.right,
+                `${width}: picker right of hero`,
+              );
+              assert.ok(
+                Math.abs(layout.picker.y - layout.hero.y) < 1,
+                `${width}: picker aligned with hero top`,
+              );
+              assert.ok(
+                Math.abs(layout.picker.x - layout.side.x) < 1,
+                `${width}: picker aligned with sidebar`,
+              );
+              assert.ok(
+                Math.abs(layout.picker.width - layout.side.width) < 1,
+                `${width}: same sidebar track`,
+              );
+              assert.ok(
+                layout.side.y >= layout.picker.bottom,
+                `${width}: sidebar below picker`,
+              );
+            } else {
+              assert.ok(
+                layout.main.y >= layout.picker.bottom,
+                `${width}: narrow picker still before hero`,
+              );
+              assert.ok(
+                layout.side.y >= layout.main.bottom,
+                `${width}: narrow sidebar still after main`,
+              );
+            }
             assert.ok(
               Math.abs(result.preview.width / result.preview.height - 4 / 3) <
                 0.01,
@@ -364,20 +423,7 @@ test(
                 (target) => target.width >= 44 && target.height >= 44,
               ),
             );
-            if (width >= 1000) {
-              const first = authenticated ? result.summary : result.signIn;
-              for (const group of [result.label, result.stars, result.skip])
-                assert.ok(
-                  Math.abs(group.y - first.y) < 1,
-                  `${width}: all main groups start on the same row`,
-                );
-              const groups = [first, result.label, result.stars, result.skip];
-              for (let i = 1; i < groups.length; i++)
-                assert.ok(
-                  groups[i].x >= groups[i - 1].x + groups[i - 1].width,
-                  `${width}: ordered nonoverlapping groups`,
-                );
-            } else {
+            {
               const first = authenticated ? result.summary : result.signIn;
               assert.ok(result.label.y >= first.y + first.height);
               assert.ok(result.stars.y >= result.label.y + result.label.height);

@@ -40,7 +40,7 @@ const imageSizes = motdPrompt
     ? '120px'
     : '(max-width: 850px) 25vw, 180px'
   : compact
-    ? '(min-width: 1000px) 280px, calc(100vw - 3rem)'
+    ? '(min-width: 1000px) 400px, calc(100vw - 3rem)'
     : '(max-width: 599px) calc(100vw - 4rem), (max-width: 899px) calc(50vw - 3rem), (max-width: 1199px) calc(33vw - 2.5rem), (max-width: 1499px) calc(25vw - 2rem), 320px';
 const mapCards = (mapsGenerated.items ?? [])
   .filter((item) => item.map !== 'min_players')
@@ -424,8 +424,8 @@ const mapCards = (mapsGenerated.items ?? [])
     min-width: 44px;
     flex: 0 0 auto;
   }
-  /* The homepage owns a full grid track, not the narrow monitor sidebar.
-     Bound the preview and give the complete rating row its own track. */
+  /* The homepage picker stacks above the sidebar on desktop; keep its
+     controls below the preview in that narrow track too. */
   .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-details) {
     display: contents;
   }
@@ -470,51 +470,14 @@ const mapCards = (mapsGenerated.items ?? [])
   .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-star) {
     min-width: 44px;
   }
-  @media (min-width: 1000px) {
-    .map-ratings-compact:not([data-motd-map-prompt]) .random-map-widget {
-      grid-template-columns: 280px minmax(0, 1fr);
-      gap: 0.75rem 1.5rem;
-    }
-    .map-ratings-compact:not([data-motd-map-prompt]) .random-map-prompt {
-      grid-column: 2;
-      grid-row: 1;
-    }
-    .map-ratings-compact:not([data-motd-map-prompt]) #random-map-preview,
-    .map-ratings-compact:not([data-motd-map-prompt]) :global(.rated-map-card) {
-      display: contents;
-    }
-    .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-thumbnail) {
-      grid-column: 1;
-      grid-row: 1;
-    }
-    .map-ratings-compact:not([data-motd-map-prompt])
-      :global(.map-card-content) {
-      grid-column: 1 / -1;
-      grid-row: 2;
-      padding: 0;
-    }
-    .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-rating-form) {
-      column-gap: 1rem;
-      align-items: flex-start;
-    }
-    .map-ratings-compact:not([data-motd-map-prompt])
-      :global(.random-community-rating),
-    .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-summary) {
-      display: flex;
-      align-items: center;
-      min-height: 44px;
-    }
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-actions),
+  .map-ratings-compact:not([data-motd-map-prompt])
+    :global(.random-community-rating),
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-summary) {
+    flex-basis: 100%;
   }
-  @media (max-width: 999px) {
-    .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-actions),
-    .map-ratings-compact:not([data-motd-map-prompt])
-      :global(.random-community-rating),
-    .map-ratings-compact:not([data-motd-map-prompt]) :global(.rating-summary) {
-      flex-basis: 100%;
-    }
-    .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-rating-form) {
-      align-items: flex-start;
-    }
+  .map-ratings-compact:not([data-motd-map-prompt]) :global(.map-rating-form) {
+    align-items: flex-start;
   }
   @media (max-width: 750px) {
     .random-map-widget :global(.rating-details) {

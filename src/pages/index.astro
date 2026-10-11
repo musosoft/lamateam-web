@@ -668,7 +668,19 @@ const pages = [
 
     @media (min-width: 1000px) {
       .home-map-rating {
-        grid-column: 1 / -1;
+        grid-area: rating;
+      }
+      /* Keep the selected map beside the hero and above the sidebar, as before
+         the full-width prompt. Narrow screens retain their existing order. */
+      :global(body:not(.is-game)) .community-grid {
+        grid-template-areas: 'main rating' 'main side';
+        grid-template-rows: auto 1fr;
+      }
+      :global(body:not(.is-game)) .community-main {
+        grid-area: main;
+      }
+      :global(body:not(.is-game)) .community-side {
+        grid-area: side;
       }
       .community-grid {
         grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
