@@ -372,7 +372,7 @@ test("chat controls remain centered circles with one shared dimension at every s
     "aspect-ratio: 1",
     "border-radius: 50%",
     "padding: 0",
-    "flex-shrink: 0",
+    "shrink: 0",
     "align-items: center",
     "justify-content: center",
   ])
