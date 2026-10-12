@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-11T12:14:41.891Z",
-  "total": 99,
+  "generatedAt": "2026-10-12T14:37:45.502Z",
+  "total": 100,
   "ok": 98,
   "items": [
     {
@@ -492,6 +492,11 @@
       "map": "knas_Sandland_CSS",
       "image": "/assets/map-cache/knas_Sandland_CSS.jpg",
       "source": "cache"
+    },
+    {
+      "map": "breakfloor",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
     },
     {
       "map": "min_players",
