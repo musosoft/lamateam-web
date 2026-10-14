@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-13T13:42:31.598Z",
+  "generatedAt": "2026-10-14T09:20:14.666Z",
   "total": 100,
-  "ok": 98,
+  "ok": 99,
   "items": [
     {
       "map": "$2000$",
@@ -494,9 +494,9 @@
       "source": "cache"
     },
     {
-      "map": "breakfloor",
-      "image": "/assets/map-placeholder.svg",
-      "source": "placeholder"
+      "map": "glass_war_double",
+      "image": "/assets/map-cache/glass_war_double.jpg",
+      "source": "cache"
     },
     {
       "map": "min_players",
