@@ -62,6 +62,8 @@ function getCustomMapsFromCsv(raw) {
     let name = (row[mapCol] ?? "").trim().replace(/^"|"$/g, "");
     if (!name) continue;
     if (name.toLowerCase().endsWith(".bsp")) name = name.slice(0, -4);
+    // Google Sheets may expose this map property as a stray row in the map column.
+    if (name.toLowerCase() === "min_players") continue;
     if (name) uniq.add(name);
   }
 

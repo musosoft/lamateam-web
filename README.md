@@ -51,6 +51,8 @@ References: [Astro image services](https://docs.astro.build/en/guides/integratio
 
 This section is for agentic LLM/code agents working in this repo.
 
+- For page, section, component, typography, fluid sizing, and MOTD layout decisions, read and maintain [`docs/design-guide.md`](docs/design-guide.md).
+
 1. Use `pnpm` only. The source of truth is `package.json#packageManager`.
 2. Before proposing merge-ready changes, run:
    - `pnpm audit --prod --audit-level=moderate`

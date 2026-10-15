@@ -499,9 +499,9 @@
       "source": "cache"
     },
     {
-      "map": "min_players",
-      "image": "/assets/map-placeholder.svg",
-      "source": "placeholder"
+      "map": "knas_Sandland_CSS",
+      "image": "/assets/map-cache/knas_Sandland_CSS.jpg",
+      "source": "cache"
     }
   ]
 }
