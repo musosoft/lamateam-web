@@ -86,7 +86,7 @@ test("ordinary browsers, crawlers and explicit locale routes are not negotiated"
   }
 });
 
-test("home plumbing keeps root canonical and map locale, reconciles stored English without cookies", () => {
+test("home plumbing keeps root canonical and map locale, with cookie preference before SSR", () => {
   const home = readFileSync(
     new URL("../pages/index.astro", import.meta.url),
     "utf8",
@@ -97,10 +97,9 @@ test("home plumbing keeps root canonical and map locale, reconciles stored Engli
     home,
     /canonicalPath=\{Astro\.url\.pathname === '\/' \? '\/' : undefined\}/,
   );
-  assert.match(home, /<MapRatings compact locale=\{locale\}/);
-  assert.match(home, /localStorage\.getItem\('lamateam-language'\)/);
-  assert.match(home, /'Accept-Language': 'en'/);
-  assert.match(home, /if \(location\.pathname !== '\/'\) return/);
+  assert.match(home, /<MapRatings compact unratedOnly locale=\{locale\}/);
+  assert.match(home, /cookieLocale: cookies.get\('lamateam-language'\)/);
+  assert.doesNotMatch(home, /localStorage\.getItem|Accept-Language': 'en'/);
 });
 
 test("hero preserves descriptive copy and background while keeping welcome, CTA and profile display", () => {
@@ -135,7 +134,7 @@ function clientFixture({
   storageThrows = false,
 } = {}) {
   const home = readFileSync(
-    new URL("../pages/index.astro", import.meta.url),
+    new URL("../components/LocalizedMarkup.astro", import.meta.url),
     "utf8",
   );
   const source = [...home.matchAll(/<script>([\s\S]*?)<\/script>/g)]
@@ -155,6 +154,7 @@ function clientFixture({
     navigator: { userAgent },
     location: {
       origin: "https://lamateam.eu",
+      protocol: "https:",
       pathname,
       search: "?communityid=123&name=Guest",
       hash: "#maps",
@@ -193,59 +193,37 @@ function clientFixture({
 test("fresh root selector and shortcut choices replace stale stored preference before navigation", () => {
   const fixture = clientFixture({ saved: "FR" });
   fixture.handlers.get("change")({ target: { id: "language", value: "EN" } });
-  assert.equal(fixture.preferences.at(-1), "EN");
+  assert.match(fixture.document.cookie, /lamateam-language=en;/);
   fixture.handlers.get("click")({
     button: 0,
     target: { closest: () => ({ dataset: { languageShortcut: "SK" } }) },
   });
-  assert.equal(fixture.preferences.at(-1), "SK");
-  for (const options of [
-    { pathname: "/cs/" },
-    { userAgent: "Mozilla" },
-    { storageThrows: true },
-  ]) {
+  assert.match(fixture.document.cookie, /lamateam-language=sk;/);
+  for (const options of [{ userAgent: "Mozilla" }]) {
     const other = clientFixture(options);
     other.handlers.get("change")({ target: { id: "language", value: "EN" } });
     assert.equal(other.preferences.length, 0);
   }
 });
 
-test("stored MOTD choice wins after SSR, without changing explicit routes or ordinary browsers", () => {
-  const fixture = clientFixture({ saved: "FR" });
-  fixture.handlers.get("astro:page-load")();
-  assert.equal(
-    fixture.navigations[0][0],
-    "/fr/?communityid=123&name=Guest#maps",
-  );
-  assert.equal(fixture.navigations[0][1].history, "replace");
-  for (const options of [
-    { pathname: "/cs/" },
-    { userAgent: "Mozilla" },
-    { storageThrows: true },
-    { saved: "RU" },
-    { saved: "CS" },
-  ]) {
-    const other = clientFixture(options);
-    other.handlers.get("astro:page-load")();
-    assert.equal(other.navigations.length, 0);
+test("legacy storage mismatch never navigates or fetches another page", () => {
+  for (const saved of ["FR", "EN", "RU"]) {
+    const fixture = clientFixture({ saved });
+    fixture.handlers.get("astro:page-load")?.();
+    assert.equal(fixture.navigations.length, 0);
+    assert.equal(fixture.requests.length, 0);
+    assert.equal(fixture.document.documentElement.lang, "cs");
   }
 });
 
-test("stored English loads SSR root with English header and does not loop if embedded headers fail", async () => {
-  const fixture = clientFixture();
-  fixture.handlers.get("astro:page-load")();
-  assert.equal(fixture.navigations[0][0], "/?communityid=123&name=Guest#maps");
-  const preparation = {
-    to: new URL("https://lamateam.eu/"),
-    loader: () => assert.fail("default loader should not run"),
-    signal: new AbortController().signal,
-  };
-  fixture.handlers.get("astro:before-preparation")(preparation);
-  await preparation.loader();
-  assert.equal(fixture.requests[0][1].headers["Accept-Language"], "en");
-  assert.equal(preparation.newDocument, fixture.parsed);
-  fixture.handlers.get("astro:page-load")();
-  assert.equal(fixture.navigations.length, 1);
+test("explicit game choice writes same-site cookie even when localStorage is disabled", () => {
+  const fixture = clientFixture({ storageThrows: true });
+  fixture.handlers.get("change")({ target: { id: "language", value: "EN" } });
+  assert.match(
+    fixture.document.cookie,
+    /lamateam-language=en; Path=\/; Max-Age=31536000; SameSite=Lax; Secure/,
+  );
+  assert.equal(fixture.navigations.length, 0);
 });
 
 test(
@@ -302,7 +280,7 @@ test(
           value.includes(
             translator(locale)(
               "LaMaTeAm is a CZ/SK Counter-Strike: Source community on a European server. Join us for classic maps every evening.",
-            ),
+            ).split(". ")[0] + ".",
           ),
         ),
         locale,

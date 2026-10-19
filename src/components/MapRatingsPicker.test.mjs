@@ -77,6 +77,8 @@ function fixture({ unratedOnly = true, loaded = false } = {}) {
   };
   const cards = ["rated", "first", "second"].map(makeCard);
   const context = vm.createContext({
+    root: { dataset: { authenticated: "true" } },
+    signInNote: null,
     unratedOnly,
     ratingsReady: loaded,
     loading: false,
@@ -173,7 +175,10 @@ test("only desktop homepage explicitly opts in; no selection before a complete l
     source,
     /compact && !motdPrompt && Astro.props.unratedOnly === true/,
   );
-  assert.match(source, /if \(!unratedOnly\) chooseRandomMap\(\)/);
+  assert.match(
+    source,
+    /if \(!unratedOnly && !previousMap\) chooseRandomMap\(\)/,
+  );
   const ui = fixture();
   ui.chooseRandomMap();
   assert.equal(ui.randomPreview.card, undefined);

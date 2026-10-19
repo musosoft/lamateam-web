@@ -177,7 +177,10 @@ test("GET returns catalog maps and zero-vote aggregates without identity fields"
   const f = fixture(t);
   const response = await f.get();
   const { ratings } = await response.json();
-  assert.equal(ratings.length, catalog.items.length);
+  assert.deepEqual(
+    new Set(ratings.map((rating) => rating.map)),
+    new Set(catalog.items.map((item) => item.map)),
+  );
   assert.ok(
     ratings.every(
       (rating) =>

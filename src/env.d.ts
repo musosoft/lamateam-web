@@ -15,6 +15,7 @@ interface ImportMeta {
 
 declare namespace App {
   interface Locals {
+    steamProfile: import('./lib/steam-profile').SteamProfile | null;
     runtime: {
       env: {
         STEAM_API_KEY?: string;

@@ -10,6 +10,7 @@ const locale =
     userAgent: Astro.request.headers.get('user-agent'),
     acceptLanguage: Astro.request.headers.get('accept-language'),
     country: Astro.request.cf?.country as string | undefined,
+    cookieLocale: Astro.cookies.get('lamateam-language')?.value,
   }) ?? localeFromPath(Astro.url.pathname);
 const t = translator(locale);
 const gamePrompt = {
@@ -74,60 +75,14 @@ const gamePlaceholder = {
   fr: 'Cliquez sur Envoyer',
 }[locale];
 const baseUrl = env.PUBLIC_BASE_URL || '/';
-const cookies = Astro.cookies;
-function parseSessionCookie() {
-  const raw = cookies.get('session')?.value;
-  if (!raw) return {};
-  try {
-    return JSON.parse(decodeURIComponent(raw));
-  } catch {
-    return {};
-  }
-}
-const userAgent = Astro.request.headers.get('user-agent')?.toLowerCase() || '';
-const isGame = userAgent.includes('valve') || userAgent.includes('steam');
-const rawCommunityId =
-  Astro.url.searchParams.get('communityid') ||
-  cookies.get('communityid')?.value ||
-  '';
-const rawPlayerName =
-  Astro.url.searchParams.get('name') || cookies.get('name')?.value || '';
-function convertToSteam64(communityId: string): string {
-  const match = communityId.match(/^\[U:1:(\d+)\]$/);
-  return match
-    ? (BigInt(match[1]) + BigInt('76561197960265728')).toString()
-    : communityId;
-}
-const session = parseSessionCookie();
-const steamID =
-  isGame && rawCommunityId
-    ? convertToSteam64(rawCommunityId)
-    : session?.steamID || '';
-const playerName =
-  isGame && rawCommunityId
-    ? rawPlayerName || 'Guest'
-    : session?.playerName || 'Guest';
-const isAuthenticated = !!(steamID && playerName !== 'Guest');
-async function fetchSteamAvatar(steam64: string) {
-  if (!env.STEAM_API_KEY) return '/assets/default-avatar.webp';
-  try {
-    const response = await fetch(
-      `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${env.STEAM_API_KEY}&steamids=${steam64}`,
-    );
-    if (!response.ok) return '/assets/default-avatar.webp';
-    const data = (await response.json()) as {
-      response?: { players?: Array<{ avatarfull?: string }> };
-    };
-    return (
-      data.response?.players?.[0]?.avatarfull || '/assets/default-avatar.webp'
-    );
-  } catch {
-    return '/assets/default-avatar.webp';
-  }
-}
-const playerAvatar = steamID
-  ? await fetchSteamAvatar(steamID)
-  : '/assets/default-avatar.webp';
+const isGame = /valve|steam/i.test(
+  Astro.request.headers.get('user-agent') || '',
+);
+const profile = Astro.locals.steamProfile;
+const steamID = profile?.steamID || '';
+const playerName = profile?.playerName || 'Guest';
+const isAuthenticated = !!profile;
+const playerAvatar = profile?.playerAvatar || '/assets/default-avatar.webp';
 ---
 
 <div
@@ -312,9 +267,12 @@ const playerAvatar = steamID
 </style>
 <script>
   let cleanupChat: (() => void) | undefined;
+  let activeChatShell: HTMLElement | null = null;
   function initializeChat() {
-    cleanupChat?.();
     const shell = document.querySelector<HTMLElement>('#live-chat-shell');
+    if (shell && activeChatShell === shell) return;
+    cleanupChat?.();
+    activeChatShell = shell;
     if (!shell) return;
     const copy: Record<string, string> = JSON.parse(shell.dataset.copy || '{}');
     const tc = (key: string) => {
@@ -628,6 +586,7 @@ const playerAvatar = steamID
         void fetchMessages();
     }, 30_000);
     cleanupChat = () => {
+      activeChatShell = null;
       controller.abort();
       window.clearTimeout(pointerReset);
       window.clearInterval(timer);

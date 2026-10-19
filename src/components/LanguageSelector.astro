@@ -1,11 +1,24 @@
 ---
-import { locales, localePath, type PageKind } from '../lib/localized-content';
+import {
+  locales,
+  localePath,
+  isLocale,
+  type PageKind,
+} from '../lib/localized-content';
+import { translator } from '../lib/page-copy';
 import LanguageFlag from './LanguageFlag.astro';
 interface Props {
   currentLanguage?: string;
   pageKind?: PageKind;
+  /** LocalizedMarkup owns route switching; omit the legacy DOM translator. */
+  serverLocalized?: boolean;
 }
-const { currentLanguage = 'en', pageKind } = Astro.props;
+const {
+  currentLanguage = 'en',
+  pageKind,
+  serverLocalized = false,
+} = Astro.props;
+const t = translator(isLocale(currentLanguage) ? currentLanguage : 'en');
 const names = {
   en: 'English',
   cs: 'Čeština',
@@ -31,7 +44,7 @@ const nativeFlags = {
 
 <div class="language-control fl-text-xs/sm">
   <label for="language" class="sr-only">
-    Language
+    {t('Language')}
   </label>
   <select
     id="language"
@@ -64,7 +77,7 @@ const nativeFlags = {
 </div>
 {pageKind && (
   <noscript>
-    <nav aria-label="Languages">
+    <nav aria-label={t('Languages')}>
       {(['en', ...locales] as const).map((locale) => (
         <a
           class="fl-px-2/3"
@@ -78,7 +91,7 @@ const nativeFlags = {
     </nav>
   </noscript>
 )}
-<script>
+{!serverLocalized && <script>
   import { navigate } from 'astro:transitions/client';
   let cleanup: (() => void) | undefined;
   const initializeLanguageSelector = () => {
@@ -329,4 +342,4 @@ const nativeFlags = {
   };
   document.addEventListener('astro:before-swap', () => cleanup?.());
   document.addEventListener('astro:page-load', initializeLanguageSelector);
-</script>
+</script>}

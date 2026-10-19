@@ -179,7 +179,10 @@ test("selection updates the safe title and hides only the cloned map label", () 
     ratings,
     /randomSkip\?\.addEventListener\('click', chooseRandomMap/,
   );
-  assert.match(ratings, /if \(!unratedOnly\) chooseRandomMap\(\)/);
+  assert.match(
+    ratings,
+    /if \(!unratedOnly && !previousMap\) chooseRandomMap\(\)/,
+  );
   assert.match(ratings, /const restoreFocus[\s\S]*?chooseRandomMap\(\)/);
 });
 

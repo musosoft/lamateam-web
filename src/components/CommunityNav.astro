@@ -1,8 +1,16 @@
 ---
 import { Icon } from 'astro-icon/components';
 import LanguageFlag from './LanguageFlag.astro';
-import { locales, localePath } from '../lib/localized-content';
+import {
+  locales,
+  localePath,
+  isLocale,
+  localizedHref,
+} from '../lib/localized-content';
+import { translator } from '../lib/page-copy';
 const { currentPath, currentLanguage = 'en', pageKind } = Astro.props;
+const locale = isLocale(currentLanguage) ? currentLanguage : 'en';
+const t = translator(locale);
 const languageOptions = [
   ['en', 'English'],
   ['cs', 'Čeština'],
@@ -25,12 +33,16 @@ const links = [
   ['Admins', '/admins', 'mdi:shield-account'],
   ['VIP', '/vip', 'mdi:star'],
   ['Contact', '/contact', 'mdi:email-outline'],
-];
+] as const;
 ---
 
 <header id="community-nav" class="community-nav" data-open="false">
   <div class="nav-inner fl-px-3/8 fl-py-2/4 fl-gap-2/5">
-    <a href="/" class="brand fl-gap-2/3" aria-label="LaMaTeAm community">
+    <a
+      href={localePath(locale, 'home')}
+      class="brand fl-gap-2/3"
+      aria-label={t('LaMaTeAm community')}
+    >
       <img src="/assets/favicon.svg" alt="" width="48" height="36" />
       <span translate="no">
         LaMaTeAm<span class="brand-sub">CS:S SERVER</span>
@@ -43,23 +55,23 @@ const links = [
       aria-expanded="false"
     >
       <span aria-hidden="true">☰</span>
-      <span class="sr-only">Menu</span>
+      <span class="sr-only">{t('Menu')}</span>
     </button>
     <nav
       id="community-links"
-      aria-label="Community"
+      aria-label={t('Community')}
       class="nav-links fl-gap-1/2"
     >
       <div class="nav-guides-links">
         {links.map(([label, href, icon]) => (
           <a
             data-menu-route={href}
-            href={href}
+            href={localizedHref(href, locale)}
             aria-current={currentPath === href ? 'page' : undefined}
             class="nav-link fl-p-2/3 fl-text-xs/lg"
           >
             <Icon name={icon} class="h-4 w-4" />
-            <span>{label}</span>
+            <span>{t(label)}</span>
           </a>
         ))}
       </div>
@@ -67,7 +79,7 @@ const links = [
     <div class="nav-connect">
       <nav
         class="header-language-options"
-        aria-label="Languages"
+        aria-label={t('Languages')}
         data-no-translate
         translate="no"
       >
@@ -93,12 +105,12 @@ const links = [
         ))}
       </nav>
       <a
-        href="/connect"
+        href={localePath(locale, 'connect')}
         aria-current={currentPath === '/connect' ? 'page' : undefined}
         class="connect-button fl-px-3/5 fl-py-2/3 fl-text-xs/lg"
       >
         <Icon name="mdi:play" class="h-4 w-4" />
-        <span>Connect</span>
+        <span>{t('Connect')}</span>
       </a>
     </div>
   </div>
@@ -127,7 +139,7 @@ const links = [
   class="nav-reveal"
   type="button"
   aria-controls="community-nav"
-  aria-label="Pull down navigation"
+  aria-label={t('Pull down navigation')}
   hidden
 ></button>
 <script>

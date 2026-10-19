@@ -18,8 +18,8 @@ test("sign-in and personal rating share a left-aligned group before the stars", 
     markup,
     /<form class="map-rating-form"[^>]*>\s*<div class="rating-details">[\s\S]*?data-rating-sign-in[\s\S]*?data-rating-summary[\s\S]*?<fieldset disabled>/,
   );
-  assert.equal(markup.match(/data-rating-summary/g)?.length, 1);
-  assert.equal(markup.match(/data-rating-sign-in/g)?.length, 1);
+  assert.equal(markup.match(/data-rating-summary/g)?.length, 2);
+  assert.equal(markup.match(/data-rating-sign-in\s/g)?.length, 2);
   assert.match(styles, /\.rating-details\s*\{[^}]*text-align: left;/);
 });
 

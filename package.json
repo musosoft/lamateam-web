@@ -6,6 +6,8 @@
     "node": ">=22.16.0"
   },
   "scripts": {
+    "test": "node --test",
+    "test:ssr": "node scripts/smoke-worker.mjs",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "node scripts/cache-map-images.mjs && astro build",
