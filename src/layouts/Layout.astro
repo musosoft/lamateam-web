@@ -155,20 +155,7 @@ const structuredData = pageKind
     }
   : undefined;
 
-function parseSessionCookie() {
-  const raw = cookies.get('session')?.value;
-  if (!raw) return {};
-  try {
-    return JSON.parse(decodeURIComponent(raw));
-  } catch {
-    return {};
-  }
-}
-const session = parseSessionCookie();
-const isAuthenticated = !!(
-  (isGame && communityId && playerName && playerName !== 'Guest') ||
-  (session?.steamID && session?.playerName && session.playerName !== 'Guest')
-);
+const isAuthenticated = !!Astro.locals.steamProfile;
 ---
 
 <!doctype html>
@@ -232,7 +219,7 @@ const isAuthenticated = !!(
     <a href="#main-content" class="skip-link">
       {t('Skip to content')}
     </a>
-    <LocalizedMarkup locale={locale}>
+    <LocalizedMarkup locale={locale} localized>
       <CommunityNav
         currentPath={pageKind ? localePath('en', pageKind) : currentPath}
         isAuthenticated={isAuthenticated}
@@ -255,8 +242,12 @@ const isAuthenticated = !!(
       )}
     </main>
     <footer class="community-footer fl-px-3/10 fl-py-3/6">
-      <LocalizedMarkup locale={locale} languageControl>
-        <LanguageSelector currentLanguage={lang} pageKind={pageKind} />
+      <LocalizedMarkup locale={locale} languageControl localized>
+        <LanguageSelector
+          currentLanguage={lang}
+          pageKind={pageKind}
+          serverLocalized
+        />
       </LocalizedMarkup>
       <nav aria-label={t('Community links')} class="footer-links fl-gap-2/4">
         {communityLinks.map(([label, href, icon]) => (

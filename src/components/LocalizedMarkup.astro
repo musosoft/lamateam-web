@@ -5,14 +5,16 @@ import { translator } from '../lib/page-copy';
 interface Props {
   locale: SiteLocale;
   languageControl?: boolean;
+  localized?: boolean;
 }
-const { locale, languageControl = false } = Astro.props;
+const { locale, languageControl = false, localized = false } = Astro.props;
 const t = translator(locale);
-const html = localizeShell(
-  await Astro.slots.render('default'),
-  locale,
-  languageControl,
-);
+// Shared components translate at their source. Do not build and traverse a
+// parse5 tree for their already-localized HTML on every Worker request.
+const rendered = await Astro.slots.render('default');
+const html = localized
+  ? rendered
+  : localizeShell(rendered, locale, languageControl);
 ---
 
 <Fragment set:html={html} />
@@ -100,4 +102,47 @@ const html = localizeShell(
   }
   document.addEventListener('astro:page-load', initializeLocaleRoutes);
   document.addEventListener('astro:before-swap', () => cleanup?.());
+</script>
+
+<script>
+  import { isGameUserAgent } from '../lib/motd-locale';
+  import { allLocales } from '../lib/localized-content';
+
+  function rememberMotdLanguage(value: string | undefined) {
+    if (!isGameUserAgent(navigator.userAgent)) return;
+    const language = allLocales.find(
+      (locale) => locale === value?.toLowerCase(),
+    );
+    if (!language) return;
+    document.cookie = `lamateam-language=${language}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+  }
+
+  // Save explicit MOTD choices before the shared route handlers navigate.
+  // LocalStorage-only preferences never trigger a late translation or swap.
+  document.addEventListener(
+    'change',
+    (event) => {
+      const target = event.target as HTMLSelectElement | null;
+      if (target?.id === 'language') rememberMotdLanguage(target.value);
+    },
+    { capture: true },
+  );
+  document.addEventListener(
+    'click',
+    (event) => {
+      if (
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.altKey ||
+        event.button !== 0
+      )
+        return;
+      const shortcut = (
+        event.target as HTMLElement | null
+      )?.closest<HTMLAnchorElement>('[data-language-shortcut]');
+      if (shortcut) rememberMotdLanguage(shortcut.dataset.languageShortcut);
+    },
+    { capture: true },
+  );
 </script>

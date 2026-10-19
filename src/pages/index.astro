@@ -13,6 +13,7 @@ const locale =
     userAgent: Astro.request.headers.get('user-agent'),
     acceptLanguage: Astro.request.headers.get('accept-language'),
     country: Astro.request.cf?.country as string | undefined,
+    cookieLocale: cookies.get('lamateam-language')?.value,
   }) ?? localeFromPath(Astro.url.pathname);
 // Layout's server-side home adapter translates this shared markup once. Keep
 // source copy English here, otherwise its strict dictionary sees translated keys.
@@ -29,29 +30,8 @@ if (Astro.url.pathname === '/') {
   Astro.response.headers.set('Cache-Control', 'private, no-store');
   Astro.response.headers.append('Vary', 'Accept-Language, User-Agent');
 }
-// Display-only profile, never an authentication or statistics identity.
-let profile: { playerName?: unknown; playerAvatar?: unknown } = {};
-try {
-  const value = JSON.parse(
-    decodeURIComponent(cookies.get('session')?.value || '{}'),
-  );
-  if (value && typeof value === 'object') profile = value;
-} catch {
-  /* An invalid display cookie gets the anonymous hero. */
-}
-let avatar = '/assets/default-avatar.webp';
-try {
-  if (typeof profile.playerAvatar === 'string') {
-    const url = new URL(profile.playerAvatar);
-    if (
-      url.protocol === 'https:' &&
-      /(^|\.)steamstatic\.com$|(^|\.)akamaihd\.net$/.test(url.hostname)
-    )
-      avatar = url.href;
-  }
-} catch {
-  /* Keep the local fallback. */
-}
+const profile = Astro.locals.steamProfile;
+const avatar = profile?.playerAvatar || '/assets/default-avatar.webp';
 
 const isGame = isGameUserAgent(Astro.request.headers.get('user-agent'));
 
@@ -60,12 +40,7 @@ const queryPlayerName = Astro.url.searchParams.get('name') || '';
 const rawCommunityId =
   queryCommunityId || cookies.get('communityid')?.value || '';
 const rawPlayerName = queryPlayerName || cookies.get('name')?.value || '';
-const displayName =
-  isGame && rawPlayerName && rawPlayerName !== 'Guest'
-    ? rawPlayerName.slice(0, 128)
-    : typeof profile.playerName === 'string' && profile.playerName !== 'Guest'
-      ? profile.playerName.slice(0, 128)
-      : '';
+const displayName = profile?.playerName || '';
 const motdQuery =
   isGame && rawCommunityId && rawPlayerName
     ? `?communityid=${encodeURIComponent(rawCommunityId)}&name=${encodeURIComponent(rawPlayerName)}`
@@ -208,7 +183,6 @@ const motdGuides = pages
                 <div class="hero-player fl-mt-3/5">
                   <img
                     src={avatar}
-                    data-motd-avatar={isGame ? rawCommunityId : undefined}
                     alt=""
                     width="48"
                     height="48"
@@ -997,63 +971,6 @@ const motdGuides = pages
       })();
     })();
   </script>
-  <script is:inline data-astro-rerun>
-    (() => {
-      const image = document.querySelector('img[data-motd-avatar]');
-      if (!image || image.dataset.avatarReady) return;
-      image.dataset.avatarReady = 'true';
-      const identity = image.dataset.motdAvatar || '';
-      // CS:S embedded engines may lack BigInt. Only the uint32 account portion
-      // becomes a Number; add it to the Steam64 base as decimal digits exactly.
-      let steamid;
-      if (/^765\d{14}$/.test(identity)) {
-        if (identity > '76561197960265728' && identity <= '76561202255233023')
-          steamid = identity;
-      } else {
-        const steam3 = /^\[U:1:(\d{1,10})\]$/.exec(identity);
-        const steam2 = /^STEAM_[01]:([01]):(\d{1,10})$/.exec(identity);
-        const account = steam3
-          ? Number(steam3[1])
-          : steam2
-            ? Number(steam2[2]) * 2 + Number(steam2[1])
-            : 0;
-        if (account > 0 && account <= 4294967295) {
-          const digits = '76561197960265728'.split('');
-          let carry = account;
-          for (let i = digits.length - 1; i >= 0; i--) {
-            const sum = Number(digits[i]) + carry;
-            digits[i] = String(sum % 10);
-            carry = Math.floor(sum / 10);
-          }
-          steamid = digits.join('');
-        }
-      }
-      if (!steamid) return;
-      void (async () => {
-        try {
-          const response = await fetch(`/api/steamUser?steamid=${steamid}`, {
-            credentials: 'same-origin',
-            headers: { Accept: 'application/json' },
-          });
-          if (!response.ok) return;
-          const data = await response.json();
-          if (typeof data?.avatar !== 'string') return;
-          const url = new URL(data.avatar);
-          if (
-            image.isConnected &&
-            url.protocol === 'https:' &&
-            !url.username &&
-            !url.password &&
-            !url.port &&
-            /(^|\.)steamstatic\.com$|(^|\.)akamaihd\.net$/.test(url.hostname)
-          )
-            image.src = url.href;
-        } catch {
-          // Outages or invalid responses keep the existing local/profile image.
-        }
-      })();
-    })();
-  </script>
   <script is:inline>
     (() => {
       const legacy = {
@@ -1202,9 +1119,12 @@ const motdGuides = pages
         stale: 'données potentiellement obsolètes',
       },
     };
+    let activePlayerCount: HTMLElement | null = null;
     function initializePlayerCount() {
-      stopPlayerCount?.();
       const element = document.getElementById('server-player-count');
+      if (element && activePlayerCount === element) return;
+      stopPlayerCount?.();
+      activePlayerCount = element;
       if (!element) return;
       const controller = new AbortController();
       const { signal } = controller;
@@ -1263,6 +1183,7 @@ const motdGuides = pages
       void refresh();
       timer = window.setInterval(() => void refresh(), 60_000);
       stopPlayerCount = () => {
+        activePlayerCount = null;
         controller.abort();
         observer.disconnect();
         if (timer !== undefined) window.clearInterval(timer);
@@ -1271,128 +1192,5 @@ const motdGuides = pages
     initializePlayerCount();
     document.addEventListener('astro:page-load', initializePlayerCount);
     document.addEventListener('astro:before-swap', () => stopPlayerCount?.());
-  </script>
-  <script>
-    import { navigate } from 'astro:transitions/client';
-    import type { TransitionBeforePreparationEvent } from 'astro:transitions/client';
-    import { isGameUserAgent } from '../lib/motd-locale';
-    import {
-      allLocales,
-      localePath,
-      type SiteLocale,
-    } from '../lib/localized-content';
-
-    function savedMotdLanguage(): SiteLocale | undefined {
-      if (!isGameUserAgent(navigator.userAgent)) return;
-      try {
-        const saved = localStorage.getItem('lamateam-language')?.toLowerCase();
-        return allLocales.find((locale) => locale === saved);
-      } catch {
-        // Embedded browsers may disable storage; keep the negotiated HTML.
-      }
-    }
-
-    function rememberMotdLanguage(value: string | undefined) {
-      if (location.pathname !== '/' || !isGameUserAgent(navigator.userAgent))
-        return;
-      const language = allLocales.find(
-        (locale) => locale === value?.toLowerCase(),
-      );
-      if (!language) return;
-      try {
-        localStorage.setItem('lamateam-language', language.toUpperCase());
-      } catch {
-        // Navigation still works if this embedded browser disables storage.
-      }
-    }
-
-    // The server-localized shell navigates directly. Save a fresh root choice
-    // before its existing handlers run, so an older preference cannot undo it.
-    document.addEventListener(
-      'change',
-      (event) => {
-        const target = event.target as HTMLSelectElement | null;
-        if (target?.id === 'language') rememberMotdLanguage(target.value);
-      },
-      { capture: true },
-    );
-    document.addEventListener(
-      'click',
-      (event) => {
-        if (
-          event.ctrlKey ||
-          event.metaKey ||
-          event.shiftKey ||
-          event.altKey ||
-          event.button !== 0
-        )
-          return;
-        const shortcut = (
-          event.target as HTMLElement | null
-        )?.closest<HTMLAnchorElement>('[data-language-shortcut]');
-        if (shortcut) rememberMotdLanguage(shortcut.dataset.languageShortcut);
-      },
-      { capture: true },
-    );
-
-    // English has no /en/ route. For a remembered English choice, use the same
-    // root with an explicit English request header, not a URL override or cookie.
-    document.addEventListener('astro:before-preparation', (event) => {
-      const preparation = event as TransitionBeforePreparationEvent;
-      if (
-        preparation.to.origin !== location.origin ||
-        preparation.to.pathname !== '/' ||
-        preparation.formData ||
-        savedMotdLanguage() !== 'en'
-      )
-        return;
-      const originalLoader = preparation.loader;
-      preparation.loader = async () => {
-        try {
-          const response = await fetch(preparation.to.href, {
-            headers: { 'Accept-Language': 'en' },
-            signal: preparation.signal,
-          });
-          if (
-            !response.ok ||
-            !response.headers.get('content-type')?.includes('text/html')
-          ) {
-            await originalLoader();
-            return;
-          }
-          preparation.newDocument = new DOMParser().parseFromString(
-            await response.text(),
-            'text/html',
-          );
-          preparation.newDocument
-            .querySelectorAll('noscript')
-            .forEach((node) => node.remove());
-        } catch {
-          if (!preparation.signal.aborted) await originalLoader();
-        }
-      };
-    });
-
-    let attemptedPreference: SiteLocale | undefined;
-    document.addEventListener('astro:page-load', () => {
-      if (location.pathname !== '/') return;
-      const saved = savedMotdLanguage();
-      if (!saved || saved === document.documentElement.lang) {
-        attemptedPreference = undefined;
-        return;
-      }
-      // If an old embedded engine strips our header or navigation fails, avoid
-      // repeatedly fetching the same root. A different explicit choice can retry.
-      if (attemptedPreference === saved) return;
-      attemptedPreference = saved;
-      // Storage cannot be read by SSR. Reconcile only this MOTD root; explicit
-      // localized pages and the existing selector's ordinary-browser flow stay put.
-      void navigate(
-        localePath(saved, 'home') + location.search + location.hash,
-        {
-          history: 'replace',
-        },
-      );
-    });
   </script>
 </Layout>

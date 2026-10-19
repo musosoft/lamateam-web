@@ -15,7 +15,7 @@ test("ratings intro keeps anonymous copy in MOTD and Steam instructions only on 
   assert.match(intro, /\{t\('LaMaTeAm CS:S map ratings are anonymous\.'\)\}/);
   assert.match(
     intro,
-    /!motdPrompt && \(\s*<span>\s*\{t\('Sign in with Steam to rate a map or update your rating\.'\)\}\s*<\/span>\s*\)/,
+    /!motdPrompt && \(\s*<span[^>]*>\s*\{t\('Sign in with Steam to rate a map or update your rating\.'\)\}\s*<\/span>\s*\)/,
   );
   for (const locale of locales) {
     const copy = JSON.parse(read(`../lib/i18n/${locale}.json`));

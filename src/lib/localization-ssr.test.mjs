@@ -134,7 +134,7 @@ test(
                 nodes.some(
                   (n) =>
                     n.tagName === "iframe" &&
-                    attr(n, "src")?.includes("borderColor=121c25"),
+                    attr(n, "src")?.includes("borderColor=131f32"),
                 ),
                 path,
               );

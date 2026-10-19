@@ -51,16 +51,21 @@ export function selectHomeLocale({
   userAgent,
   acceptLanguage,
   country,
+  cookieLocale,
 }: {
   pathname: string;
   userAgent: string | null;
   acceptLanguage: string | null;
   country?: string;
+  cookieLocale?: string;
 }): SiteLocale | undefined {
   // Undefined keeps explicit locale paths authoritative in the caller.
   if (pathname !== "/") return undefined;
   if (!isGameUserAgent(userAgent)) return "en";
   return (
+    (supported.has(cookieLocale?.toLowerCase() ?? "")
+      ? (cookieLocale!.toLowerCase() as SiteLocale)
+      : undefined) ??
     preferredMotdLanguage(acceptLanguage) ??
     countryLocales[country?.toUpperCase() ?? ""] ??
     "en"

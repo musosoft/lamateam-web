@@ -66,6 +66,11 @@ const mapCards = (mapsGenerated.items ?? [])
         : { src: MAP_PLACEHOLDER, width, height },
     };
   });
+const initialMap =
+  compact && !unratedOnly && mapCards.length
+    ? mapCards[Math.floor(Math.random() * mapCards.length)]
+    : undefined;
+const authenticated = !!Astro.locals.steamProfile;
 ---
 
 <section
@@ -76,6 +81,7 @@ const mapCards = (mapsGenerated.items ?? [])
   ]}
   aria-label={t('Available maps and ratings')}
   data-locale={locale}
+  data-authenticated={String(authenticated)}
   data-motd-map-prompt={motdPrompt ? '' : undefined}
   data-motd-community-id={motdPrompt ? communityId : undefined}
   data-unrated-only={unratedOnly ? '' : undefined}
@@ -98,7 +104,7 @@ const mapCards = (mapsGenerated.items ?? [])
     <p class="fl-mb-3/5 fl-text-sm/base text-gray-400">
       {t('LaMaTeAm CS:S map ratings are anonymous.')}
       {!motdPrompt && (
-        <span data-rating-sign-in-note hidden>
+        <span data-rating-sign-in-note hidden={authenticated}>
           {t('Sign in with Steam to rate a map or update your rating.')}
         </span>
       )}
@@ -126,7 +132,9 @@ const mapCards = (mapsGenerated.items ?? [])
   >
     <div class="random-map-prompt">
       <h2 id="random-map-title" translate="no" data-no-translate tabindex="-1">
-        {t('Loading a map…')}
+        {initialMap
+          ? t('Know {map}? Rate it.').replace('{map}', initialMap.name)
+          : t('Loading a map…')}
       </h2>
       <p
         id="random-map-announcement"
@@ -136,8 +144,106 @@ const mapCards = (mapsGenerated.items ?? [])
         class="sr-only"
       ></p>
     </div>
-    <div id="random-map-preview">
-      <p>{t('Loading a map…')}</p>
+    <div id="random-map-preview" data-initial-map={initialMap?.name}>
+      {(initialMap ? [initialMap] : []).map((map, index) => (
+        <article
+          class="rated-map-card"
+          data-map-rating={map.name}
+          data-ssr-preview
+        >
+          <div class="map-thumbnail">
+            <Image
+              {...map.imageProps}
+              alt={
+                map.sourceImage === MAP_PLACEHOLDER
+                  ? t('Preview unavailable for {map}').replace(
+                      '{map}',
+                      map.name,
+                    )
+                  : t('{map} map preview').replace('{map}', map.name)
+              }
+              loading={!compact && index < 4 ? 'eager' : 'lazy'}
+              fetchpriority={!compact && index === 0 ? 'high' : 'auto'}
+              decoding="async"
+              data-map-image
+              translate="no"
+              style="max-width: 100%;"
+              onerror={`this.onerror=null;this.removeAttribute('srcset');this.src='${MAP_PLACEHOLDER}';this.alt=${JSON.stringify(t('Preview unavailable for {map}'))}.replace('{map}',this.closest('[data-map-rating]').dataset.mapRating);`}
+            />
+          </div>
+          <div class="map-card-content">
+            <h2 class="map-name" hidden translate="no" data-no-translate>
+              {map.name}
+            </h2>
+            <form class="map-rating-form" data-rating-form>
+              <div class="rating-details">
+                <div class="rating-actions">
+                  <a
+                    href="/api/auth/steam"
+                    data-astro-reload
+                    class="rating-sign-in"
+                    data-rating-sign-in
+                    hidden={motdPrompt || authenticated}
+                  >
+                    {t('Sign in with Steam to rate.')}
+                  </a>
+                </div>
+                <p class="rating-summary" data-rating-summary data-no-translate>
+                  {t('Ratings not loaded.')}
+                </p>
+              </div>
+              <fieldset disabled>
+                <legend class="sr-only">
+                  {t('Rate')}{' '}
+                  <span translate="no" data-no-translate>
+                    {map.name}
+                  </span>
+                  <span data-community-summary></span>
+                </legend>
+                <div class="rating-overview">
+                  <div class="rating-stars" data-stars="0">
+                    {[1, 2, 3, 4, 5].map((stars) => (
+                      <label
+                        class="rating-star"
+                        data-star={stars}
+                        title={t('{count} stars').replace(
+                          '{count}',
+                          String(stars),
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="stars"
+                          value={stars}
+                          required
+                        />
+                        <span class="star-symbol" aria-hidden="true">
+                          ★
+                        </span>
+                        <span class="sr-only">
+                          {t('{count} stars').replace('{count}', String(stars))}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <span
+                    class="rating-count"
+                    data-rating-count
+                    data-no-translate
+                  ></span>
+                </div>
+              </fieldset>
+              <p
+                class="rating-feedback"
+                data-rating-feedback
+                role="status"
+                aria-live="polite"
+              ></p>
+            </form>
+          </div>
+        </article>
+      ))}
+      {!initialMap && <p>{t('Loading a map…')}</p>}
     </div>
     <div class="random-map-actions">
       <button type="button" id="random-map-skip" class="ratings-retry">
@@ -183,7 +289,7 @@ const mapCards = (mapsGenerated.items ?? [])
                     data-astro-reload
                     class="rating-sign-in"
                     data-rating-sign-in
-                    hidden
+                    hidden={motdPrompt || authenticated}
                   >
                     {t('Sign in with Steam to rate.')}
                   </a>
@@ -710,10 +816,13 @@ const mapCards = (mapsGenerated.items ?? [])
     canRate?: boolean;
   };
   let cleanupRatings: (() => void) | undefined;
+  let activeRatingsRoot: HTMLElement | null = null;
   function initializeMapRatings() {
-    cleanupRatings?.();
     const grid = document.querySelector<HTMLElement>('#rated-map-grid');
     const root = document.querySelector<HTMLElement>('#map-ratings-root');
+    if (root && activeRatingsRoot === root) return;
+    cleanupRatings?.();
+    activeRatingsRoot = root;
     const tc = clientTranslator(root);
     const inMotd = root?.hasAttribute('data-motd-map-prompt') === true;
     const unratedOnly =
@@ -813,7 +922,7 @@ const mapCards = (mapsGenerated.items ?? [])
         ?.setAttribute('aria-busy', String(saving));
       fieldset.disabled =
         !canRate(rating) || saving || thankingMap === card.dataset.mapRating;
-      signIn.hidden = inMotd || !rating || rating.authenticated === true;
+      signIn.hidden = inMotd || root?.dataset.authenticated === 'true';
       const randomMap =
         randomPreview?.querySelector<HTMLElement>('[data-map-rating]')?.dataset
           .mapRating;
@@ -864,7 +973,9 @@ const mapCards = (mapsGenerated.items ?? [])
     };
     let loading = false;
     let pool: HTMLElement[] = [];
-    let previousMap: string | undefined;
+    let previousMap: string | undefined =
+      randomPreview?.querySelector<HTMLElement>('[data-map-rating]')?.dataset
+        .mapRating;
     const chooseRandomMap = () => {
       if (
         !randomPreview ||
@@ -916,10 +1027,9 @@ const mapCards = (mapsGenerated.items ?? [])
         label.className = 'random-community-rating';
         label.setAttribute('translate', 'no');
         label.setAttribute('data-no-translate', '');
-        card.querySelector('form')!.insertBefore(
-          label,
-          card.querySelector('fieldset'),
-        );
+        card
+          .querySelector('form')!
+          .insertBefore(label, card.querySelector('fieldset'));
       }
       const map = card.dataset.mapRating!;
       previousMap = map;
@@ -943,8 +1053,10 @@ const mapCards = (mapsGenerated.items ?? [])
     randomSkip?.addEventListener('click', chooseRandomMap, {
       signal: bindings.signal,
     });
-    if (!unratedOnly) chooseRandomMap();
-    else if (randomSkip) randomSkip.disabled = true;
+    // Only legacy/catalog instances without a server preview need selection.
+    // MOTD's server-selected card is already the first visible map.
+    if (!unratedOnly && !previousMap) chooseRandomMap();
+    if (unratedOnly && randomSkip) randomSkip.disabled = true;
     const load = async () => {
       if (loading || busy.size) return;
       loading = true;
@@ -971,7 +1083,8 @@ const mapCards = (mapsGenerated.items ?? [])
           throw new Error('Invalid ratings');
         const authenticated = data.authenticated;
         const allowed = data.canRate;
-        if (signInNote) signInNote.hidden = authenticated;
+        if (signInNote)
+          signInNote.hidden = root?.dataset.authenticated === 'true';
         const ratings = new Map<string, Rating>(
           data.ratings.map((rating) => [
             rating.map,
@@ -1174,6 +1287,7 @@ const mapCards = (mapsGenerated.items ?? [])
       signal: bindings.signal,
     });
     cleanupRatings = () => {
+      activeRatingsRoot = null;
       bindings.abort();
       window.clearTimeout(advanceTimer);
       requests.forEach((controller) => controller.abort());

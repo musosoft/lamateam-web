@@ -26,10 +26,10 @@ const evaluate = new Function(
     { mode: "transform" },
   ) + "\nreturn { endpoint, canRate, controls };",
 );
-const setup = (motd, id = "") =>
+const setup = (motd, id = "", authenticated = false) =>
   evaluate({
     hasAttribute: () => motd,
-    dataset: { motdCommunityId: id },
+    dataset: { motdCommunityId: id, authenticated: String(authenticated) },
     querySelector: () => null,
   });
 
@@ -63,7 +63,10 @@ test("only the game instance passes community ID; both request methods share an 
 
 test("MOTD permission is explicit and unverified; desktop remains verified-only with its sign-in affordance", () => {
   assert.match(source, /data-rating-sign-in-note hidden/);
-  assert.match(source, /if \(signInNote\) signInNote\.hidden = authenticated;/);
+  assert.match(
+    source,
+    /if \(signInNote\)\s+signInNote\.hidden = root\?\.dataset\.authenticated === 'true';/,
+  );
   assert.match(source, /if \(signInNote\) signInNote\.hidden = false;/);
   for (const [motd, id, rating, enabled, signInVisible] of [
     [
@@ -91,7 +94,7 @@ test("MOTD permission is explicit and unverified; desktop remains verified-only 
     [false, "", { authenticated: true, canRate: false }, false, false],
     [false, "", { canRate: true, userRating: 4 }, false, true],
   ]) {
-    const ui = setup(motd, id);
+    const ui = setup(motd, id, rating?.authenticated === true);
     const fieldset = {};
     const signIn = {};
     const form = { setAttribute() {} };
