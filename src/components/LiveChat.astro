@@ -493,8 +493,12 @@ const playerAvatar = profile?.playerAvatar || '/assets/default-avatar.webp';
         localStorage.setItem(preference, String(open));
       } catch {}
       if (moveFocus) {
-        if (open) panel.querySelector<HTMLElement>('#shoutbox-title')?.focus();
-        else launcher.focus();
+        if (open) {
+          // MOTD starts ready for typing. Guests retain the heading target:
+          // a disabled composer cannot receive focus or authorize chat.
+          if (inGame && !input.disabled) input.focus();
+          else panel.querySelector<HTMLElement>('#shoutbox-title')?.focus();
+        } else launcher.focus();
       }
       if (open) void fetchMessages();
     };
