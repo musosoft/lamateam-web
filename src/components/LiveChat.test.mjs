@@ -343,7 +343,7 @@ test("shared chat keeps Steam payload, guards duplicate posts, and renders user 
   assert.equal(ui.nodes["#shoutbox-status"].textContent, "Message sent.");
 });
 
-test("Sedliak messages are visibly marked as automated", async () => {
+test("Sedliak messages preserve name, avatar and reply without a BOT badge", async () => {
   const ui = setup({
     messages: [
       {
@@ -361,8 +361,16 @@ test("Sedliak messages are visibly marked as automated", async () => {
   const avatar = ui.created.find(
     (node) => node.className === "chat-bot-avatar",
   );
-  assert.equal(badge?.textContent, "BOT");
-  assert.equal(badge?.["aria-label"], "Automated character");
+  assert.equal(badge, undefined);
+  assert.equal(
+    ui.created.find((node) => node.tag === "strong")?.textContent,
+    "Sedliak",
+  );
+  assert.match(
+    ui.nodes["#shoutboxMessages"].textContent,
+    /Sedliak: The server lags again\./,
+  );
+  assert.doesNotMatch(ui.nodes["#shoutboxMessages"].textContent, /BOT/);
   assert.equal(avatar?.src, "/assets/sedliak-avatar.svg");
 });
 
