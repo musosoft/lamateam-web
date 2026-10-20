@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-19T13:46:29.043Z",
-  "total": 100,
+  "generatedAt": "2026-10-20T11:01:28.909Z",
+  "total": 99,
   "ok": 99,
   "items": [
     {
@@ -491,11 +491,6 @@
     {
       "map": "glass_war_double",
       "image": "/assets/map-cache/glass_war_double.jpg",
-      "source": "cache"
-    },
-    {
-      "map": "knas_Sandland_CSS",
-      "image": "/assets/map-cache/knas_Sandland_CSS.jpg",
       "source": "cache"
     },
     {
