@@ -399,6 +399,7 @@ const playerAvatar = profile?.playerAvatar || '/assets/default-avatar.webp';
     };
     const renderMessages = (
       messages: Array<{
+        steamid?: string;
         player_avatar?: string;
         player_name: string;
         message: string;
@@ -414,31 +415,46 @@ const playerAvatar = profile?.playerAvatar || '/assets/default-avatar.webp';
         empty.textContent = tc('No messages yet. Start the conversation.');
         fragment.append(empty);
       }
-      messages.forEach(({ player_avatar, player_name, message, timestamp }) => {
-        const row = document.createElement('div');
-        row.className = 'shoutbox-message';
-        const avatar = document.createElement('img');
-        avatar.src = '/assets/default-avatar.webp';
-        try {
-          const url = new URL(player_avatar || '');
-          if (url.protocol === 'https:') avatar.src = url.href;
-        } catch {}
-        avatar.alt = '';
-        avatar.loading = 'lazy';
-        const content = document.createElement('div');
-        const name = document.createElement('strong');
-        name.textContent = player_name;
-        const text = document.createElement('p');
-        (text as ParentNode).append(
-          name,
-          document.createTextNode(': ' + message),
-        );
-        const time = document.createElement('time');
-        time.textContent = timeSince(timestamp) || '';
-        (content as ParentNode).append(text, time);
-        (row as ParentNode).append(avatar, content);
-        fragment.append(row);
-      });
+      messages.forEach(
+        ({ steamid, player_avatar, player_name, message, timestamp }) => {
+          const row = document.createElement('div');
+          row.className = 'shoutbox-message';
+          const isSedliak = steamid === 'sedliak-bot';
+          const avatar = document.createElement('img');
+          avatar.src = isSedliak
+            ? '/assets/sedliak-avatar.svg'
+            : '/assets/default-avatar.webp';
+          if (isSedliak) avatar.className = 'chat-bot-avatar';
+          else {
+            try {
+              const url = new URL(player_avatar || '');
+              if (url.protocol === 'https:') avatar.src = url.href;
+            } catch {}
+          }
+          avatar.alt = '';
+          avatar.loading = 'lazy';
+          const content = document.createElement('div');
+          const name = document.createElement('strong');
+          name.textContent = player_name;
+          if (isSedliak) {
+            const badge = document.createElement('small');
+            badge.className = 'chat-bot-badge';
+            badge.textContent = 'BOT';
+            badge.setAttribute('aria-label', 'Automated character');
+            (name as ParentNode).append(document.createTextNode(' '), badge);
+          }
+          const text = document.createElement('p');
+          (text as ParentNode).append(
+            name,
+            document.createTextNode(': ' + message),
+          );
+          const time = document.createElement('time');
+          time.textContent = timeSince(timestamp) || '';
+          (content as ParentNode).append(text, time);
+          (row as ParentNode).append(avatar, content);
+          fragment.append(row);
+        },
+      );
       // Avoid repeating live-region announcements on an unchanged poll.
       if (fragment.textContent !== previous) feed.replaceChildren(fragment);
     };
@@ -568,6 +584,7 @@ const playerAvatar = profile?.playerAvatar || '/assets/default-avatar.webp';
               player_name: shell.dataset.playerName,
               player_avatar: shell.dataset.playerAvatar,
               message,
+              locale: shell.dataset.locale,
             }),
           });
           if (signal.aborted) return;

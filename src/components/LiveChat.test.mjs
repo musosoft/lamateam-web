@@ -334,12 +334,36 @@ test("shared chat keeps Steam payload, guards duplicate posts, and renders user 
     player_name: "Fixture",
     player_avatar: "/assets/default-avatar.webp",
     message: "Hello",
+    locale: "en",
   });
   resolvePost({ ok: true });
   await pending;
   await flush();
   assert.equal(ui.nodes["#messageInput"].value, "");
   assert.equal(ui.nodes["#shoutbox-status"].textContent, "Message sent.");
+});
+
+test("Sedliak messages are visibly marked as automated", async () => {
+  const ui = setup({
+    messages: [
+      {
+        steamid: "sedliak-bot",
+        player_name: "Sedliak",
+        message: "The server lags again.",
+        player_avatar: "/assets/default-avatar.webp",
+        timestamp: "2026-10-07T00:00:00Z",
+      },
+    ],
+  });
+  await ui.nodes["#chat-launcher"].emit("click");
+  await flush();
+  const badge = ui.created.find((node) => node.className === "chat-bot-badge");
+  const avatar = ui.created.find(
+    (node) => node.className === "chat-bot-avatar",
+  );
+  assert.equal(badge?.textContent, "BOT");
+  assert.equal(badge?.["aria-label"], "Automated character");
+  assert.equal(avatar?.src, "/assets/sedliak-avatar.svg");
 });
 
 test("navigation aborts pending requests and removes scoped listeners and polling", async () => {

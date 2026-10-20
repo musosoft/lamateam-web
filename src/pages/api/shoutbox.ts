@@ -3,6 +3,14 @@ import type { APIRoute } from "astro";
 import { parseCookie } from "cookie";
 import { createClient } from "@libsql/client/web";
 import { env } from "cloudflare:workers";
+import { getSedliakReply } from "../../lib/sedliak";
+
+const SEDLIAK_ID = "sedliak-bot";
+const SEDLIAK_NAME = "Sedliak";
+const SEDLIAK_AVATAR = "/assets/sedliak-avatar.svg";
+const SEDLIAK_REPLY_CHANCE = 0.25;
+const SEDLIAK_COOLDOWN_MS = 30 * 60 * 1000;
+const SEDLIAK_DAILY_LIMIT = 4;
 
 function getTursoConfig(): { url: string; authToken?: string } {
   const devUrl = import.meta.env.TURSO_DATABASE_URL;
@@ -66,6 +74,7 @@ export const POST: APIRoute = async ({ request }) => {
       player_name?: string;
       message?: string;
       player_avatar?: string;
+      locale?: string;
     };
 
     const { steamid, player_name, message, player_avatar } = body;
@@ -78,6 +87,13 @@ export const POST: APIRoute = async ({ request }) => {
           headers: { "Content-Type": "application/json" },
         },
       );
+    }
+
+    if (steamid === SEDLIAK_ID) {
+      return new Response(JSON.stringify({ error: "Reserved chat identity" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const cookieHeader = request.headers.get("cookie") || "";
@@ -102,6 +118,41 @@ export const POST: APIRoute = async ({ request }) => {
             VALUES (?, ?, ?, ?, ?)`,
       args: [steamid, player_name, message, timestamp, player_avatar],
     });
+
+    const reply = getSedliakReply(message, body.locale || "en");
+    if (reply && Math.random() < SEDLIAK_REPLY_CHANCE) {
+      try {
+        const now = Date.now();
+        const cooldownAfter = new Date(now - SEDLIAK_COOLDOWN_MS).toISOString();
+        const today = new Date(now);
+        today.setUTCHours(0, 0, 0, 0);
+        await turso.execute({
+          sql: `INSERT INTO Shoutbox (steamid, player_name, message, timestamp, player_avatar)
+              SELECT ?, ?, ?, ?, ?
+              WHERE NOT EXISTS (
+                SELECT 1 FROM Shoutbox WHERE steamid = ? AND timestamp > ?
+              )
+              AND (
+                SELECT COUNT(*) FROM Shoutbox
+                WHERE steamid = ? AND timestamp >= ?
+              ) < ?`,
+          args: [
+            SEDLIAK_ID,
+            SEDLIAK_NAME,
+            reply,
+            new Date(now).toISOString(),
+            SEDLIAK_AVATAR,
+            SEDLIAK_ID,
+            cooldownAfter,
+            SEDLIAK_ID,
+            today.toISOString(),
+            SEDLIAK_DAILY_LIMIT,
+          ],
+        });
+      } catch (error) {
+        console.error("Error saving Sedliak reply:", error);
+      }
+    }
 
     return new Response(
       JSON.stringify({
