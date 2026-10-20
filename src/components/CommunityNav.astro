@@ -30,6 +30,12 @@ const links = [
   ['Fixes', '/fixes', 'mdi:wrench-cog'],
   ['Speed', '/speed', 'mdi:run-fast'],
   ['SourceTV', '/sourcetv', 'mdi:download-network'],
+  ['HLstatsX', 'https://stats.lamateam.eu/', 'mdi:chart-bar'],
+  [
+    'SourceBans',
+    'https://sourcebans.fakaheda.eu/sbans_336496/index.php?p=banlist',
+    'mdi:shield-alert-outline',
+  ],
   ['Admins', '/admins', 'mdi:shield-account'],
   ['VIP', '/vip', 'mdi:star'],
   ['Contact', '/contact', 'mdi:email-outline'],
@@ -67,11 +73,16 @@ const links = [
           <a
             data-menu-route={href}
             href={localizedHref(href, locale)}
+            rel={href.startsWith('https://') ? 'external' : undefined}
             aria-current={currentPath === href ? 'page' : undefined}
             class="nav-link fl-p-2/3 fl-text-xs/lg"
           >
             <Icon name={icon} class="h-4 w-4" />
-            <span>{t(label)}</span>
+            <span>
+              {label === 'HLstatsX' || label === 'SourceBans'
+                ? label
+                : t(label)}
+            </span>
           </a>
         ))}
       </div>
