@@ -1,9 +1,10 @@
 // src/pages/api/shoutbox.ts
 import type { APIRoute } from "astro";
-import { parseCookie } from "cookie";
 import { createClient } from "@libsql/client/web";
 import { env } from "cloudflare:workers";
 import { getSedliakReply } from "../../lib/sedliak";
+import { readSteamProfile } from "../../lib/steam-profile";
+import { resolveChatProfile } from "../../lib/chat-profile";
 
 const SEDLIAK_ID = "sedliak-bot";
 const SEDLIAK_NAME = "Sedliak";
@@ -96,27 +97,29 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const cookieHeader = request.headers.get("cookie") || "";
-    const cookies = parseCookie(cookieHeader);
-    const sessionCookie = cookies["session"];
-    const session = sessionCookie ? JSON.parse(sessionCookie) : {};
-
-    const rawUserAgent = request.headers.get("user-agent") || "";
-    const userAgent = rawUserAgent.toLowerCase();
-    const isGame = userAgent.includes("valve") || userAgent.includes("steam");
-
-    if (!isGame && session?.steamID !== steamid) {
+    const identity = resolveChatProfile(
+      request,
+      await readSteamProfile(
+        request,
+        import.meta.env.DEV ? import.meta.env.STEAM_API_KEY : env.STEAM_API_KEY,
+      ),
+    );
+    if (!identity || identity.profile.steamID !== steamid) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
 
+    // Resolve display metadata by the same rules as the rendered composer;
+    // request-body metadata must not select a different displayed identity.
+    const { playerName, playerAvatar } = identity.profile;
+
     const timestamp = new Date().toISOString();
     await turso.execute({
       sql: `INSERT INTO Shoutbox (steamid, player_name, message, timestamp, player_avatar)
             VALUES (?, ?, ?, ?, ?)`,
-      args: [steamid, player_name, message, timestamp, player_avatar],
+      args: [steamid, playerName, message, timestamp, playerAvatar],
     });
 
     const reply = getSedliakReply(message, body.locale || "en");
@@ -157,9 +160,9 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(
       JSON.stringify({
         steamid,
-        player_name,
+        player_name: playerName,
         message,
-        player_avatar,
+        player_avatar: playerAvatar,
         timestamp,
       }),
       {

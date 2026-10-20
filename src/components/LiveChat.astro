@@ -4,6 +4,7 @@ import { env } from 'cloudflare:workers';
 import { localeFromPath } from '../lib/localized-content';
 import { translator, chatCopy } from '../lib/page-copy';
 import { selectHomeLocale } from '../lib/motd-locale';
+import { resolveChatProfile } from '../lib/chat-profile';
 const locale =
   selectHomeLocale({
     pathname: Astro.url.pathname,
@@ -78,7 +79,18 @@ const baseUrl = env.PUBLIC_BASE_URL || '/';
 const isGame = /valve|steam/i.test(
   Astro.request.headers.get('user-agent') || '',
 );
-const profile = Astro.locals.steamProfile;
+const chatIdentity = resolveChatProfile(
+  Astro.request,
+  Astro.locals.steamProfile,
+);
+const profile = chatIdentity?.profile;
+const motdQuery =
+  chatIdentity?.source === 'motd'
+    ? new URLSearchParams({
+        communityid: profile!.steamID,
+        name: profile!.playerName,
+      }).toString()
+    : '';
 const steamID = profile?.steamID || '';
 const playerName = profile?.playerName || 'Guest';
 const isAuthenticated = !!profile;
@@ -93,6 +105,7 @@ const playerAvatar = profile?.playerAvatar || '/assets/default-avatar.webp';
   data-player-name={playerName}
   data-player-avatar={playerAvatar}
   data-authenticated={String(isAuthenticated)}
+  data-motd-query={motdQuery}
   data-default-open={String(!isGame)}
   data-session-render={Astro.isPrerendered ? 'static' : 'request'}
   data-locale={locale}
@@ -122,7 +135,16 @@ const playerAvatar = profile?.playerAvatar || '/assets/default-avatar.webp';
     </header>
     <div class="chat-account">
       {isAuthenticated ? (
-        <span translate="no">{playerName}</span>
+        <span
+          translate="no"
+          title={
+            chatIdentity?.source === 'motd'
+              ? 'Self-asserted MOTD identity (not verified by Steam)'
+              : undefined
+          }
+        >
+          {playerName}
+        </span>
       ) : (
         <a href="/api/auth/steam" data-astro-reload>
           {t('Sign in with Steam to chat')}
@@ -360,7 +382,7 @@ const playerAvatar = profile?.playerAvatar || '/assets/default-avatar.webp';
     let refreshQueued = false;
     let refreshed = false;
     const base = shell.dataset.baseUrl || '/';
-    const endpoint = `${base.endsWith('/') ? base : base + '/'}api/shoutbox`;
+    const endpoint = `${base.endsWith('/') ? base : base + '/'}api/shoutbox${shell.dataset.motdQuery ? '?' + shell.dataset.motdQuery : ''}`;
     input.disabled = send.disabled = !authenticated;
     const request = async (options?: RequestInit) => {
       const pending = new AbortController();
@@ -629,6 +651,7 @@ const playerAvatar = profile?.playerAvatar || '/assets/default-avatar.webp';
       'playerName',
       'playerAvatar',
       'authenticated',
+      'motdQuery',
       'defaultOpen',
       'sessionRender',
       'locale',

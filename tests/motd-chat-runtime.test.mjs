@@ -100,11 +100,30 @@ test(
         assert.deepEqual(errors, []);
         await context.close();
       }
-      // Neither a game UA nor legacy display/query metadata is authorization.
-      // Normal website keyboard users still land on the panel heading.
-      for (const authenticated of [false, true]) {
+      // MOTD community IDs are deliberately self-asserted; regular browsers
+      // still need a signed session and focus the heading when chat opens.
+      for (const scenario of [
+        {
+          userAgent: "Valve Steam Client",
+          signedSession: false,
+          enabled: true,
+          inGame: true,
+        },
+        {
+          userAgent: "Mozilla/5.0",
+          signedSession: false,
+          enabled: false,
+          inGame: false,
+        },
+        {
+          userAgent: "Mozilla/5.0",
+          signedSession: true,
+          enabled: true,
+          inGame: false,
+        },
+      ]) {
         const context = await browser.newContext({
-          userAgent: authenticated ? "Mozilla/5.0" : "Valve Steam Client",
+          userAgent: scenario.userAgent,
           viewport: { width: 1280, height: 720 },
         });
         await context.addCookies([
@@ -118,7 +137,7 @@ test(
             ),
             url: base,
           },
-          ...(authenticated
+          ...(scenario.signedSession
             ? [
                 {
                   name: "steam_auth",
@@ -141,19 +160,27 @@ test(
         await page.locator("#chat-launcher").click();
         assert.equal(
           await page.locator("#messageInput").isEnabled(),
-          authenticated,
+          scenario.enabled,
         );
         assert.equal(
           await page.locator("#sendButton").isEnabled(),
-          authenticated,
+          scenario.enabled,
         );
-        assert.equal(
-          await page
-            .locator("#shoutbox-title")
-            .evaluate((node) => document.activeElement === node),
-          true,
-        );
-        if (!authenticated) {
+        const focused = await page.evaluate(() => {
+          const target = /valve|steam/i.test(navigator.userAgent)
+            ? document.querySelector("#messageInput")
+            : document.querySelector("#shoutbox-title");
+          return document.activeElement === target;
+        });
+        assert.equal(focused, true);
+        if (scenario.inGame) {
+          await page.keyboard.type("community member");
+          assert.equal(
+            await page.locator("#messageInput").inputValue(),
+            "community member",
+          );
+        }
+        if (!scenario.enabled) {
           await page.locator("#messageInput").evaluate((node) => node.focus());
           await page.keyboard.type("must not type");
           assert.equal(await page.locator("#messageInput").inputValue(), "");
