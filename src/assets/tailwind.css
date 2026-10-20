@@ -813,6 +813,10 @@ main a {
   height: 2rem;
   border-radius: 3px;
 }
+.shoutbox-message img.chat-bot-avatar {
+  border-radius: 50%;
+  outline: 1px solid var(--edge);
+}
 .shoutbox-message div {
   flex: 1;
   min-width: 0;
@@ -825,6 +829,18 @@ main a {
 }
 .shoutbox-message strong {
   color: var(--accent);
+}
+.shoutbox-message .chat-bot-badge {
+  display: inline-block;
+  margin-inline-start: 0.35rem;
+  padding: 0.05rem 0.3rem;
+  border: 1px solid var(--edge);
+  border-radius: 0.25rem;
+  color: var(--muted);
+  font-size: 0.65em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: 0.1em;
 }
 .shoutbox-status {
   color: var(--muted);

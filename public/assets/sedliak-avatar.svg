@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Sedliak — friendly village-doctor bot</title>
+  <desc id="desc">A smiling cartoon farm doctor with a straw hat, oversized moustache, doctor's mirror and a tiny wheat sprig. Avatar for the disclosed Sedliak chat bot.</desc>
+  <defs>
+    <clipPath id="portrait"><circle cx="32" cy="32" r="31"/></clipPath>
+  </defs>
+  <g clip-path="url(#portrait)" stroke="#25352c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="32" cy="32" r="31" fill="#a9d8be" stroke="none"/>
+    <!-- White coat, green shirt and a deliberately enormous bow tie. -->
+    <path d="M9 65v-6c0-11 10-16 23-16s23 5 23 16v6" fill="#fff8e7"/>
+    <path d="m24 46 8 17 8-17" fill="#3b856b"/>
+    <path d="m26 48-7 5 9 3m10-8 7 5-9 3" fill="none"/>
+    <path d="m32 52-7-4v9l7-4 7 4v-9z" fill="#c56843"/>
+    <!-- Warm face and ears remain clear when reduced to 32 pixels. -->
+    <circle cx="16" cy="32" r="5" fill="#efb784"/>
+    <circle cx="48" cy="32" r="5" fill="#efb784"/>
+    <path d="M17 23h30v12c0 10-6 16-15 16s-15-6-15-16z" fill="#f6c99a"/>
+    <path d="M24 32h1m14 0h1" stroke-width="3.5"/>
+    <path d="m32 33-2 5h4" fill="none"/>
+    <path d="M26 44q6 5 12 0" fill="#fff8e7"/>
+    <path d="M32 40c-5-6-9 3-13-1 0 8 9 7 13 3 4 4 13 5 13-3-4 4-8-5-13 1z" fill="#68472f" stroke-width="1.5"/>
+    <!-- Straw hat doubles as the doctor's mirror headband. -->
+    <path d="m18 20 4-13q10-5 20 0l4 13" fill="#eac65c"/>
+    <path d="m22 9 2 6m17-6-2 6" stroke="#ae8236" stroke-width="2"/>
+    <path d="M18 16h28v7H18z" fill="#3b856b"/>
+    <path d="M9 23q23-7 46 0l-2 5q-21-5-42 0z" fill="#f4d77c"/>
+    <circle cx="35" cy="20" r="6.5" fill="#eef8ed"/>
+    <circle cx="35" cy="20" r="2" fill="#648d7c" stroke="none"/>
+    <!-- Wheat in the coat pocket: farm practice, not hospital branding. -->
+    <path d="m48 59 3-11m-2 7-3-3m4 0 4-2" fill="none" stroke="#aa7b2d" stroke-width="2"/>
+    <path d="M44 58h9v7h-9z" fill="#fff8e7" stroke-width="2"/>
+  </g>
+</svg>
