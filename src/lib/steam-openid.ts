@@ -282,7 +282,7 @@ export function createSteamOpenIdHandlers(deps: Dependencies) {
           ...cookieOptions,
           maxAge: STEAM_SESSION_SECONDS,
         });
-        const displaySession = encodeURIComponent(JSON.stringify(sessionData));
+        const displaySession = JSON.stringify(sessionData);
         cookies.set("session", displaySession, {
           ...cookieOptions,
           maxAge: STEAM_SESSION_SECONDS,

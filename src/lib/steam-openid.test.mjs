@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { parseCookie, stringifySetCookie } from "cookie";
 import {
   createSteamOpenIdHandlers,
   OPENID_NS,
@@ -8,7 +9,12 @@ import {
   STEAM_STATE_COOKIE,
   trustedSteamOrigin,
 } from "./steam-openid.ts";
-import { readSteamSession, STEAM_AUTH_COOKIE } from "./steam-session.ts";
+import {
+  issueSteamSession,
+  readSteamSession,
+  STEAM_AUTH_COOKIE,
+} from "./steam-session.ts";
+import { readSteamProfile } from "./steam-profile.ts";
 
 const origin = "https://lamateam.eu";
 const steamID = "76561198000000001";
@@ -48,7 +54,12 @@ async function fixture(options = {}) {
         return new Response(`ns:${OPENID_NS}\nis_valid:true\n`);
       return Response.json({
         response: {
-          players: [{ personaname: "Player", avatarfull: "avatar" }],
+          players: [
+            {
+              personaname: "Player",
+              avatarfull: "https://avatars.steamstatic.com/test.jpg",
+            },
+          ],
         },
       });
     },
@@ -139,7 +150,7 @@ test("valid flow verifies with Steam, preserves display cookie and authorizes si
     {
       steamID,
       playerName: "Player",
-      playerAvatar: "avatar",
+      playerAvatar: "https://avatars.steamstatic.com/test.jpg",
     },
   );
   const request = new Request(`${origin}/api/map-ratings`, {
@@ -150,6 +161,30 @@ test("valid flow verifies with Steam, preserves display cookie and authorizes si
   assert.equal(await readSteamSession(request, secret, now), steamID);
   assert.equal((await f.callback()).status, 401);
   assert.equal(f.calls.length, 2);
+});
+
+test("display profile survives Astro Set-Cookie serialization and request parsing", async () => {
+  const f = await fixture();
+  await f.callback();
+  const serialized = stringifySetCookie({
+    name: "session",
+    value: f.cookies.values.get("session"),
+    path: "/",
+  });
+  const requestCookie = parseCookie(serialized.split(";", 1)[0]).session;
+  const profile = JSON.parse(requestCookie);
+  assert.deepEqual(profile, {
+    steamID,
+    playerName: "Player",
+    playerAvatar: "https://avatars.steamstatic.com/test.jpg",
+  });
+  const authCookie = await issueSteamSession(steamID, secret);
+  const request = new Request(origin, {
+    headers: {
+      cookie: `${STEAM_AUTH_COOKIE}=${authCookie}; ${serialized.split(";", 1)[0]}`,
+    },
+  });
+  assert.deepEqual(await readSteamProfile(request, secret, now), profile);
 });
 
 test("missing/mismatched/expired/tampered state fails before network and clears cookie", async () => {
