@@ -436,13 +436,6 @@ const playerAvatar = profile?.playerAvatar || '/assets/default-avatar.webp';
           const content = document.createElement('div');
           const name = document.createElement('strong');
           name.textContent = player_name;
-          if (isSedliak) {
-            const badge = document.createElement('small');
-            badge.className = 'chat-bot-badge';
-            badge.textContent = 'BOT';
-            badge.setAttribute('aria-label', 'Automated character');
-            (name as ParentNode).append(document.createTextNode(' '), badge);
-          }
           const text = document.createElement('p');
           (text as ParentNode).append(
             name,
