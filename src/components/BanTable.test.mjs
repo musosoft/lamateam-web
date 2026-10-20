@@ -46,7 +46,7 @@ test("shared responsive menu includes canonical external stats and bans destinat
   );
   assert.equal(links.find(([label]) => label === "SourceBans")[1], bansUrl);
   const labelExpression = nav.match(
-    /<span>\{([^}]*\blabel\b[^}]*)\}<\/span>/,
+    /<span>\s*\{([\s\S]*?\blabel\b[\s\S]*?)\}\s*<\/span>/,
   )[1];
   const translated = [];
   for (const [label] of links) {

@@ -29,7 +29,7 @@ test("shared shell bypasses request-time HTML localization; only localized home 
   assert.match(adapter, /localized\s*\? rendered\s*:\s*localizeShell\(/);
   const nav = read("../src/components/CommunityNav.astro");
   assert.match(nav, /href=\{localizedHref\(href, locale\)\}/);
-  assert.match(nav, /\{t\(label\)\}/);
+  assert.match(nav, /: t\(label\)/);
   const selector = read("../src/components/LanguageSelector.astro");
   assert.match(selector, /!serverLocalized && <script>/);
 });
