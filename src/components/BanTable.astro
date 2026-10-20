@@ -9,7 +9,7 @@ const { data, fetchedAt, stale } = Astro.props;
 const updated = fetchedAt !== null ? new Date(fetchedAt).toISOString() : null;
 ---
 
-<section class="w-full fl-py-2/5 text-left text-gray-100">
+<section class="ban-page w-full fl-py-2/5 text-left">
   <header class="fl-mb-4/6 page-heading">
     <h1 class="fl-text-2xl/4xl font-bold tracking-tight">Ban List</h1>
   </header>
@@ -61,58 +61,67 @@ const updated = fetchedAt !== null ? new Date(fetchedAt).toISOString() : null;
             No bans found.
           </p>
         ) : (
-          <div
-            class="ban-table-scroll rounded-2xl border border-gray-700 bg-gray-900/80 shadow-lg"
-            role="region"
-            aria-label="Latest bans, scroll horizontally on small screens"
-            tabindex="0"
-          >
-            <table aria-describedby="banlist-summary">
-              <caption class="sr-only">
-                Latest public SourceBans bans. Dates and ban durations are
-                displayed as supplied by SourceBans.
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Player / Steam ID</th>
-                  <th scope="col">Admin</th>
-                  <th scope="col">Length / status</th>
-                  <th scope="col">Reason</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.bans.map((ban) => (
+          <>
+            <p id="banlist-scroll-help" class="ban-scroll-help">
+              On smaller screens, scroll the table sideways to see all bans.
+            </p>
+            <div
+              class="ban-table-scroll panel"
+              role="region"
+              aria-label="Latest bans"
+              aria-describedby="banlist-scroll-help"
+              tabindex="0"
+            >
+              <table aria-describedby="banlist-summary">
+                <caption>
+                  Latest public SourceBans bans
+                  <span class="sr-only">
+                    . Dates and ban durations are displayed as supplied by
+                    SourceBans.
+                  </span>
+                </caption>
+                <thead>
                   <tr>
-                    <td class="ban-date">{ban.date}</td>
-                    <th scope="row">
-                      {ban.countryCode && ban.flagUrl && (
-                        <img
-                          src={ban.flagUrl}
-                          alt={`${ban.countryCode} flag`}
-                          width="16"
-                          height="11"
-                          loading="lazy"
-                          decoding="async"
-                          referrerpolicy="no-referrer"
-                        />
-                      )}
-                      {ban.countryCode && (
-                        <span class="ban-country">{ban.countryCode}</span>
-                      )}
-                      <span>{ban.player}</span>
-                      <span class="ban-steam">
-                        {ban.steamId || 'Not available'}
-                      </span>
-                    </th>
-                    <td>{ban.admin || 'Not available'}</td>
-                    <td>{ban.length}</td>
-                    <td>{ban.reason || 'No reason provided'}</td>
+                    <th scope="col">Date</th>
+                    <th scope="col">Player / Steam ID</th>
+                    <th scope="col">Admin</th>
+                    <th scope="col">Length / status</th>
+                    <th scope="col">Reason</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {data.bans.map((ban) => (
+                    <tr>
+                      <td class="ban-date">{ban.date}</td>
+                      <th scope="row">
+                        {ban.countryCode && ban.flagUrl && (
+                          <img
+                            src={ban.flagUrl}
+                            alt={`${ban.countryCode} flag`}
+                            width="16"
+                            height="11"
+                            loading="lazy"
+                            decoding="async"
+                            referrerpolicy="no-referrer"
+                          />
+                        )}
+                        {ban.countryCode && (
+                          <span class="ban-country">{ban.countryCode}</span>
+                        )}
+                        <span>{ban.player}</span>
+                        <span class="ban-steam">
+                          {ban.steamId || 'Not available'}
+                        </span>
+                      </th>
+                      <td>{ban.admin || 'Not available'}</td>
+                      <td>{ban.length}</td>
+                      <td>{ban.reason || 'No reason provided'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </>
     )}
@@ -120,11 +129,21 @@ const updated = fetchedAt !== null ? new Date(fetchedAt).toISOString() : null;
 </section>
 
 <style>
+  .ban-page {
+    min-width: 0;
+  }
+  .ban-scroll-help {
+    margin-block: 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
   .ban-table-scroll {
+    max-width: 100%;
     overflow-x: auto;
+    scrollbar-color: #4878b6 #131f32;
   }
   .ban-table-scroll:focus-visible {
-    outline: 2px solid #fbbf24;
+    outline: 2px solid var(--accent);
     outline-offset: 4px;
   }
   table {
@@ -132,25 +151,32 @@ const updated = fetchedAt !== null ? new Date(fetchedAt).toISOString() : null;
     min-width: 48rem;
     border-collapse: collapse;
     text-align: left;
+    font-size: 0.875rem;
+  }
+  caption {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: #e7eef3;
+    background: #16263d;
+    border-bottom: 1px solid var(--edge);
   }
   th,
   td {
-    padding: 1rem;
-    vertical-align: top;
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
     overflow-wrap: anywhere;
     max-width: 22rem;
   }
-  thead {
-    background: rgb(31 41 55 / 80%);
+  thead th {
+    font-size: 0.75rem;
+    white-space: nowrap;
   }
   tbody tr {
-    border-top: 1px solid #374151;
-  }
-  tbody tr:nth-child(even) {
-    background: rgb(31 41 55 / 30%);
+    border-top: 1px solid var(--edge);
   }
   tbody th {
-    font-weight: 500;
+    font-weight: 600;
   }
   .ban-date {
     white-space: nowrap;
@@ -158,7 +184,7 @@ const updated = fetchedAt !== null ? new Date(fetchedAt).toISOString() : null;
   .ban-steam {
     display: inline;
     margin-left: 0.5rem;
-    color: #d1d5db;
+    color: var(--muted);
     font-size: 0.8rem;
   }
   tbody th {
@@ -178,5 +204,11 @@ const updated = fetchedAt !== null ? new Date(fetchedAt).toISOString() : null;
     margin-right: 0.5rem;
     color: var(--muted);
     font-size: 0.8rem;
+  }
+  @media (max-width: 700px) {
+    th,
+    td {
+      padding: 0.75rem;
+    }
   }
 </style>

@@ -29,6 +29,13 @@ const formatNumber = (value: number | null) =>
         Public player rankings from HLstatsX. This page shows the first page of
         players, not the full player list.
       </p>
+      <a
+        class="mt-3 inline-block underline underline-offset-4 hover:text-white"
+        href="https://stats.lamateam.eu/"
+        rel="external"
+      >
+        Full statistics on HLstatsX
+      </a>
     </header>
     <section class="panel fl-p-3/6 stats-content">
       <div class="stats-summary" id="stats-summary">
@@ -80,7 +87,7 @@ const formatNumber = (value: number | null) =>
             aria-describedby="stats-scroll-help"
             tabindex="0"
           >
-            <table aria-describedby="stats-summary stats-key">
+            <table aria-describedby="stats-summary">
               <caption>HLstatsX player rankings · first page</caption>
               <thead>
                 <tr>
@@ -157,10 +164,6 @@ const formatNumber = (value: number | null) =>
               </tbody>
             </table>
           </div>
-          <p id="stats-key" class="stats-key">
-            Skill is the HLstatsX rating. Kills / death is the kill-to-death
-            ratio. Missing statistics are marked “Not available”.
-          </p>
         </>
       )}
     </section>
@@ -173,8 +176,7 @@ const formatNumber = (value: number | null) =>
   }
   .stats-intro,
   .stats-summary,
-  .stats-scroll-help,
-  .stats-key {
+  .stats-scroll-help {
     color: var(--muted);
   }
   .stats-intro {
@@ -214,8 +216,7 @@ const formatNumber = (value: number | null) =>
     background: #322b1b;
     color: #fde4a7;
   }
-  .stats-scroll-help,
-  .stats-key {
+  .stats-scroll-help {
     margin-block: 0.75rem;
     font-size: 0.8125rem;
   }

@@ -22,6 +22,91 @@ test("stats remains a local native table route", () => {
   assert.doesNotMatch(page, /<iframe|Astro\.redirect|http-equiv=["']refresh/);
 });
 
+test("stats links to full HLstatsX statistics in every loading state without the old key", () => {
+  const page = source("../pages/stats.astro");
+  const header = page.match(/<header[\s\S]*?<\/header>/)[0];
+  assert.match(header, /href="https:\/\/stats\.lamateam\.eu\/"/);
+  assert.match(header, /Full statistics on HLstatsX/);
+  assert.match(header, /rel="external"/);
+  assert.doesNotMatch(page, /Skill is the HLstatsX rating|stats-key/);
+  assert.match(page, /<table aria-describedby="stats-summary">/);
+});
+
+test("shared responsive menu includes canonical external stats and bans destinations", () => {
+  const nav = source("./CommunityNav.astro");
+  const links = vm.runInNewContext(
+    nav.match(/const links = ([\s\S]*?) as const;/)[1],
+  );
+  const bansUrl = source("../lib/sourcebans.ts").match(
+    /SOURCEBANS_URL =\s*"([^"]+)"/,
+  )[1];
+  assert.equal(
+    links.find(([label]) => label === "HLstatsX")[1],
+    "https://stats.lamateam.eu/",
+  );
+  assert.equal(links.find(([label]) => label === "SourceBans")[1], bansUrl);
+  const labelExpression = nav.match(
+    /<span>\{([^}]*\blabel\b[^}]*)\}<\/span>/,
+  )[1];
+  const translated = [];
+  for (const [label] of links) {
+    const brand = label === "HLstatsX" || label === "SourceBans";
+    const rendered = vm.runInNewContext(labelExpression, {
+      label,
+      t: (key) => {
+        translated.push(key);
+        return `translated:${key}`;
+      },
+    });
+    assert.equal(rendered, brand ? label : `translated:${label}`);
+  }
+  assert.deepEqual(translated, [
+    "Rules",
+    "Maps",
+    "Commands",
+    "Money",
+    "Hitreg",
+    "Fixes",
+    "Speed",
+    "SourceTV",
+    "Admins",
+    "VIP",
+    "Contact",
+  ]);
+  // One link collection serves desktop, mobile overflow, and no-JS navigation.
+  assert.equal((nav.match(/links\.map\(/g) || []).length, 1);
+  assert.match(nav, /href=\{localizedHref\(href, locale\)\}/);
+  assert.match(
+    nav,
+    /rel=\{href\.startsWith\('https:\/\/'\) \? 'external' : undefined\}/,
+  );
+});
+
+test("ban table matches HLstatsX table presentation while retaining mobile scrolling", () => {
+  const bans = source("./BanTable.astro");
+  const stats = source("../pages/stats.astro");
+  for (const rule of [
+    "scrollbar-color: #4878b6 #131f32;",
+    "outline: 2px solid var(--accent);",
+    "font-size: 0.875rem;",
+    "background: #16263d;",
+    "border-bottom: 1px solid var(--edge);",
+    "padding: 0.875rem 1rem;",
+    "vertical-align: middle;",
+    "border-top: 1px solid var(--edge);",
+    "@media (max-width: 700px)",
+    "padding: 0.75rem;",
+  ]) {
+    assert.ok(stats.includes(rule), `HLstatsX baseline: ${rule}`);
+    assert.ok(bans.includes(rule), `Ban table: ${rule}`);
+  }
+  assert.match(bans, /class="ban-table-scroll panel"/);
+  assert.match(bans, /aria-describedby="banlist-scroll-help"/);
+  assert.match(bans, /id="banlist-scroll-help"/);
+  assert.match(bans, /overflow-x: auto/);
+  assert.doesNotMatch(bans, /<caption class="sr-only"|#374151|#fbbf24/);
+});
+
 test("both public ban routes load the same native, accessible table without redirects", () => {
   for (const route of ["bans", "banlist"]) {
     const page = source(`../pages/${route}.astro`);
