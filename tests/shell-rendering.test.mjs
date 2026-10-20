@@ -75,9 +75,27 @@ test(
       assert.equal(attr(rules, "href"), localePath(locale, "rules"), path);
       assert.ok(text(rules).includes(pageCopy[locale].Rules), path);
       const menuLinks = navNodes.filter((n) => attr(n, "data-menu-route"));
-      assert.equal(menuLinks.length, 11, path);
+      assert.equal(menuLinks.length, 13, path);
       for (const link of menuLinks) {
-        const kind = equivalentPage(attr(link, "data-menu-route"));
+        const route = attr(link, "data-menu-route");
+        if (route.startsWith("https://")) {
+          const externalLabel = {
+            "https://stats.lamateam.eu/": "HLstatsX",
+            "https://sourcebans.fakaheda.eu/sbans_336496/index.php?p=banlist":
+              "SourceBans",
+          }[route];
+          assert.ok(externalLabel, path);
+          assert.equal(attr(link, "href"), route, path);
+          assert.equal(attr(link, "rel"), "external", path);
+          assert.equal(
+            text(link.childNodes.find((n) => n.tagName === "span")),
+            externalLabel,
+            path,
+          );
+          assert.equal(attr(link, "aria-current"), undefined, path);
+          continue;
+        }
+        const kind = equivalentPage(route);
         assert.ok(kind, path);
         assert.equal(attr(link, "href"), localePath(locale, kind), path);
         const label = link.childNodes.find((n) => n.tagName === "span");
