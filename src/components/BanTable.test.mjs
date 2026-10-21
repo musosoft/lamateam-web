@@ -32,19 +32,13 @@ test("stats links to full HLstatsX statistics in every loading state without the
   assert.match(page, /<table aria-describedby="stats-summary">/);
 });
 
-test("shared responsive menu includes canonical external stats and bans destinations", () => {
+test("shared responsive menu links to local stats and banlist routes", () => {
   const nav = source("./CommunityNav.astro");
   const links = vm.runInNewContext(
     nav.match(/const links = ([\s\S]*?) as const;/)[1],
   );
-  const bansUrl = source("../lib/sourcebans.ts").match(
-    /SOURCEBANS_URL =\s*"([^"]+)"/,
-  )[1];
-  assert.equal(
-    links.find(([label]) => label === "HLstatsX")[1],
-    "https://stats.lamateam.eu/",
-  );
-  assert.equal(links.find(([label]) => label === "SourceBans")[1], bansUrl);
+  assert.equal(links.find(([label]) => label === "HLstatsX")[1], "/stats");
+  assert.equal(links.find(([label]) => label === "SourceBans")[1], "/banlist");
   const labelExpression = nav.match(
     /<span>\s*\{([\s\S]*?\blabel\b[\s\S]*?)\}\s*<\/span>/,
   )[1];
