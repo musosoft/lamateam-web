@@ -7,6 +7,7 @@ import {
   equivalentPage,
   localePath,
   locales,
+  untranslatedPublicRoutes,
 } from "../src/lib/localized-content.ts";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -90,6 +91,21 @@ test(
           assert.equal(
             text(link.childNodes.find((n) => n.tagName === "span")),
             externalLabel,
+            path,
+          );
+          assert.equal(attr(link, "aria-current"), undefined, path);
+          continue;
+        }
+        if (untranslatedPublicRoutes.includes(route)) {
+          const localLabel = {
+            "/stats": "HLstatsX",
+            "/banlist": "SourceBans",
+          }[route];
+          assert.ok(localLabel, path);
+          assert.equal(attr(link, "href"), route, path);
+          assert.equal(
+            text(link.childNodes.find((n) => n.tagName === "span")),
+            localLabel,
             path,
           );
           assert.equal(attr(link, "aria-current"), undefined, path);
