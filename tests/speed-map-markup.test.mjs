@@ -117,7 +117,10 @@ test("selection updates the safe title and hides only the cloned map label", () 
   ];
   const context = {
     cards,
-    pool: [...cards],
+    mapNames: cards.map((card) => card.dataset.mapRating),
+    pool: cards.map((card) => card.dataset.mapRating),
+    createCard: (name) =>
+      cards.find((card) => card.dataset.mapRating === name).cloneNode(),
     previousMap: undefined,
     busy: new Set(),
     thankingMap: undefined,

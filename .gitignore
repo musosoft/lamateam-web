@@ -1,5 +1,7 @@
 # build output
 dist/
+public/assets/motd-map-thumbnails/
+src/data/motd-map-catalog.generated.json
 
 # local wrangler state
 .wrangler/

@@ -24,6 +24,7 @@ const thanks = {
 }[locale];
 import { Image } from 'astro:assets';
 import mapsGenerated from '../data/maps.generated.json';
+import motdMapCatalog from '../data/motd-map-catalog.generated.json';
 import {
   getMapImage,
   getMapImageDimensions,
@@ -71,6 +72,8 @@ const initialMap =
     ? mapCards[Math.floor(Math.random() * mapCards.length)]
     : undefined;
 const authenticated = !!Astro.locals.steamProfile;
+const lazyMotd = compact && motdPrompt;
+const motdCatalog = lazyMotd ? motdMapCatalog : undefined;
 ---
 
 <section
@@ -97,6 +100,13 @@ const authenticated = !!Astro.locals.steamProfile;
     'Community rating · {average} / 5': t('Community rating · {average} / 5'),
   })}
 >
+  {motdCatalog && (
+    <script
+      type="application/json"
+      data-motd-map-catalog
+      set:html={JSON.stringify(motdCatalog).replace(/</g, '\\u003c')}
+    />
+  )}
   <div class="map-ratings-intro" hidden={compact}>
     <p class="fl-mb-2/4 fl-text-sm/base text-gray-300">
       {t('All maps currently available on the LaMaTeAm server.')}
@@ -255,7 +265,7 @@ const authenticated = !!Astro.locals.steamProfile;
     <p role="status">{t('Could not load the maps.')}</p>
   ) : (
     <div class="rated-map-grid fl-gap-2/5" id="rated-map-grid" hidden={compact}>
-      {mapCards.map((map, index) => (
+      {(lazyMotd ? [] : mapCards).map((map, index) => (
         <article class="rated-map-card" data-map-rating={map.name}>
           <div class="map-thumbnail">
             <Image
@@ -862,6 +872,37 @@ const authenticated = !!Astro.locals.steamProfile;
     const cards = Array.from(
       grid.querySelectorAll<HTMLElement>('[data-map-rating]'),
     );
+    const catalog: { name: string; src: string }[] = JSON.parse(
+      root?.querySelector('[data-motd-map-catalog]')?.textContent || '[]',
+    );
+    const mapNames = catalog.length
+      ? catalog.map((map) => map.name)
+      : cards.map((card) => card.dataset.mapRating!);
+    // Capture pristine localized markup before ratings or the skip button mutate
+    // the visible card. Only instantiate the next card, never the hidden gallery.
+    const motdTemplate = catalog.length
+      ? (randomPreview
+          ?.querySelector<HTMLElement>('[data-map-rating]')
+          ?.cloneNode(true) as HTMLElement | undefined)
+      : undefined;
+    const createCard = (name: string) => {
+      const source =
+        cards.find((card) => card.dataset.mapRating === name) ?? motdTemplate;
+      const card = source!.cloneNode(true) as HTMLElement;
+      if (motdTemplate) {
+        const original = card.dataset.mapRating!;
+        card.dataset.mapRating = name;
+        card.removeAttribute('data-ssr-preview');
+        card.querySelector('.map-name')!.textContent = name;
+        card.querySelector('legend span')!.textContent = name;
+        const image = card.querySelector<HTMLImageElement>('img')!;
+        image.removeAttribute('srcset');
+        image.removeAttribute('sizes');
+        image.src = catalog.find((map) => map.name === name)!.src;
+        image.alt = image.alt.replace(original, name);
+      }
+      return card;
+    };
     const allCards = () => [
       ...cards,
       ...Array.from(
@@ -972,7 +1013,7 @@ const authenticated = !!Astro.locals.steamProfile;
       controls(card, rating);
     };
     let loading = false;
-    let pool: HTMLElement[] = [];
+    let pool: string[] = [];
     let previousMap: string | undefined =
       randomPreview?.querySelector<HTMLElement>('[data-map-rating]')?.dataset
         .mapRating;
@@ -983,14 +1024,12 @@ const authenticated = !!Astro.locals.steamProfile;
         (unratedOnly && (!ratingsReady || loading)) ||
         busy.has(previousMap ?? '') ||
         thankingMap !== undefined ||
-        !cards.length
+        !mapNames.length
       )
         return;
       const candidates = unratedOnly
-        ? cards.filter(
-            (card) => states.get(card.dataset.mapRating!)?.userRating === null,
-          )
-        : cards;
+        ? mapNames.filter((name) => states.get(name)?.userRating === null)
+        : mapNames;
       if (unratedOnly) {
         pool = pool.filter((card) => candidates.includes(card));
         if (!candidates.length) {
@@ -1011,10 +1050,10 @@ const authenticated = !!Astro.locals.steamProfile;
           const j = Math.floor(Math.random() * (i + 1));
           [pool[i], pool[j]] = [pool[j], pool[i]];
         }
-        if (pool.length > 1 && pool.at(-1)?.dataset.mapRating === previousMap)
+        if (pool.length > 1 && pool.at(-1) === previousMap)
           [pool[0], pool[pool.length - 1]] = [pool[pool.length - 1], pool[0]];
       }
-      const card = pool.pop()!.cloneNode(true) as HTMLElement;
+      const card = createCard(pool.pop()!);
       // A sibling of the disabled rating fieldset, never a submit control.
       // Keep the same button and listener when replacing the preview.
       if (randomSkip)
@@ -1093,7 +1132,7 @@ const authenticated = !!Astro.locals.steamProfile;
         );
         if (
           ratings.size !== data.ratings.length ||
-          cards.some((card) => !ratings.has(card.dataset.mapRating!))
+          mapNames.some((name) => !ratings.has(name))
         )
           throw new Error('Incomplete ratings');
         if (bindings.signal.aborted) return;

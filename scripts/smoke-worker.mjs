@@ -94,6 +94,7 @@ try {
         "--test",
         "tests/shell-rendering.test.mjs",
         "tests/stable-first-render.test.mjs",
+        "tests/motd-map-ssr.test.mjs",
         "src/lib/localization-ssr.test.mjs",
         "src/lib/motd-locale.test.mjs",
       ],

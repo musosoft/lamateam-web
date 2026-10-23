@@ -196,6 +196,13 @@ test(
             return map;
           };
           await page.locator("#random-map-preview [data-map-rating]").waitFor();
+          if (!authenticated) {
+            assert.equal(
+              await page.locator("#rated-map-grid [data-map-rating]").count(),
+              0,
+            );
+            assert.equal(await page.locator("[data-map-rating]").count(), 1);
+          }
           const initial = await check();
           await page.locator("#random-map-skip").click();
           assert.notEqual(await check(), initial);
@@ -205,12 +212,27 @@ test(
           );
           assert.equal(
             await page
+              .locator("#random-map-preview [data-rating-count]")
+              .textContent(),
+            copy["No ratings yet."],
+          );
+          assert.equal(
+            await page
               .locator("#random-map-preview [data-rating-sign-in]")
               .isVisible(),
-            false,
+            // API mocking grants rating access, not an SSR Steam session.
+            authenticated,
           );
           const beforeRating = await current();
           await page.locator('#random-map-preview input[value="4"]').check();
+          await page.waitForFunction(
+            () =>
+              document.querySelector("#random-map-preview .rating-stars")
+                ?.dataset.stars === "4" &&
+              document
+                .querySelector("#random-map-preview [data-rating-count]")
+                ?.textContent?.includes("1"),
+          );
           await page.waitForFunction(
             (previous) =>
               document.querySelector("#random-map-preview [data-map-rating]")

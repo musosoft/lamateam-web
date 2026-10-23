@@ -83,7 +83,10 @@ function fixture({ unratedOnly = true, loaded = false } = {}) {
     ratingsReady: loaded,
     loading: false,
     cards,
-    pool: [...cards],
+    mapNames: cards.map((card) => card.dataset.mapRating),
+    createCard: (name) =>
+      cards.find((card) => card.dataset.mapRating === name).cloneNode(true),
+    pool: cards.map((card) => card.dataset.mapRating),
     previousMap: undefined,
     states: new Map(),
     busy: new Set(),
@@ -304,7 +307,7 @@ test("load failure shows retry without a preview; guests load safely and MOTD ke
   assert.ok(ui.randomPreview.card);
   assert.equal(ui.canRate(ui.states.get(ui.previousMap)), false);
   const motd = fixture({ unratedOnly: false });
-  motd.pool = [motd.cards[0]];
+  motd.pool = [motd.mapNames[0]];
   motd.states.set("rated", rating("rated", 5));
   motd.chooseRandomMap();
   assert.equal(motd.previousMap, "rated");
