@@ -4,7 +4,7 @@ import { createClient } from "@libsql/client/web";
 import { env } from "cloudflare:workers";
 import { getSedliakReply } from "../../lib/sedliak";
 import { readSteamProfile } from "../../lib/steam-profile";
-import { resolveChatProfile } from "../../lib/chat-profile";
+import { DEFAULT_CHAT_AVATAR, resolveChatAvatars, resolveChatProfile } from "../../lib/chat-profile";
 
 const SEDLIAK_ID = "sedliak-bot";
 const SEDLIAK_NAME = "Sedliak";
@@ -40,7 +40,31 @@ export const GET: APIRoute = async () => {
       "SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC LIMIT 50",
     );
 
-    return new Response(JSON.stringify(rows), {
+    const avatars = await resolveChatAvatars(
+      rows.filter((row) => row.player_avatar === DEFAULT_CHAT_AVATAR)
+        .map((row) => String(row.steamid)),
+      import.meta.env.DEV ? import.meta.env.STEAM_API_KEY : env.STEAM_API_KEY,
+    );
+    // Own plain objects rather than mutating the database driver's Row objects.
+    const messages = rows.map(({ steamid, player_name, message, timestamp, player_avatar }) => ({
+      steamid, player_name, message, timestamp, player_avatar,
+    }));
+    for (const row of messages) {
+      if (row.player_avatar !== DEFAULT_CHAT_AVATAR) continue;
+      const avatar = avatars.get(String(row.steamid));
+      if (!avatar) continue;
+      try {
+        // Repair only the recent row we read, never custom avatars or history.
+        await turso.execute({
+          sql: `UPDATE Shoutbox SET player_avatar = ?
+                WHERE steamid = ? AND timestamp = ? AND player_avatar = ?`,
+          args: [avatar, row.steamid, row.timestamp, DEFAULT_CHAT_AVATAR],
+        });
+      } catch { /* A best-effort repair must not break the chat feed. */ }
+      row.player_avatar = avatar;
+    }
+
+    return new Response(JSON.stringify(messages), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
@@ -113,7 +137,13 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Resolve display metadata by the same rules as the rendered composer;
     // request-body metadata must not select a different displayed identity.
-    const { playerName, playerAvatar } = identity.profile;
+    const { playerName } = identity.profile;
+    const playerAvatar = identity.source === "motd"
+      ? (await resolveChatAvatars(
+          [identity.profile.steamID],
+          import.meta.env.DEV ? import.meta.env.STEAM_API_KEY : env.STEAM_API_KEY,
+        )).get(identity.profile.steamID) ?? DEFAULT_CHAT_AVATAR
+      : identity.profile.playerAvatar;
 
     const timestamp = new Date().toISOString();
     await turso.execute({
