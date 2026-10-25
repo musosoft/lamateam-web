@@ -20,6 +20,8 @@
     "mode": "smart",
   },
   "vars": {
+    // Donation runtime secrets (not PUBLIC/build vars): DONATIONS_BACKEND_ORIGIN,
+    // DONATIONS_PROXY_SECRET. Provision separately; missing values fail closed.
     "PUBLIC_BASE_URL": "https://lamateam.eu/",
     "TURSO_DATABASE_URL": "libsql://lama-musosoft.aws-eu-west-1.turso.io",
   },
@@ -28,6 +30,11 @@
   ],
   // Approximate, per-colo burst protection; not a global usage or spend cap.
   "ratelimits": [
+    {
+      "name": "DONATIONS_CHECKOUT_RATE_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 6, "period": 60 },
+    },
     {
       "name": "TRANSLATION_RATE_LIMITER",
       "namespace_id": "1001",
