@@ -82,8 +82,6 @@ test(
         if (route.startsWith("https://")) {
           const externalLabel = {
             "https://stats.lamateam.eu/": "HLstatsX",
-            "https://sourcebans.fakaheda.eu/sbans_336496/index.php?p=banlist":
-              "SourceBans",
           }[route];
           assert.ok(externalLabel, path);
           assert.equal(attr(link, "href"), route, path);

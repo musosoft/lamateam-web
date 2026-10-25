@@ -1,6 +1,5 @@
 /** Public, read-only SourceBans adapter. Never forward visitor input upstream. */
-export const SOURCEBANS_URL =
-  "https://sourcebans.fakaheda.eu/sbans_336496/index.php?p=banlist";
+export const SOURCEBANS_URL = "https://banlist.lamateam.eu/index.php?p=banlist";
 const CACHE_KEY = "https://lamateam.eu/_internal/sourcebans-cache-v2";
 const FRESH_MS = 5 * 60_000;
 const STALE_MS = 60 * 60_000;
@@ -172,7 +171,7 @@ function countryFlag(
     // Accept only the observed SourceBans flag directory, never arbitrary URLs,
     // traversal, query strings, alternate origins or upstream event attributes.
     const match =
-      /^(?:images\/country\/|\/sbans_336496\/images\/country\/|https:\/\/sourcebans\.fakaheda\.eu\/sbans_336496\/images\/country\/)([a-z]{2})\.gif$/.exec(
+      /^(?:images\/country\/|\/images\/country\/|https:\/\/banlist\.lamateam\.eu\/images\/country\/)([a-z]{2})\.gif$/.exec(
         node.attrs.src ?? "",
       );
     if (!match) return [];
@@ -195,18 +194,26 @@ function countryFlag(
   };
 }
 
-export function parseSourceBans(html: string): BanList {
-  if (html.length > MAX_BYTES) throw new Error("SourceBans document too large");
-  // Remove raw-text bodies before tokenization, so script strings cannot spoof markup.
-  const document = parseHtml(
-    html.replace(/<(script|style|textarea)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ""),
-  );
-  const all = descendants(document);
-  const containers = all.filter(
-    (node) => node.tag === "div" && node.attrs.id === "banlist",
-  );
-  if (containers.length !== 1) throw new Error("SourceBans ban list missing");
-  const tables = children(containers[0]!, "table");
+function validateBanFields(
+  ban: SourceBan,
+  requirePublicIdentityFields = false,
+): void {
+  if (
+    !ban.date ||
+    !ban.player ||
+    !ban.length ||
+    (requirePublicIdentityFields && (!ban.reason || !ban.steamId)) ||
+    Object.values(ban).some(
+      (value) => typeof value === "string" && value.length > 4096,
+    )
+  ) {
+    throw new Error("SourceBans invalid ban row");
+  }
+}
+
+/** Legacy SourceBans panel: div#banlist > table with paired opener/detail rows. */
+function parseOldBanList(document: Element, container: Element): BanList {
+  const tables = children(container, "table");
   if (tables.length !== 1) throw new Error("SourceBans ban table missing");
   const listRows = rows(tables[0]!);
   const header = listRows[0];
@@ -242,7 +249,7 @@ export function parseSourceBans(html: string): BanList {
     );
     if (!fields.has("Steam ID") || !fields.has("Reason"))
       throw new Error("SourceBans detail columns changed");
-    const ban = {
+    const ban: SourceBan = {
       date: text(cells[1]!),
       player: text(cells[2]!),
       admin: text(cells[3]!),
@@ -251,19 +258,11 @@ export function parseSourceBans(html: string): BanList {
       reason: fields.get("Reason")!,
       ...countryFlag(cells[0]!),
     };
-    if (
-      !ban.date ||
-      !ban.player ||
-      !ban.length ||
-      Object.values(ban).some(
-        (value) => typeof value === "string" && value.length > 4096,
-      )
-    ) {
-      throw new Error("SourceBans invalid ban row");
-    }
+    validateBanFields(ban);
     bans.push(ban);
     if (bans.length > 30) throw new Error("SourceBans unexpected page size");
   }
+  const all = descendants(document);
   const nav = all
     .filter((node) => node.attrs.id === "banlist-nav")
     .map(text)
@@ -278,6 +277,65 @@ export function parseSourceBans(html: string): BanList {
     throw new Error("SourceBans empty table not recognized");
   }
   return { bans, total };
+}
+
+/** SBPP 2.2.1 panel: single table, thead Player|SteamID|Reason|Server|Length|Banned|Status,
+ * rows tr.ban-row with eight direct cells. Admin is not published; total is absent. */
+function parseNewBanList(all: Element[]): BanList {
+  const tables = all.filter((node) => node.tag === "table");
+  if (tables.length !== 1) throw new Error("SourceBans ban table missing");
+  const listRows = rows(tables[0]!);
+  const header = listRows[0];
+  const headings = header
+    ? children(header)
+        .map(text)
+        .filter((h) => h !== "")
+    : [];
+  if (
+    headings.join("|") !== "Player|SteamID|Reason|Server|Length|Banned|Status"
+  ) {
+    throw new Error("SourceBans columns changed");
+  }
+  const bans: SourceBan[] = [];
+  for (let index = 1; index < listRows.length; index++) {
+    const row = listRows[index]!;
+    if (!(row.attrs.class ?? "").split(/\s+/).includes("ban-row")) {
+      throw new Error("SourceBans unexpected ban row");
+    }
+    const cells = children(row, "td");
+    if (cells.length !== 8) throw new Error("SourceBans ban columns changed");
+    const ban: SourceBan = {
+      date: text(cells[5]!),
+      player: text(cells[0]!),
+      admin: "",
+      length: text(cells[4]!),
+      steamId: text(cells[1]!),
+      reason: text(cells[2]!),
+      countryCode: null,
+      flagUrl: null,
+    };
+    validateBanFields(ban, true);
+    bans.push(ban);
+    if (bans.length > 30) throw new Error("SourceBans unexpected page size");
+  }
+  if (!bans.length) throw new Error("SourceBans empty table not recognized");
+  // SBPP 2.2.1 exposes no total banner; do not invent one.
+  return { bans, total: null };
+}
+
+export function parseSourceBans(html: string): BanList {
+  if (html.length > MAX_BYTES) throw new Error("SourceBans document too large");
+  // Remove raw-text bodies before tokenization, so script strings cannot spoof markup.
+  const document = parseHtml(
+    html.replace(/<(script|style|textarea)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ""),
+  );
+  const all = descendants(document);
+  const containers = all.filter(
+    (node) => node.tag === "div" && node.attrs.id === "banlist",
+  );
+  if (containers.length > 1) throw new Error("SourceBans ban list missing");
+  if (containers.length === 1) return parseOldBanList(document, containers[0]!);
+  return parseNewBanList(all);
 }
 
 interface CacheStore {
