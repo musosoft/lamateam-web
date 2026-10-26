@@ -68,7 +68,7 @@ export async function resolveChatAvatars(
     // path and remains a final fallback if direct/batched requests are denied.
     for (const id of ids.filter((steamID) => !avatars.has(steamID))) {
       try {
-        const profileURL = new URL("https://lamateam.eu/api/steamUser");
+        const profileURL = new URL("https://lamateam-web.still-fog-235d.workers.dev/api/steamUser");
         profileURL.searchParams.set("steamid", id);
         const response = await fetcher(profileURL, { signal: AbortSignal.timeout(3000) });
         if (!response.ok) continue;
