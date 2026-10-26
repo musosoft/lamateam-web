@@ -97,7 +97,7 @@ const body = {
   message: "Hello",
 };
 
-test("avatar lookup falls back to the existing working single-profile route", async () => {
+test("avatar lookup retries missing IDs individually after a batch failure", async () => {
   const otherID = "76561198257068544";
   const requestedSteamLookups = [];
   const avatars = await resolveChatAvatars(
@@ -105,13 +105,17 @@ test("avatar lookup falls back to the existing working single-profile route", as
     secret,
     async (url) => {
       const parsed = new URL(url);
-      if (parsed.pathname === "/api/steamUser") {
-        const profileID = parsed.searchParams.get("steamid");
-        return Response.json({ avatar: `https://avatars.steamstatic.com/${profileID}_full.jpg` });
-      }
       const ids = parsed.searchParams.get("steamids").split(",");
       requestedSteamLookups.push(ids);
-      return new Response("forbidden", { status: 403 });
+      if (ids.length > 1) return new Response("forbidden", { status: 403 });
+      return Response.json({
+        response: {
+          players: [{
+            steamid: ids[0],
+            avatarfull: `https://avatars.steamstatic.com/${ids[0]}_full.jpg`,
+          }],
+        },
+      });
     },
   );
   assert.deepEqual(requestedSteamLookups, [[id, otherID], [id], [otherID]]);

@@ -41,12 +41,9 @@ export const GET: APIRoute = async () => {
     );
 
     const rowsNeedingAvatar = rows.filter((row) => row.player_avatar === DEFAULT_CHAT_AVATAR);
-    const avatarDiagnostics: string[] = [];
     const avatars = await resolveChatAvatars(
       rowsNeedingAvatar.map((row) => String(row.steamid)),
       import.meta.env.DEV ? import.meta.env.STEAM_API_KEY : env.STEAM_API_KEY,
-      globalThis.fetch,
-      (event) => avatarDiagnostics.push(event),
     );
     // Own plain objects rather than mutating the database driver's Row objects.
     const messages = rows.map(({ steamid, player_name, message, timestamp, player_avatar }) => ({
@@ -69,10 +66,7 @@ export const GET: APIRoute = async () => {
 
     return new Response(JSON.stringify(messages), {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "X-Chat-Avatar-Debug": `${rows.length}:${rowsNeedingAvatar.length}:${avatars.size}:${Boolean(env.STEAM_API_KEY)}:${avatarDiagnostics.join("|")}`,
-      },
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Error fetching messages:", error);
