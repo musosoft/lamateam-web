@@ -78,7 +78,7 @@ async function post(req) {
     env: {},
     readSteamProfile,
     resolveChatProfile,
-    resolveChatAvatars,
+    resolveChatAvatars: async () => new Map(),
     DEFAULT_CHAT_AVATAR,
     createClient: () => ({
       execute: async (statement) => {
@@ -97,27 +97,24 @@ const body = {
   message: "Hello",
 };
 
-test("avatar lookup falls back to the working single-ID Steam request", async () => {
+test("avatar lookup falls back to the existing working single-profile route", async () => {
   const otherID = "76561198257068544";
-  const requested = [];
+  const requestedSteamLookups = [];
   const avatars = await resolveChatAvatars(
     [id, otherID],
     secret,
     async (url) => {
-      const ids = new URL(url).searchParams.get("steamids").split(",");
-      requested.push(ids);
-      if (ids.length > 1) return new Response("forbidden", { status: 403 });
-      return Response.json({
-        response: {
-          players: [{
-            steamid: ids[0],
-            avatarfull: `https://avatars.steamstatic.com/${ids[0]}_full.jpg`,
-          }],
-        },
-      });
+      const parsed = new URL(url);
+      if (parsed.pathname === "/api/steamUser") {
+        const profileID = parsed.searchParams.get("steamid");
+        return Response.json({ avatar: `https://avatars.steamstatic.com/${profileID}_full.jpg` });
+      }
+      const ids = parsed.searchParams.get("steamids").split(",");
+      requestedSteamLookups.push(ids);
+      return new Response("forbidden", { status: 403 });
     },
   );
-  assert.deepEqual(requested, [[id, otherID], [id], [otherID]]);
+  assert.deepEqual(requestedSteamLookups, [[id, otherID], [id], [otherID]]);
   assert.equal(avatars.size, 2);
   assert.equal(avatars.get(id), `https://avatars.steamstatic.com/${id}_full.jpg`);
   assert.equal(avatars.get(otherID), `https://avatars.steamstatic.com/${otherID}_full.jpg`);
