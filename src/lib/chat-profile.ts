@@ -24,6 +24,7 @@ export async function resolveChatAvatars(
   const ids = [...new Set(steamIDs)].filter(
     (id) => /^\d{17}$/.test(id) && normalizeMotdCommunityId(id) === id,
   ).slice(0, 50);
+  diagnostic?.(`candidate-ids:${steamIDs.length}:${ids.length}`);
   if (!apiKey || !ids.length) return avatars;
   const lookup = async (requestedIDs: string[]) => {
     const url = new URL("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/");
