@@ -32,10 +32,9 @@ export async function resolveChatAvatars(
     url.searchParams.set("steamids", requestedIDs.join(","));
     let response: Response;
     try {
-      response = await fetcher(url, {
-        signal: AbortSignal.timeout(3000),
-        redirect: "error",
-      });
+      // Match the existing `/api/steamUser` fetch call: Cloudflare Workers'
+      // fetch rejects these optional RequestInit settings in some runtimes.
+      response = await fetcher(url.toString());
     } catch (error) {
       diagnostic?.(`steam-fetch-error:${requestedIDs.length}:${error instanceof Error ? error.name : "unknown"}`);
       return false;
