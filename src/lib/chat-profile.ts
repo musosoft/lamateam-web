@@ -34,7 +34,7 @@ export async function resolveChatAvatars(
     try {
       // Match the existing `/api/steamUser` fetch call: Cloudflare Workers'
       // fetch rejects these optional RequestInit settings in some runtimes.
-      response = await fetcher(url.toString());
+      response = await fetcher.call(globalThis, url.toString());
     } catch (error) {
       diagnostic?.(`steam-fetch-error:${requestedIDs.length}:${error instanceof Error ? error.name : "unknown"}`);
       return false;
@@ -84,7 +84,7 @@ export async function resolveChatAvatars(
       try {
         const profileURL = new URL("https://lamateam-web.still-fog-235d.workers.dev/api/steamUser");
         profileURL.searchParams.set("steamid", id);
-        const response = await fetcher(profileURL, { signal: AbortSignal.timeout(3000) });
+        const response = await fetcher.call(globalThis, profileURL);
         if (!response.ok) {
           diagnostic?.(`profile-http-${response.status}`);
           continue;
