@@ -18,6 +18,7 @@ export async function resolveChatAvatars(
   steamIDs: string[],
   apiKey?: string,
   fetcher: typeof fetch = globalThis.fetch,
+  diagnostic?: (event: string) => void,
 ): Promise<Map<string, string>> {
   const avatars = new Map<string, string>();
   const ids = [...new Set(steamIDs)].filter(
@@ -28,15 +29,27 @@ export async function resolveChatAvatars(
     const url = new URL("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/");
     url.searchParams.set("key", apiKey);
     url.searchParams.set("steamids", requestedIDs.join(","));
-    const response = await fetcher(url, {
-      signal: AbortSignal.timeout(3000),
-      redirect: "error",
-    });
-    if (!response.ok) return false;
+    let response: Response;
+    try {
+      response = await fetcher(url, {
+        signal: AbortSignal.timeout(3000),
+        redirect: "error",
+      });
+    } catch (error) {
+      diagnostic?.(`steam-fetch-error:${requestedIDs.length}:${error instanceof Error ? error.name : "unknown"}`);
+      return false;
+    }
+    if (!response.ok) {
+      diagnostic?.(`steam-http-${response.status}:${requestedIDs.length}`);
+      return false;
+    }
     const data = await response.json() as {
       response?: { players?: { steamid: string; avatarfull?: string }[] };
     };
-    if (!Array.isArray(data?.response?.players)) return false;
+    if (!Array.isArray(data?.response?.players)) {
+      diagnostic?.(`steam-payload-invalid:${requestedIDs.length}`);
+      return false;
+    }
     for (const player of data.response.players) {
       if (!player || !requestedIDs.includes(player.steamid) || typeof player.avatarfull !== "string") continue;
       try {
@@ -47,6 +60,7 @@ export async function resolveChatAvatars(
         ) avatars.set(player.steamid, avatar.href);
       } catch { /* Invalid upstream metadata is not an avatar. */ }
     }
+    diagnostic?.(`steam-ok:${requestedIDs.length}:${avatars.size}`);
     return true;
   };
 
@@ -71,15 +85,24 @@ export async function resolveChatAvatars(
         const profileURL = new URL("https://lamateam-web.still-fog-235d.workers.dev/api/steamUser");
         profileURL.searchParams.set("steamid", id);
         const response = await fetcher(profileURL, { signal: AbortSignal.timeout(3000) });
-        if (!response.ok) continue;
+        if (!response.ok) {
+          diagnostic?.(`profile-http-${response.status}`);
+          continue;
+        }
         const data = await response.json() as { avatar?: unknown };
         if (typeof data.avatar !== "string") continue;
         const avatar = new URL(data.avatar);
         if (
           avatar.protocol === "https:" && !avatar.username && !avatar.password &&
           !avatar.port && STEAM_AVATAR_HOSTS.has(avatar.hostname)
-        ) avatars.set(id, avatar.href);
-      } catch { /* Keep the default avatar when Steam or the profile route is unavailable. */ }
+        ) {
+          avatars.set(id, avatar.href);
+          diagnostic?.("profile-ok");
+        }
+      } catch (error) {
+        diagnostic?.(`profile-fetch-error:${error instanceof Error ? error.name : "unknown"}`);
+        /* Keep the default avatar when Steam or the profile route is unavailable. */
+      }
     }
   } catch { /* Steam outages must not prevent reading or posting chat. */ }
   return avatars;
