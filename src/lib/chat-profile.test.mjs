@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { stripTypeScriptTypes } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
-import { resolveChatProfile } from "./chat-profile.ts";
+import { DEFAULT_CHAT_AVATAR, resolveChatAvatars, resolveChatProfile } from "./chat-profile.ts";
 import { readSteamProfile } from "./steam-profile.ts";
 import { issueSteamSession } from "./steam-session.ts";
 
@@ -78,6 +78,8 @@ async function post(req) {
     env: {},
     readSteamProfile,
     resolveChatProfile,
+    resolveChatAvatars,
+    DEFAULT_CHAT_AVATAR,
     createClient: () => ({
       execute: async (statement) => {
         writes.push(statement);
