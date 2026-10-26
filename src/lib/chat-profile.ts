@@ -32,11 +32,17 @@ export async function resolveChatAvatars(
       signal: AbortSignal.timeout(3000),
       redirect: "error",
     });
-    if (!response.ok) return false;
+    if (!response.ok) {
+      console.warn("Steam avatar lookup rejected", { status: response.status, count: requestedIDs.length });
+      return false;
+    }
     const data = await response.json() as {
       response?: { players?: { steamid: string; avatarfull?: string }[] };
     };
-    if (!Array.isArray(data?.response?.players)) return false;
+    if (!Array.isArray(data?.response?.players)) {
+      console.warn("Steam avatar lookup returned an invalid payload", { count: requestedIDs.length });
+      return false;
+    }
     for (const player of data.response.players) {
       if (!player || !requestedIDs.includes(player.steamid) || typeof player.avatarfull !== "string") continue;
       try {
@@ -51,18 +57,21 @@ export async function resolveChatAvatars(
   };
 
   try {
+    if (!apiKey) console.warn("Steam avatar lookup skipped: API key unavailable");
     const batchSucceeded = await lookup(ids);
     // Steam occasionally rejects or incompletely answers multi-ID requests.
     // Retry only missing IDs individually; this mirrors the known-good profile
     // endpoint and avoids leaving the whole feed on placeholder avatars.
     const missingIDs = ids.filter((id) => !avatars.has(id));
     if (!batchSucceeded || missingIDs.length) {
+      console.log("Retrying Steam avatar lookup individually", { missing: missingIDs.length });
       for (const id of missingIDs) {
         try {
           await lookup([id]);
         } catch { /* A Steam outage must not prevent reading or posting chat. */ }
       }
     }
+    console.log("Steam avatar lookup completed", { requested: ids.length, resolved: avatars.size });
   } catch { /* Steam outages must not prevent reading or posting chat. */ }
   return avatars;
 }

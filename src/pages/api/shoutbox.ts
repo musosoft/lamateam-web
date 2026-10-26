@@ -40,9 +40,10 @@ export const GET: APIRoute = async () => {
       "SELECT steamid, player_name, message, timestamp, player_avatar FROM Shoutbox ORDER BY timestamp DESC LIMIT 50",
     );
 
+    const rowsNeedingAvatar = rows.filter((row) => row.player_avatar === DEFAULT_CHAT_AVATAR);
+    console.log("Chat feed avatar backfill", { rows: rows.length, defaults: rowsNeedingAvatar.length });
     const avatars = await resolveChatAvatars(
-      rows.filter((row) => row.player_avatar === DEFAULT_CHAT_AVATAR)
-        .map((row) => String(row.steamid)),
+      rowsNeedingAvatar.map((row) => String(row.steamid)),
       import.meta.env.DEV ? import.meta.env.STEAM_API_KEY : env.STEAM_API_KEY,
     );
     // Own plain objects rather than mutating the database driver's Row objects.
