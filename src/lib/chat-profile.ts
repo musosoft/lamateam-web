@@ -24,21 +24,21 @@ export async function resolveChatAvatars(
     (id) => /^\d{17}$/.test(id) && normalizeMotdCommunityId(id) === id,
   ).slice(0, 50);
   if (!apiKey || !ids.length) return avatars;
-  try {
+  const lookup = async (requestedIDs: string[]) => {
     const url = new URL("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/");
     url.searchParams.set("key", apiKey);
-    url.searchParams.set("steamids", ids.join(","));
+    url.searchParams.set("steamids", requestedIDs.join(","));
     const response = await fetcher(url, {
       signal: AbortSignal.timeout(3000),
       redirect: "error",
     });
-    if (!response.ok) return avatars;
+    if (!response.ok) return false;
     const data = await response.json() as {
       response?: { players?: { steamid: string; avatarfull?: string }[] };
     };
-    if (!Array.isArray(data?.response?.players)) return avatars;
+    if (!Array.isArray(data?.response?.players)) return false;
     for (const player of data.response.players) {
-      if (!player || !ids.includes(player.steamid) || typeof player.avatarfull !== "string") continue;
+      if (!player || !requestedIDs.includes(player.steamid) || typeof player.avatarfull !== "string") continue;
       try {
         const avatar = new URL(player.avatarfull);
         if (
@@ -46,6 +46,22 @@ export async function resolveChatAvatars(
           !avatar.port && STEAM_AVATAR_HOSTS.has(avatar.hostname)
         ) avatars.set(player.steamid, avatar.href);
       } catch { /* Invalid upstream metadata is not an avatar. */ }
+    }
+    return true;
+  };
+
+  try {
+    const batchSucceeded = await lookup(ids);
+    // Steam occasionally rejects or incompletely answers multi-ID requests.
+    // Retry only missing IDs individually; this mirrors the known-good profile
+    // endpoint and avoids leaving the whole feed on placeholder avatars.
+    const missingIDs = ids.filter((id) => !avatars.has(id));
+    if (!batchSucceeded || missingIDs.length) {
+      for (const id of missingIDs) {
+        try {
+          await lookup([id]);
+        } catch { /* A Steam outage must not prevent reading or posting chat. */ }
+      }
     }
   } catch { /* Steam outages must not prevent reading or posting chat. */ }
   return avatars;
