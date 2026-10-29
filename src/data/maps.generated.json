@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-22T11:17:09.512Z",
-  "total": 99,
+  "generatedAt": "2026-10-29T12:25:24.337Z",
+  "total": 100,
   "ok": 99,
   "items": [
     {
@@ -497,6 +497,11 @@
       "map": "knas_Sandland_CSS",
       "image": "/assets/map-cache/knas_Sandland_CSS.jpg",
       "source": "cache"
+    },
+    {
+      "map": "fy_simpsons",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
     }
   ]
 }
