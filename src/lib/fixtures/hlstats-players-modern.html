@@ -1,0 +1,40 @@
+<!doctype html>
+<!-- Reduced rendered contract from src/laravel/resources/views/frontend/players/index.blade.php
+     and components/ui/{player-link,flag}.blade.php. Synthetic data, no live profiles. -->
+<html lang="en"><body>
+<form method="GET" action="https://stats.lamateam.eu/players">
+  <input type="hidden" name="game" value="css">
+</form>
+<table class="hlx-table">
+  <thead><tr>
+    <th style="width:40px; text-align:center;">Rank</th>
+    <th><a href="https://stats.lamateam.eu/players?game=css&amp;sort=lastName" class="hlx-muted">Player</a></th>
+    <th><a href="https://stats.lamateam.eu/players?game=css&amp;sort=skill">Points</a></th>
+    <th>Activity</th><th>Conn. Time</th>
+    <th><a href="/players?game=css&amp;sort=kills">Kills</a></th>
+    <th><a href="/players?game=css&amp;sort=deaths">Deaths</a></th>
+    <th>K:D</th><th><a href="/players?game=css&amp;sort=headshots">Headshots</a></th>
+    <th>HS%</th><th>Accuracy</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td style="text-align:center;" class="hlx-muted">1</td>
+      <td><span style="display:inline-flex; align-items:center; gap:4px;">
+        <img src="/hlstatsimg/flags/sk.gif" alt="SK" title="SK" width="16" height="11" onerror="this.style.display='none'">
+        <a href="https://stats.lamateam.eu/players/101" class="hlx-link">Alice &amp; Bob 😀 &lt;script&gt;</a>
+      </span></td>
+      <td class="hlx-text">12,345</td>
+      <td class="hlx-activity-cell"><div style="width:100%"></div></td>
+      <td class="hlx-muted">2d 01:02:03h</td>
+      <td class="hlx-text">2,345</td><td class="hlx-text">1,000</td><td class="hlx-text">2.35</td>
+      <td class="hlx-text">900</td><td class="hlx-text">38.38%</td><td class="hlx-text">24.56%</td>
+    </tr>
+    <tr>
+      <td class="hlx-muted">2</td>
+      <td><span><a href="/players/102" class="hlx-link">Player Two</a></span></td>
+      <td class="hlx-text">1,000</td><td class="hlx-activity-cell"><div></div></td><td>0d 00:00:00h</td>
+      <td>0</td><td>0</td><td>0</td><td>0</td><td>0%</td><td>0%</td>
+    </tr>
+  </tbody>
+</table>
+</body></html>

@@ -13,6 +13,10 @@ const fixture = readFileSync(
   new URL("./fixtures/hlstats-players.html", import.meta.url),
   "utf8",
 );
+const modernFixture = readFileSync(
+  new URL("./fixtures/hlstats-players-modern.html", import.meta.url),
+  "utf8",
+);
 const html = (body = fixture, init = {}) =>
   new Response(body, {
     headers: { "Content-Type": "text/html; charset=UTF-8" },
@@ -55,8 +59,73 @@ test("faithful HLstats table extracts only player contract, with decoded inert t
   assert.equal(players[1].kills, 0);
 });
 
+test("Laravel rankings and player-link/flag components produce the public contract", async () => {
+  assert.equal(HLSTATS_URL, "https://stats.lamateam.eu/players?game=css");
+  const players = parseHlstatsPlayers(modernFixture);
+  assert.equal(players.length, 2);
+  assert.deepEqual(players[0], {
+    ...parseHlstatsPlayers(fixture)[0],
+    country: "SK",
+    flagAlt: "SK",
+    rankUrl: null,
+  });
+  assert.equal(players[1].country, "");
+  assert.equal(players[1].flagUrl, null);
+  assert.equal(players[1].kpd, "0");
+  const load = createHlstatsLoader({
+    bypassToken: testToken,
+    cache: noCache,
+    fetch: async (url, init) => {
+      assert.equal(url, "https://stats.lamateam.eu/players?game=css");
+      assert.equal(init.redirect, "manual");
+      return html(modernFixture);
+    },
+  });
+  assert.deepEqual((await load()).players, players);
+});
+
+test("Laravel empty branch succeeds, but arbitrary colspan/malformed rows fail closed", () => {
+  const emptyTable = modernFixture.replace(
+    /<tbody>[\s\S]*?<\/tbody>/,
+    '<tbody><tr><td colspan="11" class="hlx-muted">No players found.</td></tr></tbody>',
+  );
+  assert.deepEqual(parseHlstatsPlayers(emptyTable), []);
+  for (const invalid of [
+    emptyTable.replace("No players found.", "Just a moment..."),
+    emptyTable.replace('colspan="11"', 'colspan="10"'),
+    modernFixture.replace("hlx-table", "other-table"),
+    modernFixture.replace("Conn. Time", "Unknown"),
+    modernFixture.replace("/players/102", "/players/101"),
+    modernFixture.replace("/players/102", "https://evil.test/players/102"),
+    modernFixture.replace(">2</td>", ">1</td>"),
+    modernFixture.replace(">0%</td>", ">0%</td><td>extra</td>"),
+    modernFixture.replace(
+      "Player Two",
+      'Player Two</a><a href="/players/103">Other',
+    ),
+  ])
+    assert.throws(() => parseHlstatsPlayers(invalid));
+  const row = /<tbody>\s*(<tr>[\s\S]*?<\/tr>)/.exec(modernFixture)[1];
+  assert.throws(
+    () =>
+      parseHlstatsPlayers(
+        modernFixture.replace(
+          /<tbody>[\s\S]*?<\/tbody>/,
+          `<tbody>${Array.from({ length: 101 }, (_, i) =>
+            row
+              .replace(">1</td>", `>${i + 1}</td>`)
+              .replace("/players/101", `/players/${i + 1}`),
+          ).join("")}</tbody>`,
+        ),
+      ),
+    /too many players/,
+  );
+});
+
 test("player IDs come only from validated, unambiguous player-info links", () => {
   for (const href of [
+    "/players/101",
+    "https://stats.lamateam.eu/players/101",
     "hlstats.php?mode=playerinfo&player=101",
     "/hlstats.php?player=101&mode=playerinfo",
     "https://stats.lamateam.eu/hlstats.php?mode=playerinfo&player=101",
@@ -64,6 +133,14 @@ test("player IDs come only from validated, unambiguous player-info links", () =>
     assert.equal(parseHlstatsPlayerId(href), 101);
   }
   for (const href of [
+    "https://evil.test/players/101",
+    "https://user:pass@stats.lamateam.eu/players/101",
+    "/players/101#other",
+    "/players/101?player=102",
+    "/players/101/events",
+    ...["", "0", "-1", "1.5", "1e2", "0101", "9007199254740992"].map(
+      (id) => `/players/${id}`,
+    ),
     "https://evil.test/hlstats.php?mode=playerinfo&player=101",
     "https://user:pass@stats.lamateam.eu/hlstats.php?mode=playerinfo&player=101",
     "hlstats.php?mode=playerinfo&player=101#other",
@@ -513,7 +590,7 @@ test("Cache API shares snapshots/backoff across isolates", async () => {
   await createHlstatsLoader(options)();
   assert.equal(calls, 2);
   const entry = await store.match(
-    new Request("https://lamateam.eu/_internal/hlstats-players-v2"),
+    new Request("https://lamateam.eu/_internal/hlstats-players-v3"),
   );
   assert.ok(entry !== undefined);
 });

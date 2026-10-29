@@ -1,10 +1,9 @@
 import { parse, type DefaultTreeAdapterMap } from "parse5";
 
 /** Server-only adapter: neither the upstream URL nor query accepts visitor input. */
-export const HLSTATS_URL =
-  "https://stats.lamateam.eu/hlstats.php?mode=players&game=css";
+export const HLSTATS_URL = "https://stats.lamateam.eu/players?game=css";
 export const HLSTATS_SECRET_HEADER = "X-LamaTeam-Stats-Key";
-const CACHE_KEY = "https://lamateam.eu/_internal/hlstats-players-v2";
+const CACHE_KEY = "https://lamateam.eu/_internal/hlstats-players-v3";
 const FRESH_MS = 5 * 60_000;
 const STALE_MS = 60 * 60_000;
 const RETRY_MS = 60_000;
@@ -123,16 +122,24 @@ function decimal(value: string, percent = false): string | null {
   return Number.isFinite(number) && (!percent || number <= 100) ? value : null;
 }
 
-/** Parse only unambiguous same-origin player-info links. Never use names as IDs. */
+/** Parse only unambiguous same-origin player links. Never use names as IDs. */
 export function parseHlstatsPlayerId(href: string): number | null {
   try {
     const url = new URL(href, HLSTATS_URL);
     if (
       url.origin !== "https://stats.lamateam.eu" ||
-      url.pathname !== "/hlstats.php" ||
       url.username ||
       url.password ||
-      url.hash ||
+      url.hash
+    )
+      return null;
+    const modern = /^\/players\/([1-9]\d*)$/.exec(url.pathname);
+    if (modern) {
+      const id = Number(modern[1]);
+      return !url.search && Number.isSafeInteger(id) ? id : null;
+    }
+    if (
+      url.pathname !== "/hlstats.php" ||
       url.searchParams.getAll("mode").length !== 1 ||
       url.searchParams.get("mode") !== "playerinfo" ||
       url.searchParams.getAll("player").length !== 1
@@ -166,8 +173,8 @@ function parseBoundedDocument(html: string) {
 
 export function parseHlstatsPlayers(html: string): HlstatsPlayer[] {
   const document = parseBoundedDocument(html);
-  const tables = descendants(document, "table").filter((n) =>
-    classes(n, "data-table"),
+  const tables = descendants(document, "table").filter(
+    (n) => classes(n, "data-table") || classes(n, "hlx-table"),
   );
   for (const table of tables) {
     const rows = children(table).flatMap((n) =>
@@ -177,12 +184,24 @@ export function parseHlstatsPlayers(html: string): HlstatsPlayer[] {
           ? elements(n, "tr")
           : [],
     );
-    const header = rows.find((r) => classes(r, "data-table-head"));
+    // Laravel frontend/players/index.blade.php uses a semantic thead, not
+    // legacy data-table-head classes. Other hlx-table tables are not rankings.
+    const modern = classes(table, "hlx-table");
+    const headers = modern
+      ? elements(table, "thead").flatMap((n) => elements(n, "tr"))
+      : rows.filter((r) => classes(r, "data-table-head"));
+    const header = headers.length === 1 ? headers[0] : undefined;
     if (!header) continue;
     const cells = children(header)
       .filter(isElement)
       .filter((n) => ["td", "th"].includes(n.tagName));
     const labels = cells.map(clean);
+    if (
+      modern &&
+      labels.join("|") !==
+        "Rank|Player|Points|Activity|Conn. Time|Kills|Deaths|K:D|Headshots|HS%|Accuracy"
+    )
+      continue;
     if (
       labels[0] !== "Rank" ||
       !["Player", "Kills", "Deaths", "K:D", "Headshots", "Accuracy"].every(
@@ -197,8 +216,18 @@ export function parseHlstatsPlayers(html: string): HlstatsPlayer[] {
       throw new Error("HLstats ambiguous columns");
     const players: HlstatsPlayer[] = [];
     for (const row of rows) {
-      if (classes(row, "data-table-head")) continue;
+      if (row === header) continue;
       const values = elements(row, "td");
+      // Blade's @empty branch is a single explicit full-width message.
+      if (
+        modern &&
+        rows.length === 2 &&
+        values.length === 1 &&
+        attr(values[0]!, "colspan") === "11" &&
+        !attr(values[0]!, "rowspan") &&
+        clean(values[0]!) === "No players found."
+      )
+        return [];
       if (
         values.length !== labels.length ||
         values.some((v) => attr(v, "colspan") || attr(v, "rowspan"))
@@ -613,6 +642,9 @@ export async function loadHlstatsMyStats(
   if (!uniqueId || !options.bypassToken?.trim()) return unavailable;
   try {
     const url = new URL(HLSTATS_URL);
+    // The authenticated personal-stats adapter still targets the legacy
+    // identity lookup contract; changing rankings must not retarget it.
+    url.pathname = "/hlstats.php";
     url.search = "";
     url.searchParams.set("mode", "playerinfo");
     url.searchParams.set("uniqueid", uniqueId);
