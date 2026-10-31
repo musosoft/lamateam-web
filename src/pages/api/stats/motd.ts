@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { loadHlstatsMyStats } from "../../../lib/hlstats";
 import { createHlstatsMotdHandler } from "../../../lib/hlstats-motd";
+import { recordCheckPlayer } from "../../../lib/check-players";
 
 const statsEnv = env as typeof env &
   Cloudflare.Env & {
@@ -10,6 +11,8 @@ const statsEnv = env as typeof env &
 const handle = createHlstatsMotdHandler({
   rateLimiter: statsEnv.TRANSLATION_RATE_LIMITER,
   development: import.meta.env.DEV,
+  recordObservation: (communityId, lastSeen) =>
+    recordCheckPlayer(statsEnv.SESSION, communityId, lastSeen),
   load: (steamID) =>
     loadHlstatsMyStats(steamID, {
       bypassToken: import.meta.env.DEV
