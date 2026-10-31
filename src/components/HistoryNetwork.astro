@@ -1,0 +1,544 @@
+---
+interface Props {
+  nodes: Array<{
+    id: string;
+    name: string;
+    kind: 'community' | 'server' | 'person' | 'project' | 'provider';
+    summary: string;
+    period: string;
+  }>;
+  links: Array<{
+    from: string;
+    to: string;
+    kind: string;
+    account: string;
+    period: string;
+  }>;
+}
+
+const { nodes } = Astro.props;
+const available = new Set(nodes.map(({ id }) => id));
+const x = (year: number) => 90 + (year - 2006) * 110;
+const mergeX = x(2013.5);
+const battleX = x(2014.7);
+const rivalsX = x(2015.3);
+// The right-hand bay is deliberately outside the calendar scale. Neither the
+// Rivals closure nor the JZD → LaMaTeAm handoff has a researched calendar date.
+const handoffX = 1460;
+const mainY = 182;
+const milestones = [
+  {
+    id: 'agteam',
+    label: 'Aggressive Ghost Team',
+    x: x(2006),
+    y: mainY,
+    labelY: 154,
+    detail: '≈ 2006 · oral account',
+    color: '#b8a0ff',
+  },
+  {
+    id: 'aggressive-zone',
+    label: 'Aggressive Zone',
+    x: mergeX,
+    y: mainY,
+    labelY: 115,
+    detail: '≈ 2013–14 · merger',
+    color: '#b8a0ff',
+  },
+  {
+    id: 'battleforce',
+    label: 'Battleforce',
+    x: battleX,
+    y: mainY,
+    labelY: 222,
+    labelX: battleX - 20,
+    anchor: 'end' as const,
+    detail: 'Sep 2014 · joined',
+    color: '#b8a0ff',
+  },
+  {
+    id: 'rivals',
+    label: 'Rivals',
+    x: rivalsX,
+    y: mainY,
+    labelY: 143,
+    detail: '≈ 2015 · combined',
+    color: '#b8a0ff',
+  },
+  {
+    id: 'zonax',
+    label: 'ZonaX',
+    x: 470,
+    y: 92,
+    labelY: 65,
+    detail: 'Start unknown',
+    color: '#68d5c0',
+  },
+  {
+    id: 'red-skillers',
+    label: 'Red Skillers',
+    x: 470,
+    y: 350,
+    labelY: 310,
+    detail: 'Start unknown',
+    color: '#edac79',
+  },
+  {
+    id: 'black-birds',
+    label: 'Black Birds',
+    x: 710,
+    y: 385,
+    labelY: 310,
+    detail: 'Start unknown',
+    color: '#f18faa',
+  },
+  {
+    id: 'noobstyle',
+    label: 'noobstyle.sk',
+    x: 710,
+    y: 500,
+    labelY: 470,
+    detail: 'Start unknown · ended 2016',
+    color: '#8cb7f8',
+  },
+  {
+    id: 'zaparit',
+    label: 'Zaparit',
+    x: 470,
+    y: 590,
+    labelY: 560,
+    detail: 'Start / end unknown',
+    color: '#d4c27d',
+  },
+  {
+    id: 'jzd',
+    label: 'JZD',
+    x: 1340,
+    y: 350,
+    labelY: 310,
+    detailY: 389,
+    detail: 'JZD: partial fork · dates unknown',
+    color: '#74d69d',
+  },
+  {
+    id: 'lamateam',
+    label: 'LaMaTeAm',
+    x: handoffX,
+    y: 350,
+    labelY: 310,
+    detailY: 423,
+    detail: 'Same server continues · handoff undated',
+    color: '#74d69d',
+  },
+].filter(({ id }) => available.has(id));
+
+const paths = [
+  {
+    ids: ['agteam', 'aggressive-zone'],
+    d: `M ${x(2006)} ${mainY} H ${mergeX}`,
+    color: '#b8a0ff',
+    title: 'AGT, circa 2006 by oral account; merged with ZonaX circa 2013–14.',
+  },
+  {
+    ids: ['zonax', 'aggressive-zone'],
+    d: `M 470 92 H ${mergeX - 30} V ${mainY} H ${mergeX}`,
+    color: '#68d5c0',
+    uncertain: true,
+    title:
+      'ZonaX coexisted separately with AGT; start unknown. They merged circa 2013–14.',
+  },
+  {
+    ids: ['aggressive-zone', 'battleforce'],
+    d: `M ${mergeX} ${mainY} H ${battleX}`,
+    color: '#b8a0ff',
+    title:
+      'Aggressive Zone joined Battleforce in September 2014, according to the owner.',
+  },
+  {
+    ids: ['battleforce', 'rivals'],
+    d: `M ${battleX} ${mainY} H ${rivalsX}`,
+    color: '#b8a0ff',
+    uncertain: true,
+    title:
+      'Main community thread only: the AGZ group directs people to Rivals. No proven direct Battleforce-to-Rivals server succession or merger.',
+  },
+  {
+    ids: ['rivals'],
+    d: `M ${rivalsX} ${mainY} H ${x(2016)}`,
+    color: '#b8a0ff',
+    title:
+      'Rivals existed by 2015 and received players after noobstyle closed in 2016. Continuous uptime is not established.',
+  },
+  {
+    ids: ['rivals'],
+    d: `M ${x(2016)} ${mainY} H ${handoffX}`,
+    color: '#b8a0ff',
+    uncertain: true,
+    title:
+      'Gradual Rivals closure; exact end date unknown. This endpoint lies outside the calendar scale.',
+  },
+  {
+    ids: ['red-skillers', 'rivals'],
+    d: `M 470 350 H ${rivalsX - 20} V ${mainY}`,
+    color: '#edac79',
+    uncertain: true,
+    title:
+      'Independent Red Skillers combined with Black Birds into Rivals circa 2015. Start unknown; dashed span is schematic.',
+  },
+  {
+    ids: ['black-birds', 'rivals'],
+    d: `M 710 385 H ${rivalsX} V ${mainY}`,
+    color: '#f18faa',
+    uncertain: true,
+    title:
+      'Black Birds coexisted with Red Skillers, then combined into Rivals circa 2015. Start unknown; not a Red Skillers rename.',
+  },
+  {
+    ids: ['noobstyle'],
+    d: `M 710 500 H ${x(2016)}`,
+    color: '#8cb7f8',
+    uncertain: true,
+    title: 'noobstyle.sk closed in 2016. Its start date is unknown.',
+  },
+  {
+    ids: ['noobstyle', 'rivals'],
+    d: `M ${x(2016)} 500 H 1260 V ${mainY}`,
+    color: '#8cb7f8',
+    uncertain: true,
+    title:
+      'Players later joined Rivals after the 2016 closure. Movement date unknown; not a merger.',
+  },
+  {
+    ids: ['zaparit', 'battleforce'],
+    d: `M 470 590 H ${battleX - 38} V 256 H ${battleX} V ${mainY}`,
+    color: '#d4c27d',
+    uncertain: true,
+    title:
+      'Zaparit servers ended and players joined the AGZ/Battleforce thread. Both closure and movement dates are unknown; schematic placement, not a dated merger.',
+  },
+  {
+    ids: ['jzd', 'lamateam'],
+    d: `M 1340 350 H 1720`,
+    color: '#74d69d',
+    title:
+      'JZD continued into LaMaTeAm as the same server/community. Start and handoff dates unknown; this entire lane is in the undated bay.',
+  },
+].filter(({ ids }) => ids.every((id) => available.has(id)));
+---
+
+<figure class="history-network">
+  <p class="scroll-cue">
+    <span aria-hidden="true">↔</span> Swipe / scroll sideways to explore the
+    full network
+  </p>
+  <div
+    class="graph-scroll"
+    tabindex="0"
+    role="region"
+    aria-label="Horizontal server history; scroll to explore"
+  >
+    <svg
+      viewBox="0 0 1790 660"
+      role="img"
+      aria-labelledby="history-network-title history-network-desc"
+    >
+      <title id="history-network-title">CS:S server network · 2006 onwards</title>
+      <desc id="history-network-desc">
+        Horizontal year axis with persistent community lanes. AGT starts circa
+        2006 by oral account, merges with the separate ZonaX circa 2013–14 into
+        Aggressive Zone, then joins Battleforce in September 2014. The main
+        thread leads to Rivals, without claiming a proven direct server
+        succession. Red Skillers and Black Birds coexist and combine into Rivals
+        circa 2015. noobstyle closes in 2016 and players later join Rivals.
+        Zaparit players join AGZ/Battleforce at an unknown date. JZD continues
+        into LaMaTeAm in an undated bay. LaMaTeAm's start is aligned visually
+        with Rivals' unknown endpoint, not a dated merger. Dashed spans with
+        unknown starts are schematic and do not assert lifespans.
+      </desc>
+
+      <g class="calendar">
+        {Array.from({ length: 11 }, (_, i) => 2006 + i).map((year) => (
+          <g>
+            <path d={`M ${x(year)} 48 V 620`} class="year-grid" />
+            <text x={x(year)} y="28" text-anchor="middle" class="year-label">
+              {year}
+            </text>
+          </g>
+        ))}
+        <path d="M 1240 20 l 6 -10 m 0 10 l 6 -10" class="axis-break" />
+        <text x="1510" y="28" text-anchor="middle" class="year-label">
+          UNDATED / NOT TO SCALE
+        </text>
+      </g>
+
+      {paths.map((path) => (
+        <path
+          d={path.d}
+          stroke={path.color}
+          class:list={['thread', { uncertain: path.uncertain }]}
+        >
+          <title>{path.title}</title>
+        </path>
+      ))}
+
+      {/* Alignment is a guide only, deliberately not a community connection. */}
+      <path d={`M ${handoffX} 195 V 337`} class="alignment" />
+      <text x={handoffX + 16} y="238" class="note">
+        Visual alignment only
+      </text>
+      <text x={handoffX + 16} y="258" class="note">
+        No Rivals → LaMaTeAm merger
+      </text>
+
+      {milestones.map((node) => (
+        <g class="milestone" style={`--lane-color: ${node.color}`}>
+          <circle cx={node.x} cy={node.y} r="6" />
+          <text
+            x={node.labelX ?? node.x}
+            y={node.labelY}
+            text-anchor={node.anchor ?? 'start'}
+            class="server-name"
+          >
+            {node.label}
+          </text>
+          <text
+            x={node.labelX ?? node.x}
+            y={node.detailY ?? node.labelY + 19}
+            text-anchor={node.anchor ?? 'start'}
+            class="detail"
+          >
+            {node.detail}
+          </text>
+        </g>
+      ))}
+
+      <circle cx={x(2016)} cy="500" r="6" class="end-dot" stroke="#8cb7f8" />
+      <text x={x(2016) + 14} y="539" class="note">
+        2016 closure
+      </text>
+      <text x="1240" y="445" text-anchor="end" class="note">
+        Players join
+      </text>
+      <text x="1240" y="465" text-anchor="end" class="detail">
+        Date unknown
+      </text>
+      <text x="690" y="626" class="note">
+        Zaparit → AGZ / Battleforce: players, not merger · date unknown
+      </text>
+      <text x={handoffX} y="156" class="detail">
+        Gradual closure · date unknown
+      </text>
+      <circle
+        cx={handoffX}
+        cy={mainY}
+        r="7"
+        class="unknown-end"
+        stroke="#b8a0ff"
+      />
+    </svg>
+  </div>
+  <figcaption>
+    <div class="legend">
+      <span>
+        <i class="solid"></i> Recalled continuation / join
+      </span>
+      <span>
+        <i class="dashed"></i> Unknown dates / schematic span
+      </span>
+      <span>
+        <i class="dot"></i> Milestone
+      </span>
+      <span>
+        ≈ Oral estimate · unknown starts are not dated by their placement
+      </span>
+    </div>
+    <div
+      class="observations"
+      aria-label="Researched observations, not lifespan boundaries"
+    >
+      <span class="observation-label">
+        Observations, not launch / closure dates:
+      </span>
+      <a href="https://steamcommunity.com/groups/aggressivezone">
+        12 Nov 2013 · AGZ Steam group
+      </a>
+      <a href="https://steamcommunity.com/groups/aggressivezone/announcements/detail/141058918492392685">
+        21 Sep 2014 · Battleforce addresses
+      </a>
+      <a href="https://steamcommunity.com/groups/rivalscommunity">
+        24 Jul 2015 · Rivals Steam group
+      </a>
+      <a href="https://web.archive.org/web/20151017210323/http://www.game-monitor.com/search.php?game=cstrike2%26pg=4">
+        17 Oct 2015 · Rivals server snapshot
+      </a>
+    </div>
+  </figcaption>
+</figure>
+
+<style>
+  .history-network {
+    --graph-background: #0b0c10;
+    margin: 0;
+    color: #e4e8f0;
+    font-family: inherit;
+  }
+
+  .graph-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-color: #4b4762 var(--graph-background);
+    scrollbar-width: thin;
+  }
+
+  .scroll-cue {
+    display: none;
+    margin: 0 0 16px;
+    color: #c5cad4;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .scroll-cue span {
+    color: #b8a0ff;
+    margin-right: 6px;
+  }
+
+  @media (width < 1608px) {
+    .scroll-cue {
+      display: block;
+    }
+  }
+
+  .graph-scroll:focus-visible {
+    outline: 2px solid #b8a0ff;
+    outline-offset: 4px;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-width: 1560px;
+    height: auto;
+  }
+
+  .year-grid {
+    stroke: #ffffff;
+    stroke-opacity: 0.06;
+    stroke-width: 1;
+  }
+
+  .year-label {
+    fill: #aab1c0;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+  }
+
+  .axis-break {
+    fill: none;
+    stroke: #aab1c0;
+  }
+
+  .thread {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .uncertain {
+    stroke-dasharray: 7 7;
+  }
+
+  .alignment {
+    stroke: #737b8b;
+    stroke-width: 1;
+    stroke-dasharray: 2 6;
+  }
+
+  .milestone circle,
+  .end-dot,
+  .unknown-end {
+    fill: var(--graph-background);
+    stroke-width: 3;
+  }
+
+  .milestone circle {
+    stroke: var(--lane-color);
+  }
+
+  .unknown-end {
+    stroke-dasharray: 3 3;
+  }
+
+  .server-name {
+    fill: var(--lane-color);
+    font-size: 16px;
+    font-weight: 650;
+  }
+
+  .detail,
+  .note {
+    fill: #aab1c0;
+    font-size: 12px;
+  }
+
+  .note {
+    fill: #c5cad4;
+  }
+
+  figcaption {
+    border-top: 1px solid #ffffff14;
+    padding-top: 16px;
+    font-size: 11px;
+    line-height: 1.7;
+    color: #aab1c0;
+  }
+
+  .legend,
+  .observations {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 24px;
+  }
+
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .legend i {
+    display: inline-block;
+    width: 24px;
+    border-top: 2px solid #b8a0ff;
+  }
+
+  .legend .dashed {
+    border-top-style: dashed;
+  }
+
+  .legend .dot {
+    width: 8px;
+    height: 8px;
+    border: 2px solid #b8a0ff;
+    border-radius: 50%;
+  }
+
+  .observations {
+    margin-top: 12px;
+    gap: 4px 20px;
+  }
+
+  .observations a {
+    color: inherit;
+    text-decoration-color: #596173;
+    text-underline-offset: 3px;
+  }
+
+  .observations a:hover,
+  .observations a:focus-visible {
+    color: #e4e8f0;
+  }
+</style>

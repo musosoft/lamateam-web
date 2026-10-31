@@ -1,0 +1,592 @@
+---
+import { translator } from '../lib/page-copy';
+import { vipCopy } from '../lib/vip-copy';
+import { reserveSteamPrefill } from '../lib/reserve-identity';
+import type { SiteLocale } from '../lib/localized-content';
+interface Props {
+  locale: SiteLocale;
+}
+const { locale } = Astro.props;
+const t = translator(locale);
+const c = vipCopy(locale);
+const steamPrefill = reserveSteamPrefill(
+  Astro.request,
+  Astro.locals.steamProfile,
+);
+const offers = [
+  { months: 1, amount: 100, label: '1 month = 100 CZK' },
+  { months: 6, amount: 300, label: '6 months = 300 CZK' },
+  { months: 12, amount: 500, label: '12 months = 500 CZK' },
+] as const;
+---
+
+<section
+  class="vip-payment"
+  data-vip-payment
+  data-copy-ok={c.copied}
+  data-copy-error={c.copyError}
+  data-qr-error={c.qrError}
+  data-loading={c.loading}
+  data-error={c.error}
+  aria-label={c.method}
+>
+  <fieldset class="method-picker" hidden>
+    <legend>{c.method}</legend>
+    <div class="offer-grid">
+      <label class="offer">
+        <input type="radio" name="payment-method" value="bank" checked />
+        {c.bank}
+      </label>
+      <label class="offer">
+        <input type="radio" name="payment-method" value="paypal" />
+        {c.paypal}
+      </label>
+    </div>
+  </fieldset>
+  <section data-method="bank" aria-labelledby="bank-title">
+    <h2 id="bank-title">{c.bank}</h2>
+    <p>{t('Send your payment to bank account:')}</p>
+    <div class="bank-detail">
+      <strong translate="no">1939775153/0800</strong>
+      <button
+        type="button"
+        data-copy="1939775153/0800"
+        aria-label={`${c.copy}: 1939775153/0800`}
+        hidden
+      >
+        {c.copy}
+      </button>
+    </div>
+    <div class="bank-detail">
+      <span translate="no">IBAN CZ88 0800 0000 0019 3977 5153</span>
+      <button
+        type="button"
+        data-copy="CZ8808000000001939775153"
+        aria-label={`${c.copy}: IBAN`}
+        hidden
+      >
+        {c.copy}
+      </button>
+    </div>
+    <p data-copy-status role="status" aria-live="polite"></p>
+    <p>
+      {t(
+        'Include your nickname in the payment message so we know who sent the contribution.',
+      )}
+    </p>
+    <form id="bank-qr-form">
+      <fieldset>
+        <legend>{c.term}</legend>
+        <div class="offer-grid">
+          {offers.map((offer, index) => (
+            <label class="offer">
+              <input
+                type="radio"
+                name="amount"
+                value={offer.amount}
+                checked={index === 0}
+                required
+              />
+              {t(offer.label)}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <label for="bank-nickname">{c.nickname}</label>
+      <input
+        id="bank-nickname"
+        name="nickname"
+        type="text"
+        required
+        maxlength="60"
+        autocomplete="nickname"
+        aria-describedby="bank-qr-help"
+      />
+      <button type="submit" class="connect-button" disabled>
+        {c.qrButton}
+      </button>
+    </form>
+    <p id="bank-qr-help" class="muted">
+      {c.qrHelp}
+    </p>
+    <p data-qr-status role="status" aria-live="polite">
+      {c.qrPending}
+    </p>
+    <div data-qr-result hidden>
+      <canvas role="img" aria-label={c.qrAlt}></canvas>
+      <p data-qr-summary translate="no"></p>
+    </div>
+  </section>
+  <section data-method="paypal" aria-labelledby="paypal-title">
+    <h2 id="paypal-title">{c.paypal}</h2>
+    <form id="reserve-form">
+      <label for="reserve-steam">{c.steam}</label>
+      <input
+        id="reserve-steam"
+        name="steamId"
+        value={steamPrefill}
+        type="text"
+        required
+        maxlength="128"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="STEAM_0:1:12345678"
+        aria-describedby="reserve-steam-help"
+      />
+      <p id="reserve-steam-help" class="muted">
+        {c.steamHelp}
+      </p>
+      <fieldset>
+        <legend>{c.term}</legend>
+        <div class="offer-grid">
+          {offers.map((offer) => (
+            <label class="offer">
+              <input type="radio" name="months" value={offer.months} required />
+              {t(offer.label)}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <button type="submit" class="connect-button" disabled>
+        {c.review}
+      </button>
+    </form>
+    <p
+      id="reserve-status"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></p>
+    <div
+      id="reserve-review"
+      hidden
+      tabindex="-1"
+      aria-labelledby="reserve-review-title"
+    >
+      <h3 id="reserve-review-title">{c.reviewTitle}</h3>
+      <dl>
+        <div>
+          <dt>{c.term}</dt>
+          <dd data-review="offerName"></dd>
+        </div>
+        <div>
+          <dt>CZK</dt>
+          <dd data-review="amount"></dd>
+        </div>
+        <div>
+          <dt>{c.steam}</dt>
+          <dd data-review="steamId" translate="no"></dd>
+        </div>
+        <div>
+          <dt>{c.expiry}</dt>
+          <dd data-review="estimatedExpiry"></dd>
+        </div>
+      </dl>
+      <button id="reserve-continue" type="button" class="connect-button">
+        {c.continue}
+      </button>
+    </div>
+  </section>
+  <p class="payment-notice">{c.notice}</p>
+  <noscript>
+    <p>{c.noJs}</p>
+  </noscript>
+</section>
+
+<script>
+  import QRCode from 'qrcode';
+  import { buildQrPlatbaPayload } from '../lib/bank-qr';
+
+  const initialized = new WeakSet<HTMLElement>();
+  function initializePayments() {
+    const root = document.querySelector<HTMLElement>('[data-vip-payment]');
+    if (!root || initialized.has(root)) return;
+    initialized.add(root);
+    const picker = root.querySelector<HTMLFieldSetElement>('.method-picker')!;
+    const panels = root.querySelectorAll<HTMLElement>('[data-method]');
+    const review = root.querySelector<HTMLElement>('#reserve-review')!;
+    const checkout = root.querySelector<HTMLFormElement>('#reserve-form')!;
+    const status = root.querySelector<HTMLElement>('#reserve-status')!;
+    const submit =
+      checkout.querySelector<HTMLButtonElement>('[type="submit"]')!;
+    const continueButton =
+      root.querySelector<HTMLButtonElement>('#reserve-continue')!;
+    type Checkout = {
+      action: string;
+      fields: Record<string, string>;
+      offerName: string;
+      amount: string;
+      steamId: string;
+      estimatedExpiry: string;
+    };
+    const paypalAction = 'https://www.paypal.com/cgi-bin/webscr';
+    const allowedFields = new Set([
+      'cmd',
+      'business',
+      'item_name',
+      'item_number',
+      'amount',
+      'currency_code',
+      'custom',
+      'notify_url',
+      'return',
+      'cancel_return',
+      'no_shipping',
+      'no_note',
+      'rm',
+    ]);
+    let prepared: Checkout | null = null;
+    let revision = 0;
+    let busy = false;
+    const invalidate = () => {
+      revision++;
+      prepared = null;
+      review.hidden = true;
+      status.textContent = '';
+    };
+    picker.hidden = false;
+    const selectMethod = () => {
+      const method =
+        picker.querySelector<HTMLInputElement>('input:checked')!.value;
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.method !== method;
+      });
+      invalidate();
+    };
+    picker.addEventListener('change', selectMethod);
+    selectMethod();
+
+    root
+      .querySelectorAll<HTMLButtonElement>('[data-copy]')
+      .forEach((button) => {
+        button.hidden = false;
+        button.addEventListener('click', async () => {
+          const copyStatus =
+            root.querySelector<HTMLElement>('[data-copy-status]')!;
+          try {
+            await navigator.clipboard.writeText(button.dataset.copy!);
+            copyStatus.textContent = root.dataset.copyOk!;
+          } catch {
+            copyStatus.textContent = root.dataset.copyError!;
+          }
+        });
+      });
+    const bank = root.querySelector<HTMLFormElement>('#bank-qr-form')!;
+    const qrResult = root.querySelector<HTMLElement>('[data-qr-result]')!;
+    const qrStatus = root.querySelector<HTMLElement>('[data-qr-status]')!;
+    const qrButton = bank.querySelector<HTMLButtonElement>('button')!;
+    let qrRevision = 0;
+    qrButton.disabled = false;
+    bank.addEventListener('input', () => {
+      qrRevision++;
+      qrResult.hidden = true;
+      qrStatus.textContent = '';
+    });
+    bank.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!bank.reportValidity()) return;
+      const version = ++qrRevision;
+      qrResult.hidden = true;
+      qrStatus.textContent = '';
+      const data = new FormData(bank);
+      const nickname = String(data.get('nickname') ?? '').trim();
+      try {
+        if (!nickname) throw new Error('Missing nickname');
+        const amount = data.get('amount');
+        if (
+          typeof amount !== 'string' ||
+          !['100', '300', '500'].includes(amount)
+        )
+          throw new Error('Invalid package');
+        const payload = buildQrPlatbaPayload({
+          iban: 'CZ8808000000001939775153',
+          amount,
+          message: nickname,
+        });
+        // Draw offscreen first so a stale async render cannot replace the current code.
+        const canvas = document.createElement('canvas');
+        await QRCode.toCanvas(canvas, payload, {
+          width: 288,
+          margin: 4,
+          errorCorrectionLevel: 'M',
+        });
+        if (version !== qrRevision) return;
+        const visibleCanvas = qrResult.querySelector('canvas')!;
+        visibleCanvas.width = canvas.width;
+        visibleCanvas.height = canvas.height;
+        visibleCanvas.getContext('2d')!.drawImage(canvas, 0, 0);
+        root.querySelector<HTMLElement>('[data-qr-summary]')!.textContent =
+          `${amount} CZK · ${nickname}`;
+        qrResult.hidden = false;
+      } catch {
+        if (version === qrRevision)
+          qrStatus.textContent = root.dataset.qrError!;
+      }
+    });
+
+    function validateCheckout(value: unknown): Checkout {
+      if (!value || typeof value !== 'object' || Array.isArray(value))
+        throw new Error('Invalid checkout');
+      const data = value as Checkout;
+      if (
+        data.action !== paypalAction ||
+        !data.fields ||
+        typeof data.fields !== 'object' ||
+        Array.isArray(data.fields)
+      )
+        throw new Error('Invalid checkout');
+      const fields = Object.entries(data.fields);
+      if (
+        fields.length !== allowedFields.size ||
+        JSON.stringify(data.fields).length > 16384
+      )
+        throw new Error('Invalid checkout');
+      for (const [key, field] of fields) {
+        if (
+          !allowedFields.has(key) ||
+          typeof field !== 'string' ||
+          field.length > 512 ||
+          /[\u0000-\u001f\u007f]/.test(field)
+        )
+          throw new Error('Invalid checkout');
+      }
+      if (
+        data.fields.cmd !== '_xclick' ||
+        data.fields.currency_code !== 'CZK' ||
+        !data.fields.business ||
+        !/^(100|300|500)\.00$/.test(data.fields.amount ?? '')
+      )
+        throw new Error('Invalid checkout');
+      for (const key of [
+        'offerName',
+        'amount',
+        'steamId',
+        'estimatedExpiry',
+      ] as const) {
+        if (
+          typeof data[key] !== 'string' ||
+          !data[key].trim() ||
+          data[key].length > 256 ||
+          /[\u0000-\u001f\u007f]/.test(data[key])
+        )
+          throw new Error('Invalid checkout');
+      }
+      if (data.amount !== data.fields.amount)
+        throw new Error('Invalid checkout');
+      return data;
+    }
+    submit.disabled = false;
+    checkout.addEventListener('input', invalidate);
+    checkout.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (busy || !checkout.reportValidity()) return;
+      invalidate();
+      const version = revision;
+      busy = true;
+      submit.disabled = true;
+      checkout.setAttribute('aria-busy', 'true');
+      status.textContent = root.dataset.loading!;
+      const inputs = new FormData(checkout);
+      try {
+        const response = await fetch('/api/donations/checkout', {
+          method: 'POST',
+          credentials: 'same-origin',
+          redirect: 'error',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: 'application/json',
+          },
+          body: new URLSearchParams({
+            steamid_user: String(inputs.get('steamId') ?? '').trim(),
+            offer: String(inputs.get('months') ?? ''),
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (
+          !response.ok ||
+          !response.headers.get('content-type')?.includes('application/json')
+        )
+          throw new Error('Checkout unavailable');
+        const body = await response.text();
+        if (body.length > 24576) throw new Error('Invalid checkout');
+        const data = validateCheckout(JSON.parse(body));
+        const expected = (
+          { '1': '100.00', '6': '300.00', '12': '500.00' } as Record<
+            string,
+            string
+          >
+        )[String(inputs.get('months'))];
+        if (
+          data.amount !== expected ||
+          data.fields.item_number !== `reserve-${inputs.get('months')}`
+        )
+          throw new Error('Mismatched offer');
+        if (version !== revision) return;
+        prepared = data;
+        review
+          .querySelectorAll<HTMLElement>('[data-review]')
+          .forEach((element) => {
+            element.textContent =
+              data[
+                element.dataset.review as
+                  'offerName' | 'amount' | 'steamId' | 'estimatedExpiry'
+              ];
+          });
+        continueButton.disabled = false;
+        review.hidden = false;
+        status.textContent = '';
+        review.focus();
+      } catch {
+        if (version === revision) status.textContent = root.dataset.error!;
+      } finally {
+        busy = false;
+        submit.disabled = false;
+        checkout.removeAttribute('aria-busy');
+      }
+    });
+    continueButton.addEventListener('click', () => {
+      if (!prepared || busy) return;
+      const data = validateCheckout(prepared);
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = paypalAction;
+      form.hidden = true;
+      for (const [name, value] of Object.entries(data.fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      }
+      prepared = null;
+      continueButton.disabled = true;
+      document.body.appendChild(form);
+      HTMLFormElement.prototype.submit.call(form);
+    });
+  }
+  document.addEventListener('astro:page-load', initializePayments);
+  initializePayments();
+</script>
+
+<style>
+  .vip-payment {
+    margin-block: 1.5rem;
+  }
+  .vip-payment [hidden] {
+    display: none !important;
+  }
+  .vip-payment section {
+    border: 1px solid var(--edge);
+    border-radius: 0.75rem;
+    padding: clamp(1rem, 3vw, 2rem);
+    background: var(--surface);
+    margin-top: 1rem;
+  }
+  .vip-payment h2 {
+    font-size: clamp(1.25rem, 2vw, 1.6rem);
+    font-weight: 700;
+  }
+  .vip-payment h3,
+  .vip-payment legend,
+  .vip-payment form > label {
+    font-weight: 600;
+  }
+  .vip-payment section > * + *,
+  .vip-payment form > * + * {
+    margin-top: 1rem;
+  }
+  .offer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  .offer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 60px;
+    padding: 1rem;
+    border: 1px solid var(--edge);
+    border-radius: 0.5rem;
+    cursor: pointer;
+  }
+  .offer:has(input:checked) {
+    border-color: var(--brand-accent);
+    background: color-mix(in srgb, var(--brand-accent) 10%, var(--surface));
+  }
+  .offer input {
+    accent-color: var(--brand-accent);
+    width: 1.125rem;
+    height: 1.125rem;
+    flex-shrink: 0;
+  }
+  .vip-payment form > label,
+  .vip-payment input[type='text'] {
+    display: block;
+  }
+  .vip-payment input[type='text'] {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem;
+    border: 1px solid var(--edge);
+    border-radius: 0.375rem;
+    background: var(--surface);
+    color: inherit;
+  }
+  .vip-payment button {
+    min-height: 44px;
+    padding: 0.75rem 1.25rem;
+    white-space: normal;
+    border: 1px solid var(--edge);
+    border-radius: 0.375rem;
+    cursor: pointer;
+  }
+  .vip-payment button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .vip-payment :is(input, button, [tabindex]):focus-visible {
+    outline: 2px solid var(--brand-accent);
+    outline-offset: 4px;
+  }
+  .bank-detail {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
+  }
+  .muted,
+  .vip-payment dt {
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+  .payment-notice {
+    padding: 1rem;
+    border-left: 3px solid var(--brand-accent);
+    margin-top: 1rem;
+  }
+  .vip-payment dl {
+    display: grid;
+    gap: 0.75rem;
+    margin-block: 1rem;
+  }
+  .vip-payment dd {
+    overflow-wrap: anywhere;
+  }
+  .vip-payment canvas {
+    width: 288px;
+    max-width: 100%;
+    height: auto;
+    background: white;
+  }
+  [data-qr-summary] {
+    overflow-wrap: anywhere;
+  }
+  #reserve-review {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--edge);
+  }
+</style>

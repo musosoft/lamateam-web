@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-31T11:47:56.898Z",
+  "generatedAt": "2026-10-31T15:25:45.508Z",
   "total": 100,
-  "ok": 99,
+  "ok": 100,
   "items": [
     {
       "map": "$2000$",
@@ -500,8 +500,8 @@
     },
     {
       "map": "fy_simpsons",
-      "image": "/assets/map-placeholder.svg",
-      "source": "placeholder"
+      "image": "/assets/map-cache/fy_simpsons.jpg",
+      "source": "cache"
     }
   ]
 }

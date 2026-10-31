@@ -29,6 +29,11 @@
   // Approximate, per-colo burst protection; not a global usage or spend cap.
   "ratelimits": [
     {
+      "name": "DONATIONS_CHECKOUT_RATE_LIMITER",
+      "namespace_id": "1003",
+      "simple": { "limit": 6, "period": 60 },
+    },
+    {
       "name": "TRANSLATION_RATE_LIMITER",
       "namespace_id": "1001",
       "simple": { "limit": 6, "period": 60 },
