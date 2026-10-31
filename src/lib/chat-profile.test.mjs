@@ -6,6 +6,7 @@ import vm from "node:vm";
 import { resolveChatProfile } from "./chat-profile.ts";
 import { readSteamProfile } from "./steam-profile.ts";
 import { issueSteamSession } from "./steam-session.ts";
+import { normalizeMotdCommunityId } from "./hlstats-motd.ts";
 
 const id = "76561197960265731";
 const secret = "chat-test-secret";
@@ -56,37 +57,63 @@ async function render(req) {
     },
   );
 }
-async function post(req) {
+function apiHarness({
+  rows = [],
+  fetcher = async () => new Response(null, { status: 503 }),
+  failRepair = false,
+} = {}) {
   const writes = [];
   const code = stripTypeScriptTypes(
     withoutImports(api)
       .replaceAll("import.meta.env", "testEnv")
-      .replace(/export const /g, "const "),
+      .replace(/export (const |async function )/g, "$1"),
     { mode: "transform" },
   );
-  const handler = vm.runInNewContext(`(() => { ${code}; return POST; })()`, {
-    Request,
-    Response,
-    console,
-    Date,
-    Math,
-    testEnv: {
-      DEV: true,
-      STEAM_API_KEY: secret,
-      TURSO_DATABASE_URL: "file:test",
-    },
-    env: {},
-    readSteamProfile,
-    resolveChatProfile,
-    createClient: () => ({
-      execute: async (statement) => {
-        writes.push(statement);
-        return { rows: [] };
+  const handlers = vm.runInNewContext(
+    `(() => { ${code}; return { POST, GET, resolveChatAvatars }; })()`,
+    {
+      Request,
+      Response,
+      console,
+      Date,
+      Math,
+      URL,
+      setTimeout,
+      clearTimeout,
+      fetch: fetcher,
+      testEnv: {
+        DEV: true,
+        STEAM_API_KEY: secret,
+        TURSO_DATABASE_URL: "file:test",
       },
-    }),
-    getSedliakReply: () => null,
-  });
-  return { response: await handler({ request: req }), writes };
+      env: {},
+      readSteamProfile,
+      resolveChatProfile,
+      normalizeMotdCommunityId,
+      createClient: () => ({
+        execute: async (statement) => {
+          writes.push(statement);
+          if (
+            failRepair &&
+            typeof statement === "object" &&
+            statement.sql.startsWith("UPDATE")
+          ) {
+            throw new Error("repair unavailable");
+          }
+          return { rows };
+        },
+      }),
+      getSedliakReply: () => null,
+    },
+  );
+  return { ...handlers, writes };
+}
+async function post(req, options) {
+  const harness = apiHarness(options);
+  return {
+    response: await harness.POST({ request: req }),
+    writes: harness.writes,
+  };
 }
 const body = {
   steamid: id,
@@ -198,4 +225,187 @@ test("required-field and reserved-bot checks still run for MOTD", async () => {
     assert.equal(result.response.status, 400);
     assert.equal(result.writes.length, 0);
   }
+});
+
+const avatar = "https://avatars.steamstatic.com/player_full.jpg";
+const summaries = (players) => Response.json({ response: { players } });
+const player = (steamid = id, avatarfull = avatar) => ({ steamid, avatarfull });
+
+test("avatar resolver batches deduplicated valid Steam64 IDs and binds the Worker fetch receiver", async () => {
+  const other = "76561199385049281";
+  const calls = [];
+  const { resolveChatAvatars } = apiHarness({
+    fetcher: function workerFetch(url, ...init) {
+      assert.equal(this.fetch, workerFetch); // must receive the VM global, not undefined
+      assert.equal(init.length, 0);
+      calls.push(new URL(url).searchParams.get("steamids"));
+      return Promise.resolve(summaries([player(), player(other)]));
+    },
+  });
+  const result = await resolveChatAvatars(
+    [id, id, "bad", "00000000000000000", other],
+    "key",
+  );
+  assert.equal(result.size, 2);
+  assert.equal(result.get(other), avatar);
+  assert.deepEqual(calls, [`${id},${other}`]);
+});
+
+test("avatar resolver retries missing IDs after incomplete, failed or malformed batches", async () => {
+  const other = "76561199385049281";
+  for (const batch of [
+    () => summaries([player()]),
+    () => new Response(null, { status: 503 }),
+    () => new Response("not json"),
+    () => {
+      throw new TypeError("network failure");
+    },
+  ]) {
+    const calls = [];
+    const { resolveChatAvatars } = apiHarness({
+      fetcher: async (url) => {
+        const ids = new URL(url).searchParams.get("steamids").split(",");
+        calls.push(ids);
+        return calls.length === 1
+          ? batch()
+          : summaries(ids.map((value) => player(value)));
+      },
+    });
+    const result = await resolveChatAvatars([id, other], "key");
+    assert.equal(result.size, 2);
+    assert.equal(calls[0].length, 2);
+    assert.ok(calls.slice(1).every((ids) => ids.length === 1));
+  }
+});
+
+test("avatar resolver rejects non-Steam HTTPS metadata and unrequested identities", async () => {
+  for (const unsafe of [
+    "http://avatars.steamstatic.com/x.jpg",
+    "https://avatars.steamstatic.com.evil.test/x.jpg",
+    "https://evil.test/x.jpg",
+    "https://user:pass@avatars.steamstatic.com/x.jpg",
+    "https://avatars.steamstatic.com:444/x.jpg",
+    "not a URL",
+  ]) {
+    const { resolveChatAvatars } = apiHarness({
+      fetcher: async () =>
+        summaries([player(id, unsafe), player("76561199385049281")]),
+    });
+    assert.equal((await resolveChatAvatars([id], "key")).size, 0);
+  }
+});
+
+test("avatar resolver bounds batch, retries and stalled fetch/body; missing credentials do no IO", async () => {
+  let calls = 0;
+  const { resolveChatAvatars } = apiHarness({
+    fetcher: async () => {
+      calls++;
+      return summaries([]);
+    },
+  });
+  const ids = Array.from({ length: 70 }, (_, i) =>
+    String(BigInt(id) + BigInt(i)),
+  );
+  assert.equal((await resolveChatAvatars(ids)).size, 0);
+  assert.equal((await resolveChatAvatars(["bad"], "key")).size, 0);
+  assert.equal(calls, 0);
+  await resolveChatAvatars(ids, "key");
+  assert.equal(calls, 6);
+  for (const fetcher of [
+    () => new Promise(() => {}),
+    async () => ({ ok: true, json: () => new Promise(() => {}) }),
+  ]) {
+    const start = Date.now();
+    assert.equal((await resolveChatAvatars([id], "key", fetcher, 20)).size, 0);
+    assert.ok(Date.now() - start < 1000);
+  }
+});
+
+test("MOTD POST uses server avatar, never submitted metadata; failed lookup preserves posting", async () => {
+  const result = await post(request({ body }), {
+    fetcher: async () => summaries([player()]),
+  });
+  assert.equal(result.response.status, 201);
+  assert.equal((await result.response.json()).player_avatar, avatar);
+  assert.equal(result.writes[0].args[4], avatar);
+  const failed = await post(request({ body }), {
+    fetcher: async () => {
+      throw new Error("offline");
+    },
+  });
+  assert.equal(failed.response.status, 201);
+  assert.equal(
+    (await failed.response.json()).player_avatar,
+    "/assets/default-avatar.webp",
+  );
+});
+
+test("signed POST preserves authoritative profile avatar without Steam lookup", async () => {
+  const display = { steamID: id, playerName: "Signed", playerAvatar: avatar };
+  const cookie = `steam_auth=${await issueSteamSession(id, secret)}; session=${encodeURIComponent(JSON.stringify(display))}`;
+  let calls = 0;
+  const result = await post(request({ cookie, body }), {
+    fetcher: async () => {
+      calls++;
+      throw new Error("unexpected lookup");
+    },
+  });
+  assert.equal(result.response.status, 201);
+  assert.equal((await result.response.json()).player_avatar, avatar);
+  assert.equal(calls, 0);
+});
+
+test("GET repairs only exact-default recent valid Steam rows, conditionally persists, and tolerates repair failure", async () => {
+  const rows = [
+    {
+      steamid: id,
+      player_name: "Recent",
+      message: "Hi",
+      timestamp: "2026-11-01T00:00:00Z",
+      player_avatar: "/assets/default-avatar.webp",
+    },
+    { steamid: id, player_avatar: "https://custom.test/avatar" },
+    { steamid: "sedliak-bot", player_avatar: "/assets/default-avatar.webp" },
+    { steamid: "bad", player_avatar: "/assets/default-avatar.webp" },
+    { steamid: id, player_avatar: null },
+    { steamid: id, player_avatar: "/assets/default-avatar.webp?custom" },
+  ];
+  for (const failRepair of [false, true]) {
+    const harness = apiHarness({
+      rows,
+      failRepair,
+      fetcher: async (url) => {
+        assert.equal(new URL(url).searchParams.get("steamids"), id);
+        return summaries([player()]);
+      },
+    });
+    const response = await harness.GET();
+    assert.equal(response.status, 200);
+    const messages = await response.json();
+    assert.equal(messages[0].player_avatar, avatar);
+    assert.deepEqual(messages.slice(1), rows.slice(1));
+    assert.equal(rows[0].player_avatar, "/assets/default-avatar.webp");
+    assert.match(harness.writes[0], /ORDER BY timestamp DESC LIMIT 50/);
+    assert.equal(harness.writes.length, 2);
+    assert.match(
+      harness.writes[1].sql,
+      /WHERE steamid = \? AND timestamp = \? AND player_avatar = \?/,
+    );
+    assert.deepEqual(Array.from(harness.writes[1].args), [
+      avatar,
+      id,
+      rows[0].timestamp,
+      rows[0].player_avatar,
+    ]);
+  }
+  const failed = apiHarness({
+    rows,
+    fetcher: async () => {
+      throw new Error("offline");
+    },
+  });
+  const response = await failed.GET();
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), rows);
+  assert.equal(failed.writes.length, 1);
 });
