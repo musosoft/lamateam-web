@@ -1,6 +1,7 @@
 ---
 // src/pages/vip.astro
 import Layout from '../layouts/Layout.astro';
+import VipPayment from '../components/VipPayment.astro';
 import { translator } from '../lib/page-copy';
 import {
   localeFromPath,
@@ -89,18 +90,7 @@ const supporters = [
         <li>{t('6 months = 300 CZK')}</li>
         <li>{t('12 months = 500 CZK')}</li>
       </ul>
-      <p class="text-yellow-400">
-        {t('Send your payment to bank account:')}{' '}
-        <strong translate="no">1939775153/0800</strong>
-      </p>
-      <p class="fl-text-sm/base text-gray-400" translate="no">
-        IBAN CZ88 0800 0000 0019 3977 5153
-      </p>
-      <p>
-        {t(
-          'Include your nickname in the payment message so we know who sent the contribution.',
-        )}
-      </p>
+      <VipPayment locale={locale} />
       <p>
         {t(
           'You can also support the server without receiving VIP status by contributing any amount. Contact us and we will arrange the details.',
