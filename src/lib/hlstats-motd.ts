@@ -34,6 +34,7 @@ export function createHlstatsMotdHandler(options: {
     limit(options: { key: string }): Promise<{ success: boolean }>;
   };
   development?: boolean;
+  recordObservation?: (communityId: string, lastSeen: number) => Promise<void>;
 }) {
   const now = options.now ?? Date.now;
   const entries = new Map<
@@ -158,6 +159,11 @@ export function createHlstatsMotdHandler(options: {
       // No exception serialization, IP logging, or fail-open upstream request.
       return fail("unavailable", 503);
     }
+    // Record accepted hints even if HLstats has no data. Storage failure must
+    // not break the existing MOTD stats surface; never log identity or URL.
+    try {
+      await options.recordObservation?.(steamID, now());
+    } catch { /* best-effort durable observation, retried on future MOTD visits */ }
     const result = await load(steamID);
     if (!result.available)
       return fail(
