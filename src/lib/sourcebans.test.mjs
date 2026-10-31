@@ -69,7 +69,7 @@ test("extracts the observed SourceBans MOD/Country flag, not the game icon", () 
     assert.equal(ban.countryCode, code.toUpperCase());
     assert.equal(
       ban.flagUrl,
-      `https://sourcebans.fakaheda.eu/sbans_336496/images/country/${code}.gif`,
+      `https://banlist.lamateam.eu/images/country/${code}.gif`,
     );
   }
 });
@@ -80,14 +80,14 @@ test("country flags accept only exact trusted paths and valid ISO country codes"
       .bans[0];
   for (const path of [
     "images/country/cz.gif",
-    "/sbans_336496/images/country/cz.gif",
-    "https://sourcebans.fakaheda.eu/sbans_336496/images/country/cz.gif",
+    "/images/country/cz.gif",
+    "https://banlist.lamateam.eu/images/country/cz.gif",
   ]) {
     const ban = parseFlag(`<img src="${path}" alt="CZ" onerror="bad()">`);
     assert.equal(ban.countryCode, "CZ");
     assert.equal(
       ban.flagUrl,
-      "https://sourcebans.fakaheda.eu/sbans_336496/images/country/cz.gif",
+      "https://banlist.lamateam.eu/images/country/cz.gif",
     );
     assert.ok(!JSON.stringify(ban).includes("bad()"));
   }
@@ -103,9 +103,9 @@ test("country flags accept only exact trusted paths and valid ISO country codes"
     "images/country/%63z.gif",
     "//evil.example/images/country/cz.gif",
     "https://evil.example/images/country/cz.gif",
-    "https://sourcebans.fakaheda.eu.evil.example/sbans_336496/images/country/cz.gif",
-    "https://sourcebans.fakaheda.eu@evil.example/sbans_336496/images/country/cz.gif",
-    "http://sourcebans.fakaheda.eu/sbans_336496/images/country/cz.gif",
+    "https://banlist.lamateam.eu.evil.example/images/country/cz.gif",
+    "https://banlist.lamateam.eu@evil.example/images/country/cz.gif",
+    "http://banlist.lamateam.eu/images/country/cz.gif",
     "javascript:bad()",
     "data:image/svg+xml,bad",
   ]) {
@@ -334,6 +334,80 @@ test("parser, content type, oversized response and cache failures are handled wi
     },
   });
   assert.equal((await load()).data.bans.length, 1);
+});
+
+// SBPP 2.2.1 panel: single table, thead Player|SteamID|Reason|Server|Length|Banned|Status,
+// rows tr.ban-row with eight direct cells. Sanitized, no real identity data.
+const sbppRow = `<tr class="ban-row" data-state="expired" data-id="1">
+  <td><div><p><a data-testid="drawer-trigger">PlayerA</a></p></div></td>
+  <td>STEAM_0:1:12345</td>
+  <td title="Reason text">Reason text</td>
+  <td title="192.0.2.10">192.0.2.10</td>
+  <td title="30 min">30 min</td>
+  <td><time datetime="2026-01-01T00:00:00+00:00">2026-01-01 00:00:00</time></td>
+  <td><span>Expired</span></td>
+  <td></td>
+</tr>`;
+const sbppRowUnbanned = sbppRow
+  .replace(
+    'class="ban-row" data-state="expired"',
+    'class="ban-row" data-state="unbanned"',
+  )
+  .replace("PlayerA", "PlayerB")
+  .replace("Expired", "Unbanned");
+const sbppFixture = (rows = sbppRow) =>
+  `<div id="readability-page-1" class="page"><table>
+    <thead><tr>
+      <th scope="col">Player</th><th scope="col">SteamID</th><th scope="col">Reason</th>
+      <th scope="col">Server</th><th scope="col">Length</th><th scope="col">Banned</th>
+      <th scope="col">Status</th><th scope="col" aria-label="Row actions"></th>
+    </tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+
+test("parses SBPP 2.2.1 panel rows, omits admin and total", () => {
+  const parsed = parseSourceBans(sbppFixture());
+  assert.deepEqual(parsed, {
+    bans: [
+      {
+        date: "2026-01-01 00:00:00",
+        player: "PlayerA",
+        admin: "",
+        length: "30 min",
+        steamId: "STEAM_0:1:12345",
+        reason: "Reason text",
+        countryCode: null,
+        flagUrl: null,
+      },
+    ],
+    total: null,
+  });
+  assert.ok(!JSON.stringify(parsed).includes("192.0.2.10"));
+});
+
+test("parses SBPP 2.2.1 unbanned status variant", () => {
+  const parsed = parseSourceBans(sbppFixture(sbppRowUnbanned));
+  assert.equal(parsed.bans[0].player, "PlayerB");
+  assert.equal(parsed.bans[0].length, "30 min");
+});
+
+test("rejects SBPP 2.2.1 challenge/error/changed structure", () => {
+  for (const invalid of [
+    "<html>Cloudflare challenge</html>",
+    sbppFixture().replace(
+      '<th scope="col">Status</th>',
+      '<th scope="col">Changed</th>',
+    ),
+    sbppFixture().replace('class="ban-row"', 'class="changed"'),
+    sbppFixture().replace(
+      '<td title="Reason text">Reason text</td>',
+      "<td></td>",
+    ),
+    sbppFixture() + '<div id="banlist"><table></table></div>',
+    sbppFixture(sbppRow + sbppRow).replace("SteamID", "ChangedID"),
+  ]) {
+    assert.throws(() => parseSourceBans(invalid));
+  }
+  assert.throws(() => parseSourceBans(sbppFixture(sbppRow.repeat(31))));
 });
 
 test("shared ban table interpolates text only, without iframe or raw upstream HTML", () => {
