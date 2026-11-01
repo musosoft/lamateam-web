@@ -319,7 +319,7 @@ function initCheck() {
           : `Latest observation: ${formatTime(value.observedAt)}`;
       updateStaleness();
       playerStatus.textContent = snapshot.players.length
-        ? `${snapshot.players.length} recent ${snapshot.players.length === 1 ? "identity" : "identities"}.`
+        ? ""
         : "No recent MOTD identities yet. Refresh after a player opens the MOTD.";
     } catch (error) {
       if (signal.aborted) return;

@@ -25,14 +25,6 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
       <h1 class="fl-text-2xl/4xl font-bold tracking-tight">{t('Admins')}</h1>
     </header>
     <article class="space-y-6 panel fl-p-3/6 text-gray-200">
-      <header>
-        <h2 class="fl-text-xl/3xl font-bold tracking-tight">
-          {t('Admin Rules')}
-        </h2>
-        <p class="fl-mt-2/4 fl-text-sm/base text-gray-300">
-          <em>{t('Not knowing the rules is no excuse.')}</em>
-        </p>
-      </header>
       {showCheck && (
         <section
           class="check-tool"
@@ -41,7 +33,7 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
           aria-label="Player lookup"
         >
           <div class="check-toolbar">
-            <h3 class="font-semibold">Player lookup</h3>
+            <h2 class="font-semibold">Check recent players</h2>
             <button type="button" data-check-refresh>
               Refresh
             </button>
@@ -61,6 +53,14 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
           <noscript>JavaScript is required for player lookup.</noscript>
         </section>
       )}
+      <header>
+        <h2 class="fl-text-xl/3xl font-bold tracking-tight">
+          {t('Admin Rules')}
+        </h2>
+        <p class="fl-mt-2/4 fl-text-sm/base text-gray-300">
+          <em>{t('Not knowing the rules is no excuse.')}</em>
+        </p>
+      </header>
       <ul
         translate="no"
         class="flex flex-wrap items-center fl-gap-2/4 fl-text-sm/base text-gray-200"

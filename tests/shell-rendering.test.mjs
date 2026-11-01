@@ -26,7 +26,7 @@ test("Admins embeds private player lookup only behind the server-side allowlist"
   assert.match(admins, /headers\.set\('Cache-Control', 'private, no-store'\)/);
   assert.match(
     admins,
-    /\{t\('Admin Rules'\)\}[\s\S]*?\{showCheck && \([\s\S]*?data-check-page[\s\S]*?\)\}[\s\S]*?\{t\('1\. Basic Admin Responsibilities'\)\}/,
+    /\{showCheck && \([\s\S]*?data-check-page[\s\S]*?<h2 class="font-semibold">Check recent players<\/h2>[\s\S]*?\)\}\s*<header>[\s\S]*?\{t\('Admin Rules'\)\}[\s\S]*?\{admins\.map[\s\S]*?\{t\('1\. Basic Admin Responsibilities'\)\}/,
   );
   assert.doesNotMatch(admins, /href="\/check"|data-check-results/);
   assert.equal(

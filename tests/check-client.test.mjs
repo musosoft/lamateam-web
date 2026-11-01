@@ -166,6 +166,7 @@ test("loads only the latest 30 API identities, newest first, without lookups or 
   );
   const rows = page.get("[data-check-players]").children;
   assert.equal(rows.length, 30);
+  assert.equal(page.get("[data-check-players-status]").textContent, "");
   assert.equal(rows[0].children[0].children[0].children[0].textContent, id(34));
   assert.equal(rows[29].children[0].children[0].children[0].textContent, id(5));
   assert.doesNotMatch(JSON.stringify(rows), /DO NOT DISPLAY|private log/);
@@ -451,6 +452,7 @@ test("refresh rereads without caching and renders a newly observed player", asyn
   finish(ok(value));
   await settle();
   assert.equal(page.buttons()[0].children[0].children[0].textContent, id(2));
+  assert.equal(page.get("[data-check-players-status]").textContent, "");
   assert.equal(refresh.disabled, false);
   assert.equal(
     page.get("[data-check-players]").attributes["aria-busy"],
