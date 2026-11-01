@@ -12,6 +12,25 @@ import {
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
+test("Admins heading always exposes the translated /check link", () => {
+  const admins = read("../src/pages/admins.astro");
+  const heading = admins.match(/<header\b[^>]*>[\s\S]*?<\/header>/)?.[0];
+  assert.ok(heading);
+  // Direct siblings, with no auth/client condition or hidden wrapper.
+  assert.match(
+    heading,
+    /<h1\b[^>]*>\{t\('Admins'\)\}<\/h1>\s*<a\s+href="\/check"\s+class="[^"]*"\s*>\s*\{t\('Open player review tool'\)\}\s*<span translate="no" class="[^"]*">\s*\/check\s*<\/span>\s*<\/a>\s*<\/header>/,
+  );
+  assert.doesNotMatch(heading, /\b(?:hidden|sr-only|justify-between)\b/);
+  for (const locale of locales) {
+    const label = pageCopy[locale]["Open player review tool"];
+    assert.ok(label?.trim(), locale);
+    assert.ok(!label.includes("/check"), locale);
+    if (locale !== "en")
+      assert.notEqual(label, pageCopy.en["Open player review tool"], locale);
+  }
+});
+
 test("shared shell bypasses request-time HTML localization; only localized home content needs the adapter", () => {
   const layout = read("../src/layouts/Layout.astro");
   assert.match(
