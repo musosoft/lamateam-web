@@ -204,18 +204,36 @@ test("independent rivals combine into one Rivals, not a direct Battleforce renam
     node("red-skillers").summary,
     /independent rival.*copying servers and bans/i,
   );
+  assert.match(
+    node("red-skillers").summary,
+    /first merged into Black Birds.*later merged into Rivals/,
+  );
+  assert.match(
+    node("red-skillers").summary,
+    /reopened later and merged into JZD/,
+  );
   link("aggressive-zone", "red-skillers", "rival");
   link("battleforce", "red-skillers", "participant-move");
   assert.match(
     event("rivals-merge").account,
     /Muso improved Black Birds.*trimmed customized base.*Noaco/,
   );
-  for (const id of ["black-birds", "red-skillers"])
-    assert.match(link(id, "rivals", "merge").period, /2015.*approximate/);
-  assert.equal(event("rivals-merge").year, 2015);
   assert.match(
     event("rivals-merge").account,
-    /one Rivals.cz community\/server.*neither stayed separate/,
+    /Red Skillers first merged into Black Birds/,
+  );
+  assert.match(
+    event("rivals-merge").account,
+    /one Rivals.cz community\/server.*neither remained separate/,
+  );
+  assert.equal(event("rivals-merge").year, 2015);
+  assert.match(
+    link("red-skillers", "black-birds", "merge").period,
+    /Undated.*sequence recalled, not dated/,
+  );
+  assert.match(
+    link("black-birds", "rivals", "merge").period,
+    /2015.*approximate/,
   );
   assert.ok(
     !historyLinks.some(
@@ -233,6 +251,34 @@ test("independent rivals combine into one Rivals, not a direct Battleforce renam
   assert.match(
     event("rivals-continuity").provenance,
     /not independently retrieved/,
+  );
+});
+
+test("Red Skillers reopens and merges into JZD, which joins LaMaTeAm", () => {
+  const reopen = event("red-skillers-reopen");
+  assert.equal(reopen.year, null);
+  assert.match(reopen.dateLabel, /Undated/);
+  assert.match(reopen.account, /reopened later and merged into JZD/);
+  assert.deepEqual(reopen.nodeIds, ["red-skillers", "jzd", "lamateam"]);
+  assert.deepEqual(reopen.sources, []);
+  assert.match(reopen.provenance, /oral account/);
+  const jzdJoin = event("jzd-joins-main");
+  assert.equal(jzdJoin.year, null);
+  assert.match(jzdJoin.dateLabel, /Undated/);
+  assert.match(jzdJoin.account, /JZD.*merged into.*main LaMaTeAm line/);
+  assert.deepEqual(jzdJoin.nodeIds, ["jzd", "lamateam"]);
+  assert.deepEqual(jzdJoin.sources, []);
+  assert.match(jzdJoin.provenance, /oral account/);
+  const redToJzd = link("red-skillers", "jzd", "merge");
+  assert.match(redToJzd.period, /Undated.*sequence recalled, not dated/);
+  assert.match(redToJzd.account, /reopened later and merged into JZD/);
+  assert.match(redToJzd.account, /not independently verified/);
+  assert.deepEqual(redToJzd.sources, []);
+  assert.match(redToJzd.provenance, /oral account/);
+  assert.ok(
+    !historyLinks.some(
+      (item) => item.from === "red-skillers" && item.to === "rivals",
+    ),
   );
 });
 

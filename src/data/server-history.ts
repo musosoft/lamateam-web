@@ -78,7 +78,12 @@ export const historyNetworkRows: {
     lane: "main",
     context: "AGT + ZonaX · circa 2013–14; Steam group founded 12 Nov 2013",
   },
-  { id: "battleforce", lane: "branch", context: "New addresses · 21 Sep 2014" },
+  {
+    id: "battleforce",
+    lane: "branch",
+    context:
+      "Earlier independent line · later joins main AGT→AGZ→Battleforce→Rivals→LaMaTeAm",
+  },
   {
     id: "vega",
     lane: "branch",
@@ -100,19 +105,21 @@ export const historyNetworkRows: {
     context: "Independent · GameME, promotion and player exchange",
   },
   {
-    id: "red-skillers",
-    lane: "branch",
-    context: "Independent rival · later combined with Black Birds",
-  },
-  {
     id: "black-birds",
     lane: "branch",
-    context: "Improved by Muso · combined with Red Skillers",
+    context: "Improved by Muso · merges with Red Skillers, later into Rivals",
+  },
+  {
+    id: "red-skillers",
+    lane: "branch",
+    context:
+      "Independent rival · merges into Black Birds, reopens, merges into JZD",
   },
   {
     id: "rivals",
     lane: "main",
-    context: "Black Birds + Red Skillers · one community/server circa 2015",
+    context:
+      "Black Birds + Red Skillers · one community/server circa 2015; later joins main line",
   },
   {
     id: "noobstyle",
@@ -134,7 +141,7 @@ export const historyNetworkRows: {
     id: "jzd",
     lane: "branch",
     context:
-      "Partial unmaintained code fork · same server/community continued to LaMaTeAm",
+      "Partial unmaintained code fork · Red Skillers reopens and merges into JZD; JZD joins main LaMaTeAm",
   },
   {
     id: "lamateam",
@@ -307,8 +314,9 @@ export const historyNodes: HistoryNode[] = [
     name: "Battleforce",
     kind: "server",
     summary:
-      "An Aggressive Zone announcement lists new Battleforce addresses for Dust2, Public and DeathMatch. It does not by itself establish an ownership transfer or a community merger.",
-    period: "New IPs · 21 Sep 2014",
+      "Battleforce existed earlier on its own server line and later merged/joined the main AGT→AGZ→Battleforce→Rivals→LaMaTeAm line. An Aggressive Zone announcement lists new Battleforce addresses for Dust2, Public and DeathMatch on 21 Sep 2014; this does not by itself establish an ownership transfer or a community merger.",
+    period:
+      "Earlier own line · joins main line Sep 2014 · exact earlier origin unknown",
     sources: [battleforceSource],
     graph: true,
   },
@@ -317,9 +325,9 @@ export const historyNodes: HistoryNode[] = [
     name: "Rivals Community",
     kind: "community",
     summary:
-      "Black Birds and Red Skillers combined into one Rivals.cz community/server around 2015; neither remained separate. The original server gradually shut down as credits ran out. Steam dates the group only to 24 July 2015. The undated Aggressive Zone About text directs people to Rivals, not proof of a direct server or ownership succession. The README’s retrospective 2008 refers to the code core under another name, not the Rivals brand.",
+      "Black Birds and Red Skillers combined into one Rivals.cz community/server around 2015; neither remained separate. Rivals later joined the main LaMaTeAm line. The original server gradually shut down as credits ran out. Steam dates the group only to 24 July 2015. The undated Aggressive Zone About text directs people to Rivals, not proof of a direct server or ownership succession. The README’s retrospective 2008 refers to the code core under another name, not the Rivals brand.",
     period:
-      "Combined community circa 2015 · shutdown gradual, exact date unknown",
+      "Combined community circa 2015 · later joins main line · shutdown gradual, exact date unknown",
     sources: [rivalsGroupSource, groupSource],
     graph: true,
   },
@@ -409,14 +417,14 @@ export const historyNodes: HistoryNode[] = [
     "A separate NL server maintained by the user that hosted the Aggressive Zone Jailbreak server. The user recalls a tweakgaming.com partnership after the FakaHeda partnership. The sequence is oral history; dates and commercial terms are unverified. Partnership, not merger.",
   ),
   oralNode(
-    "red-skillers",
-    "Red Skillers",
-    "An independent rival community. The user recalls Red Skillers copying servers and bans. Player and admin movement occurred during the Battleforce-era network/IP issues. Red Skillers later merged with Black Birds into Rivals.cz.",
-  ),
-  oralNode(
     "black-birds",
     "Black Birds",
     "The user joined and improved Black Birds. Black Birds later merged with Red Skillers into Rivals.cz around 2015. Named among the rivals who collectively became friends in the user's account.",
+  ),
+  oralNode(
+    "red-skillers",
+    "Red Skillers",
+    "An independent rival community. The user recalls Red Skillers copying servers and bans. Red Skillers first merged into Black Birds, which later merged into Rivals. Red Skillers reopened later and merged into JZD, which then joined the main LaMaTeAm line.",
   ),
   oralNode(
     "jzd",
@@ -558,18 +566,25 @@ export const historyLinks: HistoryLink[] = [
     "Players and admins moved during Battleforce-era network/IP problems. This is participant movement, not a transfer of community ownership.",
   ),
   oralLink(
+    "red-skillers",
+    "black-birds",
+    "merge",
+    "Red Skillers first merged into Black Birds, which later merged into Rivals around 2015. The exact sequence and date are recalled, not independently verified.",
+    "Undated · sequence recalled, not dated",
+  ),
+  oralLink(
     "black-birds",
     "rivals",
     "merge",
-    "Black Birds merged with Red Skillers into Rivals around 2015.",
+    "Black Birds later merged into Rivals around 2015. The exact sequence and date are recalled, not independently verified.",
     "Circa 2015 · approximate",
   ),
   oralLink(
     "red-skillers",
-    "rivals",
+    "jzd",
     "merge",
-    "Red Skillers merged with Black Birds into Rivals around 2015.",
-    "Circa 2015 · approximate",
+    "Red Skillers reopened later and merged into JZD, which then joined the main LaMaTeAm line. The reopening date and merge sequence are recalled, not independently verified.",
+    "Undated · sequence recalled, not dated",
   ),
   oralLink(
     "rivals-srcds",
@@ -829,10 +844,22 @@ export const historyEvents: HistoryEvent[] = [
   oralEvent(
     "rivals-merge",
     "Black Birds and Red Skillers become one Rivals.cz",
-    "Muso improved Black Birds, reusing a trimmed customized base from the short-lived Noaco side project. Black Birds and independent rival Red Skillers combined into one Rivals.cz community/server around 2015; neither stayed separate.",
-    ["black-birds", "red-skillers", "rivals"],
+    "Muso improved Black Birds, reusing a trimmed customized base from the short-lived Noaco side project. Red Skillers first merged into Black Birds, which later combined into one Rivals.cz community/server around 2015; neither remained separate. The exact sequence and date are recalled, not independently verified.",
+    ["red-skillers", "black-birds", "rivals"],
     2015,
     "Circa 2015 · approximate",
+  ),
+  oralEvent(
+    "red-skillers-reopen",
+    "Red Skillers reopens and merges into JZD",
+    "Red Skillers reopened later and merged into JZD, which then joined the main LaMaTeAm line. The reopening date and merge sequence are recalled, not independently verified.",
+    ["red-skillers", "jzd", "lamateam"],
+  ),
+  oralEvent(
+    "jzd-joins-main",
+    "JZD joins the main LaMaTeAm line",
+    "JZD, which had received the reopened Red Skillers, then merged into/joined the main LaMaTeAm line. The exact date is unknown; this is a recalled continuation, not proof of uninterrupted technical uptime.",
+    ["jzd", "lamateam"],
   ),
   oralEvent(
     "noobstyle-closure",
