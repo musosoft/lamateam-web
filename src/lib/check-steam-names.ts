@@ -26,13 +26,14 @@ export async function enrichCheckPlayerNames(
       url.searchParams.set("key", options.apiKey);
       url.searchParams.set("steamids", ids.join(","));
       // Bound the whole operation (including body reads), even if a transport
-      // ignores abort. Never follow redirects carrying the server-side key.
+      // ignores abort. Workers supports manual but not error redirects; reject
+      // every 3xx below without forwarding the server-side key.
       const result = await Promise.race([
         (async () => {
           const fetcher = options.fetch ?? fetch;
           const response = await fetcher.call(globalThis, url.href, {
             method: "GET",
-            redirect: "error",
+            redirect: "manual",
             signal: controller.signal,
             headers: { Accept: "application/json" },
           });

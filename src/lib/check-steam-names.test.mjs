@@ -29,7 +29,7 @@ test("one bounded encoded batch, keyed by Steam ID rather than provider order; s
         players.slice(0, 30).map((p) => p.communityId),
       );
       assert.equal(init.method, "GET");
-      assert.equal(init.redirect, "error");
+      assert.equal(init.redirect, "manual");
       assert.equal(init.signal.aborted, false);
       return summaries([
         { steamid: id(30), personaname: " Žluťoučký 🎮 " },
@@ -80,6 +80,22 @@ test("calls the Worker fetch binding with its required global receiver", async (
   });
   assert.equal(receiver, globalThis);
   assert.equal(result[0].displayName, "Player");
+});
+
+test("manual Steam redirects fail closed without a second request", async () => {
+  let calls = 0;
+  const result = await enrichCheckPlayerNames(players.slice(0, 1), {
+    apiKey: "offline-key",
+    fetch: async () => {
+      calls++;
+      return new Response(null, {
+        status: 302,
+        headers: { location: "https://evil.invalid/collect" },
+      });
+    },
+  });
+  assert.equal(calls, 1);
+  assert.deepEqual(result, fallback(players.slice(0, 1)));
 });
 
 test("missing profiles and malformed/unsafe names yield null without dropping rows", async () => {
