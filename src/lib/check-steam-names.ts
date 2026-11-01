@@ -29,7 +29,8 @@ export async function enrichCheckPlayerNames(
       // ignores abort. Never follow redirects carrying the server-side key.
       const result = await Promise.race([
         (async () => {
-          const response = await (options.fetch ?? fetch)(url.href, {
+          const fetcher = options.fetch ?? fetch;
+          const response = await fetcher.call(globalThis, url.href, {
             method: "GET",
             redirect: "error",
             signal: controller.signal,

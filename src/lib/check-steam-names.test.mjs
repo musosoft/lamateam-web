@@ -69,6 +69,19 @@ test("missing key and empty list never call Steam", async () => {
   );
 });
 
+test("calls the Worker fetch binding with its required global receiver", async () => {
+  let receiver;
+  const result = await enrichCheckPlayerNames(players.slice(0, 1), {
+    apiKey: "offline-key",
+    fetch: async function (_input, _init) {
+      receiver = this;
+      return summaries([{ steamid: id(1), personaname: "Player" }]);
+    },
+  });
+  assert.equal(receiver, globalThis);
+  assert.equal(result[0].displayName, "Player");
+});
+
 test("missing profiles and malformed/unsafe names yield null without dropping rows", async () => {
   const invalidNames = [
     null,
