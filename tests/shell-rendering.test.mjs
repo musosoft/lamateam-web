@@ -16,8 +16,7 @@ test("Admins embeds the only public review tool without a Steam login gate", () 
   const admins = read("../src/pages/admins.astro");
   assert.match(admins, /showPlayerReview && <PlayerReview \/>/);
   assert.match(admins, /=== '\/admins'/);
-  assert.match(admins, /'#player-review' : '\/admins#player-review'/);
-  assert.match(admins, /hreflang="en"/);
+  assert.doesNotMatch(admins, /href=.*#player-review|Open player review tool/);
   assert.doesNotMatch(admins, /isCheckAdmin|href="\/check"/);
   assert.equal(
     existsSync(new URL("../src/pages/check.astro", import.meta.url)),
@@ -53,6 +52,24 @@ test("Admins embeds the only public review tool without a Steam login gate", () 
     "7. Final Notes",
   ])
     assert.ok(admins.includes(title));
+});
+
+test("admin rules use seven native, initially collapsed disclosures with heading summaries", () => {
+  const admins = read("../src/pages/admins.astro");
+  const rules = [
+    ...admins.matchAll(/<details class="admin-rule">([\s\S]*?)<\/details>/g),
+  ];
+  assert.equal(rules.length, 7);
+  for (const [index, rule] of rules.entries()) {
+    assert.match(
+      rule[1],
+      new RegExp(`<summary>\\s*<h3[^>]*>\\s*\\{t\\('${index + 1}\\.`),
+    );
+    assert.match(rule[1], /<\/h3>\s*<\/summary>\s*<ul/);
+    assert.doesNotMatch(rule[0], /\bopen(?:=|\s|>)/);
+  }
+  assert.match(admins, /summary:focus-visible/);
+  assert.match(admins, /summary::marker/);
 });
 
 test("shared shell bypasses request-time HTML localization; only localized home content needs the adapter", () => {
@@ -91,6 +108,28 @@ test(
     assert.match(html, /data-check-page/);
     assert.match(html, /data-check-refresh/);
     assert.match(html, /Check recent players/);
+    assert.doesNotMatch(html, /href="[^"]*#player-review"/);
+    const tree = parse(html);
+    const details = [];
+    const visit = (node) => {
+      if (
+        node.tagName === "details" &&
+        node.attrs?.some((a) => a.name === "class" && a.value === "admin-rule")
+      )
+        details.push(node);
+      for (const child of node.childNodes || []) visit(child);
+    };
+    visit(tree);
+    assert.equal(details.length, 7);
+    for (const rule of details) {
+      assert.equal(
+        rule.attrs.some((a) => a.name === "open"),
+        false,
+      );
+      const summary = rule.childNodes.find((n) => n.tagName);
+      assert.equal(summary.tagName, "summary");
+      assert.ok(summary.childNodes.some((n) => n.tagName === "h3"));
+    }
     assert.doesNotMatch(html, /Mizan|data-check-results|data-check-search/);
     assert.match(html, /Admin Rules/);
     assert.match(html, /Crazy69/);
@@ -101,7 +140,15 @@ test(
     );
     const localized = await fetch(new URL(localePath("cs", "admins"), base));
     assert.equal(localized.status, 200);
-    assert.doesNotMatch(await localized.text(), /data-check-page/);
+    const localizedHtml = await localized.text();
+    assert.doesNotMatch(
+      localizedHtml,
+      /data-check-page|href="[^"]*#player-review"/,
+    );
+    assert.equal(
+      (localizedHtml.match(/<details\b[^>]*class="admin-rule"/g) || []).length,
+      7,
+    );
   },
 );
 test(

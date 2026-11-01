@@ -1,7 +1,8 @@
 # Public review-only `/admins` backend
 
 The review UI is embedded directly on `/admins` above the admin roster and
-rules. Localized admin pages link to `/admins#player-review`; `/check` is removed
+rules. There is no header jump link. Localized admin pages show the roster and
+native rule accordions without duplicating the player list; `/check` is removed
 (404), with no alternate public review page. The existing `/api/check/*` endpoint
 names are unchanged. The tool needs no Steam login. Its compact “Check recent
 players” section only fetches `/api/check/players` on load and Refresh, displaying
