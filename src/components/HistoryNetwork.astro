@@ -42,6 +42,12 @@ const position = {
   vcielkaEnd: x(2015),
   vcielkaJoin: x(2016.35),
   zoneMerge: x(2013.5),
+  gamesStart: x(2011.8),
+  // Layout only: Games joined existing AGZ before Sep 2014; no exact date known.
+  gamesJoin: x(2014.1),
+  avalonStart: x(2018),
+  // Offset the split from the RS detour; Avalon exits upward, RS downward.
+  avalonSplit: x(2018) - 32,
   zoneWebEnd: x(2016.8),
   battleStart: x(2013.25),
   battleMerge: x(2014.7),
@@ -70,9 +76,11 @@ const position = {
 const lane = {
   main: 280,
   vcielka: 70,
+  games: 105,
   zonax: 145,
   battle: 200,
   birds: 410,
+  avalon: 125,
   red: 465,
   jzd: 540,
   noob: 630,
@@ -92,6 +100,8 @@ const color = {
   vcielka: '#7dd5e8',
   vega: '#c9a0da',
   tweak: '#a7c784',
+  games: '#e5b5dd',
+  avalon: '#76c8f0',
 };
 
 type Marker = {
@@ -124,7 +134,7 @@ const markers: Marker[] = [
     y: lane.main,
     labelY: lane.main - 35,
     color: color.main,
-    labelX: position.zoneMerge - 18,
+    labelX: position.zoneMerge - 38,
     anchor: 'end' as const,
   },
   {
@@ -213,6 +223,21 @@ const markers: Marker[] = [
     y: lane.tweak,
     labelY: lane.tweak - 24,
     color: color.tweak,
+  },
+  {
+    id: 'games-community',
+    x: position.gamesStart,
+    y: lane.games,
+    labelY: lane.games + 20,
+    color: color.games,
+  },
+  {
+    id: 'avalon',
+    x: position.avalonStart,
+    y: lane.avalon,
+    labelY: lane.avalon - 24,
+    labelX: position.avalonStart + 16,
+    color: color.avalon,
   },
 ].filter(({ id }) => names.has(id));
 
@@ -332,9 +357,24 @@ const paths = [
     annotation:
       'NL Tweakgaming · approximate server-listing observation range, not a full server lifespan',
   },
+  {
+    ids: ['games-community', 'aggressive-zone'],
+    d: `M ${position.gamesStart} ${lane.games} H ${position.gamesJoin} V ${lane.main}`,
+    color: color.games,
+    annotation:
+      'Games Community merged into the existing Aggressive Zone before Aggressive Zone joined Battleforce in September 2014. The exact Games merger date is unknown; this junction is an editorial layout position, not the AGZ formation point. No separate Games-to-Rivals transition.',
+  },
+  {
+    ids: ['games-community', 'avalon', 'rivals'],
+    d: `M ${position.avalonSplit} ${lane.main} V ${lane.avalon} H ${position.end}`,
+    color: color.avalon,
+    annotation:
+      'Avalon · separate continuation of Games Community, branching upward from the main history before the separate downward Red Skillers detour. Its founding is supported by the Steam group and archived site. Avalon does not merge into JZD or LaMaTeAm.',
+  },
 ].filter(({ ids }) => ids.every((id) => names.has(id)));
 
 const junctions = [
+  { x: position.avalonSplit, y: lane.main, color: color.avalon },
   { x: position.battleMerge, y: lane.main, color: color.battle },
   { x: position.birdsMerge, y: lane.birds, color: color.red },
   { x: position.jzdMerge, y: lane.jzd, color: color.red },
@@ -386,7 +426,16 @@ const junctions = [
         with a gap between its first merger and reopening. Vega remains separate
         before its members join the Aggressive Zone thread. NL Tweakgaming is an
         independent server with a code-source relationship, not a community
-        merger.
+        merger. Games Community merged into the existing Aggressive Zone before
+        Aggressive Zone joined Battleforce in September 2014, not into Rivals.
+        Its exact merger date is unknown; its junction position is illustrative,
+        not the Aggressive Zone formation point. It is distinct from Gamers of
+        Germany. The same community later continues separately as Avalon, whose
+        Steam group and archived site support its origin. Avalon branches upward
+        onto its own lane at a separate split point and continues independently
+        above the main track, with no crossing or merger at the LaMaTeAm rejoin.
+        The Red Skillers-to-JZD off-main route branches downward and remains
+        separate.
       </desc>
       <g class="calendar">
         {Array.from({ length: horizon - 2006 + 1 }, (_, i) => 2006 + i).map(

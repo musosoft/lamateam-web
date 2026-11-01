@@ -84,6 +84,8 @@ test("visual lanes expose all public branches, not just a false linear successio
     "vega",
     "noobstyle",
     "zaparit",
+    "games-community",
+    "avalon",
     "gamers-germany",
     "fakaheda",
     "tweakgaming",
@@ -142,6 +144,52 @@ test("bedroom origin, AGT contribution and AGT/ZonaX merger are separate claims"
   assert.match(mergeEvent.account, /no legal ownership transfer is inferred/);
   assert.deepEqual(mergeEvent.sources, []);
   assert.match(mergeEvent.provenance, /oral account/);
+});
+
+test("Games Community joins Aggressive Zone before Battleforce; Avalon continues separately from 2018", () => {
+  const games = node("games-community");
+  const avalon = node("avalon");
+  assert.equal(games.name, "Games Community");
+  assert.equal(avalon.name, "Avalon");
+  assert.match(
+    games.summary,
+    /merged into Aggressive Zone before.*Battleforce/i,
+  );
+  assert.match(
+    link("games-community", "aggressive-zone", "merge").period,
+    /Before Sep 2014/,
+  );
+  assert.ok(
+    !historyLinks.some(
+      (item) => item.from === "games-community" && item.to === "rivals",
+    ),
+  );
+  const continuation = link("games-community", "avalon", "server-continuation");
+  assert.match(continuation.period, /2018/);
+  assert.match(continuation.account, /owner identifies Avalon/);
+  const avalonStart = event("avalon-founded");
+  assert.equal(avalonStart.year, 2018);
+  assert.match(avalonStart.dateLabel, /26 Oct 2018/);
+  assert.deepEqual(avalonStart.nodeIds, ["games-community", "avalon"]);
+  assert.match(
+    avalonStart.account,
+    /timing only.*connection back to Games Community is owner-recalled/,
+  );
+  assert.ok(
+    avalonStart.sources.some((source) =>
+      source.url.includes("steamcommunity.com/groups/avaloncsgroup"),
+    ),
+  );
+  assert.ok(
+    avalonStart.sources.some((source) =>
+      source.url.includes("web.archive.org/web/20190117"),
+    ),
+  );
+  assert.match(
+    games.sources.find((source) => source.url.includes("20130406")).label,
+    /general site, not CS:S proof/,
+  );
+  assert.ok(historyNetworkRows.some((row) => row.id === "gamers-germany"));
 });
 
 test("tracker captures are identity observations, never founding or transition evidence", () => {

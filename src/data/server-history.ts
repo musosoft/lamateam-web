@@ -135,6 +135,18 @@ export const historyNetworkRows: {
       "Observed 2007–2015 · [CZ] www.Zaparit.cz · players joined AGZ/Battleforce line",
   },
   {
+    id: "games-community",
+    lane: "branch",
+    context:
+      "Merged into Aggressive Zone before Battleforce join · oral account",
+  },
+  {
+    id: "avalon",
+    lane: "branch",
+    context:
+      "Separate continuation from Games Community · Steam group founded 2018",
+  },
+  {
     id: "rivals-srcds",
     lane: "branch",
     context: "Public code release · repository created 4 Apr 2018",
@@ -223,6 +235,27 @@ const rivalsGroupSource: Evidence = {
   url: "https://steamcommunity.com/groups/rivalscommunity",
   kind: "document",
 };
+const avalonGroupSource: Evidence = {
+  label: "AvalonCS Steam group · founded 26 Oct 2018",
+  url: "https://steamcommunity.com/groups/avaloncsgroup",
+  kind: "document",
+};
+const avalonSiteSource: Evidence = {
+  label: "AvalonCS · Wayback capture 17 Jan 2019; says it started in 2018",
+  url: "https://web.archive.org/web/20190117095543/https://avaloncs.net/",
+  kind: "archive",
+};
+const gamesCommunity2013Source: Evidence = {
+  label:
+    "gamescommunity.net · Wayback capture 6 Apr 2013; general site, not CS:S proof",
+  url: "https://web.archive.org/web/20130406095652/http://gamescommunity.net/",
+  kind: "archive",
+};
+const gamesCommunity2016Source: Evidence = {
+  label: "gamescommunity.net · Wayback capture 2 Oct 2016; domain for sale",
+  url: "https://web.archive.org/web/20161002091031/http://gamescommunity.net/",
+  kind: "archive",
+};
 
 // Identity observations only. Never retain archived player lists or infer uptime.
 const identitySnapshots = [
@@ -306,7 +339,7 @@ export const historyNodes: HistoryNode[] = [
     name: "Aggressive Zone",
     kind: "community",
     summary:
-      "AGT and the separate ZonaX community merged around 2013–14 into Aggressive Zone, according to the owner. Aggressive Zone joined Battleforce in September 2014 after organizational dispute, funding problems and lost IPs; it discontinued as Muso left the head role. Steam dates only the group foundation to 12 November 2013, and the tracker is only an identity snapshot.",
+      "AGT and the separate ZonaX community merged around 2013–14 into Aggressive Zone, according to the owner. Games Community existed before 2015 and merged into Aggressive Zone before the Battleforce join; this is oral only. Aggressive Zone joined Battleforce in September 2014 after organizational dispute, funding problems and lost IPs; it discontinued as Muso left the head role. Steam dates only the group foundation to 12 November 2013, and the tracker is only an identity snapshot.",
     period: "Merge circa 2013–14 · Battleforce move Sep 2014 · closure undated",
     sources: [groupSource, snapshotSource(identitySnapshots[3])],
     graph: true,
@@ -404,6 +437,22 @@ export const historyNodes: HistoryNode[] = [
       "GameTracker observed [CZ] www.Zaparit.cz on 195.47.67.228:27017 (2007–2008) and 195.47.67.228:27019 (2009–2015). The portal and server observations track a consistent title, not uptime. After Zaparit.cz servers ended, players joined the Aggressive Zone/Battleforce line. This is participant movement, not an organizational merger.",
     ),
     period: "Observed 2007–2015 · archive capture range, not inferred lifespan",
+  },
+  {
+    ...oralNode(
+      "games-community",
+      "Games Community",
+      "Games Community existed before 2015 and merged into Aggressive Zone before Aggressive Zone's later Battleforce join. This lineage is oral; no exact date is established. The archived gamescommunity.net site shows a general community portal, not direct CS:S or merger evidence.",
+    ),
+    sources: [gamesCommunity2013Source, gamesCommunity2016Source],
+  },
+  {
+    ...oralNode(
+      "avalon",
+      "Avalon",
+      "Avalon continued separately from Games Community. Steam group founded 26 Oct 2018; archived site from 2019 says 'We start up in 2018.' These sources prove Avalon group/site active from 2018, not the earlier Games→AGZ lineage. That Games Community→Aggressive Zone transition is oral only.",
+    ),
+    sources: [avalonGroupSource, avalonSiteSource],
   },
   oralNode(
     "gamers-germany",
@@ -511,6 +560,20 @@ export const historyLinks: HistoryLink[] = [
     "merge",
     "AGT merged with ZonaX around 2013–14 into Aggressive Zone.",
     "Circa 2013–14 · approximate",
+  ),
+  oralLink(
+    "games-community",
+    "aggressive-zone",
+    "merge",
+    "Games Community merged into Aggressive Zone before Aggressive Zone joined Battleforce. This is owner-recalled lineage; the archived Games Community site does not document the merger or a CS:S server.",
+    "Before Sep 2014 · approximate owner account",
+  ),
+  oralLink(
+    "games-community",
+    "avalon",
+    "server-continuation",
+    "The owner identifies Avalon as the same community continuing separately from Games Community. Public sources date Avalon to 2018 but do not substantiate this predecessor relationship.",
+    "From 2018 · owner-recalled separate continuation",
   ),
   oralLink(
     "vcielka",
@@ -850,6 +913,14 @@ export const historyEvents: HistoryEvent[] = [
     "Circa 2013–14 · exact date unknown",
   ),
   oralEvent(
+    "games-community-agz-merge",
+    "Games Community merges into Aggressive Zone",
+    "Games Community merged into Aggressive Zone before the September 2014 Battleforce join, according to the owner. The transition date and CS:S-specific documentary evidence are not established.",
+    ["games-community", "aggressive-zone", "battleforce"],
+    null,
+    "Before Sep 2014 · owner account; exact date unknown",
+  ),
+  oralEvent(
     "battleforce-joining",
     "Aggressive Zone joins Battleforce",
     "After organizational dispute, funding problems and lost IPs, Aggressive Zone joined Battleforce in September 2014. Aggressive Zone discontinued as Muso left the head role; the exact closure date is unknown. Player/admin movement occurred during the network/IP problems.",
@@ -865,6 +936,18 @@ export const historyEvents: HistoryEvent[] = [
     2015,
     "Circa 2015 · approximate",
   ),
+  {
+    id: "avalon-founded",
+    year: 2018,
+    dateLabel: "26 Oct 2018 · Steam group founded; site says started in 2018",
+    title: "Avalon appears as a separate continuation",
+    account:
+      "Avalon's Steam group metadata gives a founding date of 26 October 2018, and its January 2019 site says it started in 2018. Those sources establish Avalon group/site timing only; the connection back to Games Community is owner-recalled and is not named in those sources.",
+    nodeIds: ["games-community", "avalon"],
+    sources: [avalonGroupSource, avalonSiteSource],
+    provenance:
+      "Steam group metadata and Wayback site capture; predecessor relationship is owner account",
+  },
   oralEvent(
     "red-skillers-reopen",
     "Main line pauses as players move to reborn Red Skillers",
