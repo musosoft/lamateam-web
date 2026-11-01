@@ -210,7 +210,7 @@ test("independent rivals combine into one Rivals, not a direct Battleforce renam
   );
   assert.match(
     node("red-skillers").summary,
-    /reopened later and merged into JZD/,
+    /copied and reopened our server.*players left the main line.*community later moved\/merged into JZD/,
   );
   link("aggressive-zone", "red-skillers", "rival");
   link("battleforce", "red-skillers", "participant-move");
@@ -254,27 +254,38 @@ test("independent rivals combine into one Rivals, not a direct Battleforce renam
   );
 });
 
-test("Red Skillers reopens and merges into JZD, which joins LaMaTeAm", () => {
+test("main line pauses for Red Skillers and resumes through JZD into LaMaTeAm", () => {
   const reopen = event("red-skillers-reopen");
   assert.equal(reopen.year, null);
-  assert.match(reopen.dateLabel, /Undated/);
-  assert.match(reopen.account, /reopened later and merged into JZD/);
+  assert.match(reopen.dateLabel, /2018–2024.*approximate/);
+  assert.match(reopen.account, /players left the main line.*around 2018/);
+  assert.match(
+    reopen.account,
+    /off-line through the Red Skillers-to-JZD transition/,
+  );
   assert.deepEqual(reopen.nodeIds, ["red-skillers", "jzd", "lamateam"]);
   assert.deepEqual(reopen.sources, []);
   assert.match(reopen.provenance, /oral account/);
   const jzdJoin = event("jzd-joins-main");
-  assert.equal(jzdJoin.year, null);
-  assert.match(jzdJoin.dateLabel, /Undated/);
-  assert.match(jzdJoin.account, /JZD.*merged into.*main LaMaTeAm line/);
+  assert.equal(jzdJoin.year, 2024);
+  assert.match(jzdJoin.dateLabel, /2024.*approximate/);
+  assert.match(jzdJoin.account, /community moved\/merged into JZD/);
+  assert.match(jzdJoin.account, /resumed the main line around 2024/);
   assert.deepEqual(jzdJoin.nodeIds, ["jzd", "lamateam"]);
   assert.deepEqual(jzdJoin.sources, []);
   assert.match(jzdJoin.provenance, /oral account/);
+  const playerMove = link("rivals", "red-skillers", "participant-move");
+  assert.match(playerMove.period, /2018–2024.*approximate/);
+  assert.match(playerMove.account, /players left to play at Red Skillers/);
   const redToJzd = link("red-skillers", "jzd", "merge");
-  assert.match(redToJzd.period, /Undated.*sequence recalled, not dated/);
-  assert.match(redToJzd.account, /reopened later and merged into JZD/);
-  assert.match(redToJzd.account, /not independently verified/);
+  assert.match(redToJzd.period, /After circa 2018.*around 2024/);
+  assert.match(redToJzd.account, /community moved\/merged into JZD/);
   assert.deepEqual(redToJzd.sources, []);
   assert.match(redToJzd.provenance, /oral account/);
+  assert.match(
+    link("jzd", "lamateam", "server-continuation").period,
+    /2024.*approximate/,
+  );
   assert.ok(
     !historyLinks.some(
       (item) => item.from === "red-skillers" && item.to === "rivals",
@@ -322,7 +333,7 @@ test("JZD fork is distinct from server continuation and restored maintained code
     /half or more.*not maintained/,
   );
   const continuation = link("jzd", "lamateam", "server-continuation");
-  assert.match(continuation.period, /Undated/);
+  assert.match(continuation.period, /2024.*approximate/);
   assert.match(continuation.account, /same server\/community continuation/);
   assert.match(
     link("rivals-srcds", "lamateam", "code-maintenance").account,
@@ -376,13 +387,22 @@ test("participant joins and independent partnerships never become ownership merg
     link("zaparit", "battleforce", "participant-move").account,
     /After Zaparit\.cz's servers ended.*players joined/,
   );
+  assert.equal(node("zaparit").name, "[CZ] www.Zaparit.cz");
+  assert.match(
+    node("zaparit").period,
+    /Observed 2007–2015.*not inferred lifespan/,
+  );
   assert.match(
     historyNetworkRows.find((row) => row.id === "zaparit").context,
-    /Servers ended.*players joined AGZ\/Battleforce line.*date unknown/,
+    /Observed 2007–2015.*\[CZ\] www\.Zaparit\.cz/,
   );
   assert.match(
     node("zaparit").summary,
     /joined the Aggressive Zone\/Battleforce line/i,
+  );
+  assert.match(
+    node("zaparit").summary,
+    /GameTracker observed.*195\.47\.67\.228.*not uptime/,
   );
   link("agteam", "fakaheda", "partnership");
   link("aggressive-zone", "fakaheda", "partnership");
@@ -394,7 +414,16 @@ test("participant joins and independent partnerships never become ownership merg
   );
   assert.match(
     node("tweakgaming").summary,
-    /separate NL server maintained by the user.*Jailbreak/,
+    /GameTracker observed NL Tweakgaming.*2008–2012.*not inferred uptime/,
+  );
+  assert.equal(node("tweakgaming").name, "NL Tweakgaming");
+  assert.match(
+    node("tweakgaming").period,
+    /Observed 2008–2012.*not inferred lifespan/,
+  );
+  assert.match(
+    node("tweakgaming").summary,
+    /Jailbreak server.*Partnership, not merger/,
   );
 });
 

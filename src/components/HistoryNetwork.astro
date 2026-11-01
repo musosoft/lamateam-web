@@ -18,6 +18,11 @@ interface Props {
 
 const { nodes } = Astro.props;
 const names = new Map(nodes.map(({ id, name }) => [id, name]));
+const displayNames: Record<string, string> = {
+  rivals: 'Rivals',
+  zaparit: '[CZ] www.Zaparit.cz',
+  tweakgaming: 'NL Tweakgaming',
+};
 // Preserve room for the dense early history, with a compact later-year scale.
 const x = (year: number) =>
   90 + (Math.min(year, 2020) - 2006) * 110 + Math.max(0, year - 2020) * 50;
@@ -47,10 +52,11 @@ const position = {
   noobStart: x(2011),
   noobEnd: x(2016),
   noobJoin: x(2016.7),
-  redReopens: x(2015.8),
-  jzdStart: x(2014),
-  jzdMerge: x(2017),
-  lamaMerge: x(2018),
+  mainPause: x(2018),
+  redReopens: x(2018),
+  jzdStart: x(2021),
+  jzdMerge: x(2021),
+  lamaMerge: x(2024),
   zaparitStart: x(2007),
   zaparitEnd: x(2015),
   zaparitJoin: x(2015.15),
@@ -58,7 +64,7 @@ const position = {
   vegaEnd: x(2014.3),
   vegaJoin: x(2014.55),
   tweakStart: x(2008),
-  tweakEnd: x(2012.8),
+  tweakEnd: x(2012),
   end: x(Math.max(currentYear + 1, 2027)),
 };
 const lane = {
@@ -156,6 +162,7 @@ const markers: Marker[] = [
     x: position.redReopens,
     y: lane.red,
     labelY: lane.red - 24,
+    labelX: position.redReopens + 16,
     color: color.red,
   },
   {
@@ -236,8 +243,8 @@ const paths = [
     color: color.main,
   },
   {
-    ids: ['rivals', 'lamateam'],
-    d: `M ${position.rivalsMerge} ${lane.main} H ${position.lamaMerge}`,
+    ids: ['rivals', 'red-skillers'],
+    d: `M ${position.rivalsMerge} ${lane.main} H ${position.mainPause} V ${lane.red}`,
     color: color.main,
   },
   {
@@ -286,6 +293,9 @@ const paths = [
     ids: ['zaparit'],
     d: `M ${position.zaparitStart} ${lane.zaparit} H ${position.zaparitEnd}`,
     color: color.zaparit,
+    observation: true,
+    annotation:
+      '[CZ] www.Zaparit.cz · approximate archive-observation range, not founding or closure dates',
   },
   {
     ids: ['vcielka'],
@@ -318,6 +328,9 @@ const paths = [
     ids: ['tweakgaming'],
     d: `M ${position.tweakStart} ${lane.tweak} H ${position.tweakEnd}`,
     color: color.tweak,
+    observation: true,
+    annotation:
+      'NL Tweakgaming · approximate server-listing observation range, not a full server lifespan',
   },
 ].filter(({ ids }) => ids.every((id) => names.has(id)));
 
@@ -355,19 +368,23 @@ const junctions = [
       <desc id="history-network-desc">
         Aggressive Ghost Team and ZonaX converge at the start of Aggressive
         Zone. The earlier parallel Battleforce line joins the main lane,
-        followed by Rivals and LaMaTeAm. Red Skillers joins Black Birds, which
-        joins Rivals. Red Skillers later reopens and joins JZD; JZD joins the
-        main lane at LaMaTeAm. noobstyle.sk and Zaparit.cz have separate lanes
-        with player-movement connections. All spans and handoff positions are
+        followed by Rivals. The main lane pauses as players move to the reopened
+        Red Skillers lane, then through JZD, before resuming at LaMaTeAm. The
+        main lane has no activity line across that off-main interval. The
+        earlier Red Skillers segment joins Black Birds, which joins Rivals.
+        noobstyle.sk and [CZ] www.Zaparit.cz have separate lanes with
+        player-movement connections. All spans and handoff positions are
         approximate. The faint dashed Aggressive Zone branch represents later
         archived website presence, not a proven server lifespan. Battleforce's
         early portal and noobstyle's archive captures are observations, not
-        founding dates. JZD's approximate era follows the owner's oral account.
+        founding dates. The off-main sequence follows the owner's approximate
+        recollection. The Zaparit and NL Tweakgaming stippled spans represent
+        archive observations only, not full lifespans or founding/closure dates.
         Vcielka coexists with ZonaX, receives its community continuation when
         ZonaX merges into Aggressive Zone, then closes and its members join
         Rivals. Red Skillers has two separate active spans on the same lane,
         with a gap between its first merger and reopening. Vega remains separate
-        before its members join the Aggressive Zone thread. Tweakgaming is an
+        before its members join the Aggressive Zone thread. NL Tweakgaming is an
         independent server with a code-source relationship, not a community
         merger.
       </desc>
@@ -388,7 +405,7 @@ const junctions = [
       </g>
       {names.has('aggressive-zone') && (
         <path
-          d={`M ${position.zoneMerge} ${lane.main} V 340 H ${position.zoneWebEnd}`}
+          d={`M ${position.zoneMerge} ${lane.main} V 340 H ${position.zoneWebEnd} V ${lane.main}`}
           stroke={color.main}
           class="website-trail"
         >
@@ -399,8 +416,13 @@ const junctions = [
         <path
           d={path.d}
           stroke={path.color}
-          class:list={['thread', { movement: path.movement }]}
-        />
+          class:list={[
+            'thread',
+            { movement: path.movement, observation: path.observation },
+          ]}
+        >
+          {path.annotation && <title>{path.annotation}</title>}
+        </path>
       ))}
       {junctions.map((point) => (
         <circle
@@ -420,7 +442,7 @@ const junctions = [
             text-anchor={node.anchor ?? 'start'}
             class="server-name"
           >
-            {node.id === 'rivals' ? 'Rivals' : names.get(node.id)}
+            {displayNames[node.id] ?? names.get(node.id)}
           </text>
         </g>
       ))}
@@ -492,6 +514,10 @@ const junctions = [
   }
   .movement {
     stroke-dasharray: 7 7;
+  }
+  .observation {
+    stroke-width: 2;
+    stroke-dasharray: 2 5;
   }
   .milestone circle,
   .junction {

@@ -98,7 +98,8 @@ export const historyNetworkRows: {
   {
     id: "tweakgaming",
     lane: "branch",
-    context: "Independent NL server · maintained by Muso · Jailbreak hosting",
+    context:
+      "Observed 2008–2012 · GunGame/Surf · Jailbreak hosting partnership",
   },
   {
     id: "gamers-germany",
@@ -114,13 +115,13 @@ export const historyNetworkRows: {
     id: "red-skillers",
     lane: "branch",
     context:
-      "Independent rival · merges into Black Birds, reopens, merges into JZD",
+      "First joins Black Birds · later players move from main line · community moves to JZD",
   },
   {
     id: "rivals",
     lane: "main",
     context:
-      "Black Birds + Red Skillers · one community/server circa 2015; later joins main line",
+      "Black Birds + Red Skillers · main line pauses around 2018 as players move to Red Skillers",
   },
   {
     id: "noobstyle",
@@ -131,7 +132,7 @@ export const historyNetworkRows: {
     id: "zaparit",
     lane: "branch",
     context:
-      "Servers ended · players joined AGZ/Battleforce line; date unknown",
+      "Observed 2007–2015 · [CZ] www.Zaparit.cz · players joined AGZ/Battleforce line",
   },
   {
     id: "rivals-srcds",
@@ -142,13 +143,13 @@ export const historyNetworkRows: {
     id: "jzd",
     lane: "branch",
     context:
-      "Partial unmaintained code fork · Red Skillers reopens and merges into JZD; JZD joins main LaMaTeAm",
+      "Red Skillers community moves here · continuation rejoins main as LaMaTeAm around 2024",
   },
   {
     id: "lamateam",
     lane: "main",
     context:
-      "JZD continuation · maintained code restored at handoff; date unknown",
+      "JZD continuation resumes main line around 2024 · continues forward",
   },
 ];
 
@@ -323,10 +324,10 @@ export const historyNodes: HistoryNode[] = [
   },
   {
     id: "rivals",
-    name: "Rivals Community",
+    name: "Rivals",
     kind: "community",
     summary:
-      "Black Birds and Red Skillers combined into one Rivals.cz community/server around 2015; neither remained separate. Rivals later joined the main LaMaTeAm line. The original server gradually shut down as credits ran out. Steam dates the group only to 24 July 2015. The undated Aggressive Zone About text directs people to Rivals, not proof of a direct server or ownership succession. The README’s retrospective 2008 refers to the code core under another name, not the Rivals brand.",
+      "Black Birds and Red Skillers combined into one Rivals.cz community/server around 2015; neither remained separate. Around 2018, the main line paused as players moved to the reborn Red Skillers. The Red Skillers community later moved to JZD; JZD continued into LaMaTeAm, resuming the main line around 2024. The original Rivals server gradually shut down as credits ran out. Steam dates the group only to 24 July 2015. The undated Aggressive Zone About text directs people to Rivals, not proof of a direct server or ownership succession. The README’s retrospective 2008 refers to the code core under another name, not the Rivals brand.",
     period:
       "Combined community circa 2015 · later joins main line · shutdown gradual, exact date unknown",
     sources: [rivalsGroupSource, groupSource],
@@ -396,11 +397,14 @@ export const historyNodes: HistoryNode[] = [
     "noobstyle.sk",
     "noobstyle.sk ended in 2016 and its players joined Rivals.cz. The exact player-movement date is unknown; this was not an organizational merger.",
   ),
-  oralNode(
-    "zaparit",
-    "Zaparit.cz",
-    "After its servers ended, Zaparit.cz players joined the Aggressive Zone/Battleforce line. The date is unknown; this was participant movement, not an organizational merger.",
-  ),
+  {
+    ...oralNode(
+      "zaparit",
+      "[CZ] www.Zaparit.cz",
+      "GameTracker observed [CZ] www.Zaparit.cz on 195.47.67.228:27017 (2007–2008) and 195.47.67.228:27019 (2009–2015). The portal and server observations track a consistent title, not uptime. After Zaparit.cz servers ended, players joined the Aggressive Zone/Battleforce line. This is participant movement, not an organizational merger.",
+    ),
+    period: "Observed 2007–2015 · archive capture range, not inferred lifespan",
+  },
   oralNode(
     "gamers-germany",
     "Gamers of Germany",
@@ -412,11 +416,14 @@ export const historyNodes: HistoryNode[] = [
     "The user recalls an official FakaHeda partnership in the Aggressive Zone community thread, separately from the earlier agteam.fakaheda.eu hostname. FakaHeda sponsored and hosted AGT early. Official is the participant's description, not independently verified status; neither implies ownership.",
     "provider",
   ),
-  oralNode(
-    "tweakgaming",
-    "tweakgaming.com",
-    "A separate NL server maintained by the user that hosted the Aggressive Zone Jailbreak server. The user recalls a tweakgaming.com partnership after the FakaHeda partnership. The sequence is oral history; dates and commercial terms are unverified. Partnership, not merger.",
-  ),
+  {
+    ...oralNode(
+      "tweakgaming",
+      "NL Tweakgaming",
+      "GameTracker observed NL Tweakgaming (GunGame/Surf) 2008–2012. This is a capture range, not inferred uptime. The user recalls a tweakgaming.com partnership after the FakaHeda partnership. A separate NL server hosted the Aggressive Zone Jailbreak server. Partnership, not merger.",
+    ),
+    period: "Observed 2008–2012 · archive capture range, not inferred lifespan",
+  },
   oralNode(
     "black-birds",
     "Black Birds",
@@ -425,12 +432,12 @@ export const historyNodes: HistoryNode[] = [
   oralNode(
     "red-skillers",
     "Red Skillers",
-    "An independent rival community. The user recalls Red Skillers copying servers and bans. Red Skillers first merged into Black Birds, which later merged into Rivals. Red Skillers reopened later and merged into JZD, which then joined the main LaMaTeAm line.",
+    "An independent rival community. The user recalls Red Skillers copying servers and bans. Red Skillers first merged into Black Birds, which later merged into Rivals. After Red Skillers copied and reopened our server, players left the main line for Red Skillers around 2018. The Red Skillers community later moved/merged into JZD during the off-main interval ending around 2024.",
   ),
   oralNode(
     "jzd",
     "JZD",
-    "Used a partial fork of rivals-srcds (half or more of the base), not maintained by the user. The JZD server/community continued into LaMaTeAm.",
+    "Used a partial fork of rivals-srcds (half or more of the base), not maintained by the user. The Red Skillers community moved/merged into JZD. JZD continued into LaMaTeAm, which resumed the main line around 2024 and continues to present/future.",
   ),
   {
     ...oralNode(
@@ -581,11 +588,18 @@ export const historyLinks: HistoryLink[] = [
     "Circa 2015 · approximate",
   ),
   oralLink(
+    "rivals",
+    "red-skillers",
+    "participant-move",
+    "After Red Skillers copied our server and was reborn, the main line paused around 2018–2024 as players left to play at Red Skillers. This is participant movement, not a community merger.",
+    "Circa 2018–2024 · broad interval, approximate",
+  ),
+  oralLink(
     "red-skillers",
     "jzd",
     "merge",
-    "Red Skillers reopened later and merged into JZD, which then joined the main LaMaTeAm line. The reopening date and merge sequence are recalled, not independently verified.",
-    "Undated · sequence recalled, not dated",
+    "Following the player movement period, the Red Skillers community moved/merged into JZD. This represents the community moving, not just participant flow.",
+    "After circa 2018 · before LaMaTeAm returns to main line around 2024",
   ),
   oralLink(
     "rivals-srcds",
@@ -597,7 +611,8 @@ export const historyLinks: HistoryLink[] = [
     "jzd",
     "lamateam",
     "server-continuation",
-    "The JZD server/community continued into LaMaTeAm (same server/community continuation). At handoff the user switched back to their own maintained code.",
+    "The JZD server/community continued into LaMaTeAm (same server/community continuation), resuming the main line around 2024. At handoff the user switched back to their own maintained code.",
+    "Around 2024 · approximate main-line resumption",
   ),
   oralLink(
     "rivals",
@@ -852,15 +867,19 @@ export const historyEvents: HistoryEvent[] = [
   ),
   oralEvent(
     "red-skillers-reopen",
-    "Red Skillers reopens and merges into JZD",
-    "Red Skillers reopened later and merged into JZD, which then joined the main LaMaTeAm line. The reopening date and merge sequence are recalled, not independently verified.",
+    "Main line pauses as players move to reborn Red Skillers",
+    "After Red Skillers copied and reopened our server, players left the main line to play there around 2018. The main route stays off-line through the Red Skillers-to-JZD transition before LaMaTeAm resumes it around 2024. This is owner-recalled sequence and approximate timing.",
     ["red-skillers", "jzd", "lamateam"],
+    null,
+    "Around 2018–2024 · off-main interval, approximate",
   ),
   oralEvent(
     "jzd-joins-main",
-    "JZD joins the main LaMaTeAm line",
-    "JZD, which had received the reopened Red Skillers, then merged into/joined the main LaMaTeAm line. The exact date is unknown; this is a recalled continuation, not proof of uninterrupted technical uptime.",
+    "JZD continues into LaMaTeAm; main line resumes",
+    "The Red Skillers community moved/merged into JZD. JZD then continued into LaMaTeAm, which resumed the main line around 2024 and continues to the present and future. This is approximate owner-recalled chronology, not proof of uninterrupted technical uptime.",
     ["jzd", "lamateam"],
+    2024,
+    "Around 2024 · approximate main-line resumption",
   ),
   oralEvent(
     "noobstyle-closure",
