@@ -39,31 +39,16 @@ function element() {
   };
 }
 
-function mount(respond, visible = true) {
+function mount(respond) {
   const nodes = new Map();
   const get = (selector) => {
-    const find = (node) => {
-      if (
-        selector.startsWith("[data-check-") &&
-        selector.slice(1, -1) in node.attributes
-      )
-        return node;
-      for (const child of node.children) {
-        const match = find(child);
-        if (match) return match;
-      }
-    };
-    const match =
-      nodes.has("[data-check-players]") &&
-      find(nodes.get("[data-check-players]"));
-    if (match) return match;
     if (!nodes.has(selector)) nodes.set(selector, element());
     return nodes.get(selector);
   };
   const root = element();
   root.querySelector = get;
   root.querySelectorAll = () =>
-    get("[data-check-players]").children.map((row) => row.children[0]);
+    get("[data-check-players]").children.map((row) => row.children[1]);
   const events = {};
   const calls = [];
   const context = {
@@ -79,7 +64,7 @@ function mount(respond, visible = true) {
     window: { setInterval: () => 1, clearInterval() {} },
     document: {
       documentElement: { lang: "en" },
-      querySelector: () => (visible ? root : null),
+      querySelector: () => root,
       createElement: element,
       addEventListener: (name, handler) => {
         events[name] = handler;
@@ -101,49 +86,15 @@ function mount(respond, visible = true) {
 const ok = (value) => ({ ok: true, json: async () => value });
 const snapshot = (players) => ({ observedAt: Date.now(), players });
 
-test("does not fetch when SSR did not render the authorized lookup", async () => {
-  const page = mount(() => {
-    throw new Error("unexpected request");
-  }, false);
+test("public Steam display names remain text and keep the canonical ID visible", async () => {
+  const page = mount(() => ok(snapshot([
+    { communityId: id(1), displayName: "<img src=x onerror=alert(1)>", lastSeen: Date.now() },
+  ])));
   await settle();
-  assert.equal(page.calls.length, 0);
-});
-
-test("one accordion opens at a time; switching aborts and ignores a late response", async () => {
-  const pending = [];
-  const page = mount((path) =>
-    path.endsWith("players")
-      ? ok(
-          snapshot(
-            [1, 2].map((n) => ({
-              communityId: id(n),
-              lastSeen: Date.now() - n,
-            })),
-          ),
-        )
-      : new Promise((resolve) => pending.push(resolve)),
-  );
-  await settle();
-  const rows = page.get("[data-check-players]").children;
-  const [first, second] = page.buttons();
-  first.events.click();
-  assert.equal(rows[0].children[1].hidden, false);
-  second.events.click();
-  assert.equal(page.calls[1].signal.aborted, true);
-  assert.equal(rows[0].children[1].hidden, true);
-  assert.equal(first.attributes["aria-expanded"], "false");
-  assert.equal(second.attributes["aria-expanded"], "true");
-  assert.equal(rows[1].children[1].attributes["aria-busy"], "true");
-  pending[0]({ ok: false, status: 429 });
-  await settle();
-  assert.match(rows[1].children[1].children[0].textContent, /Checking/);
-  pending[1]({ ok: false, status: 429 });
-  await settle();
-  assert.match(rows[1].children[1].children[0].textContent, /rate limit/);
-  assert.equal(rows[1].children[1].attributes["aria-busy"], "false");
-  second.events.click();
-  assert.equal(rows[1].children[1].hidden, true);
-  assert.equal(page.calls.length, 3);
+  const info = page.get("[data-check-players]").children[0].children[0];
+  assert.equal(info.children[0].textContent, "<img src=x onerror=alert(1)>");
+  assert.equal(info.children[1].textContent, id(1));
+  assert.equal(page.calls.length, 1);
 });
 
 test("loads only the latest 30 API identities, newest first, without lookups or raw fields", async () => {
@@ -166,14 +117,13 @@ test("loads only the latest 30 API identities, newest first, without lookups or 
   );
   const rows = page.get("[data-check-players]").children;
   assert.equal(rows.length, 30);
-  assert.equal(page.get("[data-check-players-status]").textContent, "");
-  assert.equal(rows[0].children[0].children[0].children[0].textContent, id(34));
-  assert.equal(rows[29].children[0].children[0].children[0].textContent, id(5));
+  assert.equal(rows[0].children[0].children[0].textContent, id(34));
+  assert.equal(rows[29].children[0].children[0].textContent, id(5));
   assert.doesNotMatch(JSON.stringify(rows), /DO NOT DISPLAY|private log/);
-  assert.equal(page.buttons()[0].attributes["aria-expanded"], "false");
+  assert.equal(page.buttons()[0].textContent, "Check Mizan");
 });
 
-test("manual search posts only communityId; collapse aborts a pending lookup", async () => {
+test("manual search posts only communityId and suppresses concurrent lookups", async () => {
   let finish;
   const page = mount((path) =>
     path.endsWith("players")
@@ -188,19 +138,21 @@ test("manual search posts only communityId; collapse aborts a pending lookup", a
   assert.equal(page.calls.length, 2);
   assert.equal(page.calls[1].path, "/api/check/search");
   assert.deepEqual(JSON.parse(page.calls[1].body), { communityId: id(1) });
-  assert.equal(page.buttons()[0].attributes["aria-expanded"], "false");
-  assert.equal(page.calls[1].signal.aborted, true);
+  assert.equal(page.buttons()[0].disabled, true);
   finish({ ok: false, status: 429 });
   await settle();
-  assert.equal(page.get("[data-check-result-content]").hidden, true);
+  assert.match(
+    page.get("[data-check-search-status]").textContent,
+    /rate limit/,
+  );
+  assert.equal(page.buttons()[0].disabled, false);
 });
 
-test("renders names as text with secondary Steam64 IDs and inline results", async () => {
-  const displayName = '<img src=x onerror="alert(1)"> & Player';
+test("renders a validated result for the selected identity", async () => {
   const page = mount((path) =>
     ok(
       path.endsWith("players")
-        ? snapshot([{ communityId: id(1), displayName, lastSeen: Date.now() }])
+        ? snapshot([{ communityId: id(1), lastSeen: Date.now() }])
         : {
             queriedAt: Date.now(),
             steamId64: id(1),
@@ -220,115 +172,17 @@ test("renders names as text with secondary Steam64 IDs and inline results", asyn
     ),
   );
   await settle();
-  const row = page.get("[data-check-players]").children[0];
-  const info = row.children[0].children[0];
-  assert.equal(info.children[0].textContent, displayName);
-  assert.equal(info.children[1].textContent, id(1));
-  assert.equal(info.children[1].translate, false);
-  assert.equal(
-    page.buttons()[0].attributes["aria-label"],
-    `Ban results for ${displayName} (${id(1)})`,
-  );
   page.buttons()[0].events.click();
-  assert.equal(
-    page.get("[data-check-search-status]").textContent,
-    `Checking bans for ${displayName} (${id(1)})…`,
-  );
   await settle();
   assert.equal(page.get("[data-check-result-content]").hidden, false);
   assert.match(
     page.get("[data-check-search-status]").textContent,
     /not proof of innocence/,
   );
-  assert.equal(row.children[1].hidden, false);
-  assert.equal(row.children[0].attributes["aria-controls"], row.children[1].id);
   assert.equal(
-    row.children[1].attributes["aria-labelledby"],
-    row.children[0].id,
+    page.get("[data-check-result-player]").textContent,
+    `CommunityID ${id(1)}`,
   );
-});
-
-test("missing, null and blank names fall back to the ID in list and results", async () => {
-  for (const displayName of [undefined, null, "", "  \t "]) {
-    const page = mount((path) =>
-      ok(
-        path.endsWith("players")
-          ? snapshot([
-              { communityId: id(1), displayName, lastSeen: Date.now() },
-            ])
-          : {
-              queriedAt: Date.now(),
-              steamId64: id(1),
-              profileUrl: `https://mizan.ac/players/steam/${id(1)}`,
-              cheater: false,
-              trolling: false,
-              bans: {
-                total: 0,
-                active: 0,
-                sources: 0,
-                conduct: 0,
-                categories: [],
-                games: [],
-                lastAt: null,
-              },
-            },
-      ),
-    );
-    await settle();
-    const info = page.get("[data-check-players]").children[0].children[0]
-      .children[0];
-    assert.equal(info.children[0].textContent, id(1));
-    assert.equal(info.children.length, 2); // ID and last-seen time, no duplicate ID.
-    page.buttons()[0].events.click();
-    await settle();
-    assert.equal(page.get("[data-check-result-content]").hidden, false);
-  }
-});
-
-test("trims display names and rejects values outside the optional string/null contract", async () => {
-  const page = mount(() =>
-    ok(
-      snapshot([
-        { communityId: id(1), displayName: "  Player  ", lastSeen: Date.now() },
-      ]),
-    ),
-  );
-  await settle();
-  assert.equal(
-    page.get("[data-check-players]").children[0].children[0].children[0]
-      .children[0].textContent,
-    "Player",
-  );
-  const invalid = mount(() =>
-    ok(
-      snapshot([{ communityId: id(1), displayName: 42, lastSeen: Date.now() }]),
-    ),
-  );
-  await settle();
-  assert.match(
-    invalid.get("[data-check-players-status]").textContent,
-    /Could not load/,
-  );
-  assert.equal(invalid.buttons().length, 0);
-});
-
-test("embedded copy stays concise and rendering never uses HTML sinks", () => {
-  const page = readFileSync(
-    new URL("../src/pages/admins.astro", import.meta.url),
-    "utf8",
-  );
-  assert.doesNotMatch(
-    page,
-    /Mizan|MOTD IDs can be spoofed|List may be out of date|data-check-stale/,
-  );
-  assert.doesNotMatch(source, /Mizan|data-check-stale/);
-  assert.ok(page.indexOf("data-check-players") < page.indexOf("{admins.map"));
-  assert.match(source, /not proof of innocence/);
-  assert.doesNotMatch(
-    page,
-    /No checks run\s+automatically|not a complete history\. Zero|no safe canonical URL was/,
-  );
-  assert.doesNotMatch(source, /innerHTML|insertAdjacentHTML/);
 });
 
 test("handles empty, malformed, failed and rate-limited list responses", async () => {
@@ -368,6 +222,7 @@ test("null observedAt is an empty state only when the backend players list is em
     page.get("[data-check-observed]").textContent,
     "No recent observations available.",
   );
+  assert.equal(page.get("[data-check-stale]").hidden, true);
   assert.equal(page.get("[data-check-refresh]").disabled, false);
   assert.equal(page.buttons().length, 0);
   assert.equal(page.calls.length, 1);
@@ -386,7 +241,7 @@ test("null observedAt is an empty state only when the backend players list is em
   assert.equal(invalid.buttons().length, 0);
 });
 
-test("failed refresh keeps the last list with a clear status and never searches", async () => {
+test("failed refresh keeps the last list with a stale warning and never searches", async () => {
   let fail = false;
   const page = mount(() =>
     fail
@@ -398,70 +253,6 @@ test("failed refresh keeps the last list with a clear status and never searches"
   page.get("[data-check-refresh]").events.click();
   await settle();
   assert.equal(page.buttons().length, 1);
-  assert.match(
-    page.get("[data-check-players-status]").textContent,
-    /Refresh failed. Showing the previous list/,
-  );
-  assert.equal(page.get("[data-check-refresh]").disabled, false);
-  fail = false;
-  page.get("[data-check-refresh]").events.click();
-  await settle();
-  assert.equal(page.calls.length, 3);
-  assert.doesNotMatch(
-    page.get("[data-check-players-status]").textContent,
-    /failed/,
-  );
+  assert.equal(page.get("[data-check-stale]").hidden, false);
   assert.ok(page.calls.every((call) => call.path === "/api/check/players"));
-});
-
-test("refresh rereads without caching and renders a newly observed player", async () => {
-  let value = {
-    observedAt: 1700000000000,
-    players: [{ communityId: id(1), lastSeen: 1700000000000 }],
-  };
-  let finish;
-  const page = mount(() =>
-    finish
-      ? new Promise((resolve) => {
-          finish = resolve;
-        })
-      : ok(value),
-  );
-  await settle();
-  const refresh = page.get("[data-check-refresh]");
-  refresh.events.click();
-  await settle();
-  assert.equal(page.calls.length, 2);
-  assert.match(
-    page.get("[data-check-observed]").textContent,
-    /^Latest observation:/,
-  );
-  value = {
-    observedAt: 1700000010000,
-    players: [{ communityId: id(2), lastSeen: 1700000010000 }],
-  };
-  finish = true;
-  refresh.events.click();
-  assert.equal(refresh.disabled, true);
-  assert.equal(
-    page.get("[data-check-players]").attributes["aria-busy"],
-    "true",
-  );
-  refresh.events.click();
-  assert.equal(page.calls.length, 3);
-  finish(ok(value));
-  await settle();
-  assert.equal(page.buttons()[0].children[0].children[0].textContent, id(2));
-  assert.equal(page.get("[data-check-players-status]").textContent, "");
-  assert.equal(refresh.disabled, false);
-  assert.equal(
-    page.get("[data-check-players]").attributes["aria-busy"],
-    "false",
-  );
-  for (const call of page.calls) {
-    assert.equal(call.path, "/api/check/players");
-    assert.equal(call.method, "GET");
-    assert.equal(call.cache, "no-store");
-    assert.equal(call.credentials, "same-origin");
-  }
 });

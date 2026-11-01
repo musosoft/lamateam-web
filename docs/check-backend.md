@@ -1,26 +1,28 @@
-# Admin review-only `/check` backend
+# Public review-only `/check` backend
 
-No SourceMod publisher is required or installed. Observed player identity is spoofable:
+No SourceMod publisher is required or installed. Identity is explicitly spoofable:
 MOTD query hints are observations, **not proof of identity, online status, admin
 membership or cheating**. Manual Mizan results are review leads only. No bans,
 RCON, SourceBans writes, automatic batch checks or AI summaries are performed.
 
 ## Designer contract
 
-- `GET /api/check/players` → `{observedAt, players:[{communityId,lastSeen}]}`.
+- `GET /api/check/players` → `{observedAt, players:[{communityId,lastSeen,displayName}]}`.
   Canonical Steam64 strings, integer Unix-millisecond times, latest first;
   deterministic ID ordering breaks timestamp ties. At most 30 unique identities.
   `observedAt` is the newest retained observation time, or `null` when empty.
-  A server-side Steam name lookup adds `displayName: string | null` to each player;
-  failures leave it null. No IPs, query extras, roster or capability are exposed.
+  No IPs, query extras, cookies, roster or capability are required/exposed.
+  Optional public Steam profile names are fetched in one bounded server-side
+  batch using `STEAM_API_KEY`; failures yield `displayName: null`, not a list
+  failure. Names are escaped display hints only, never identity proof or auth,
+  and are not persisted. Missing names fall back to the canonical CommunityID.
 - `POST /api/check/search` accepts exactly `{communityId}` as Steam64, Steam3
   (`[U:1:4]`) or Steam2 (`STEAM_0:0:2`, `STEAM_1:0:2`). Normalizes public individual
-  accounts losslessly. The target does not require roster membership; the caller
-  must be a verified allowlisted admin.
+  accounts losslessly. It does not require roster membership or authorization.
   Each explicit request makes at most one fresh Mizan call; no retry or caching.
   Unknown fields, the obsolete `{steamId64}` request, invalid IDs and JSON fail 400.
 
-Both are HTTPS-only and admin/review-only. POST requires same-origin `Origin`
+Both are HTTPS-only and public/review-only. POST requires same-origin `Origin`
 and JSON. Any supplied Origin must match and Fetch Metadata must be `same-origin`.
 No CORS. Responses use `no-store`, `nosniff`, same-origin resource policy.
 The existing `CHECK_RATE_LIMITER` remains: namespace 1002, six requests per 60s
@@ -28,30 +30,6 @@ per action/IP HMAC digest. Requires trusted Cloudflare ingress IP, existing
 `SESSION`, `CHECK_AUTH_SECRET` (32+ characters), and limiter; fails closed.
 The auth secret remains necessary for the per-IP digest, **not** a user login.
 Cloudflare quotas are approximate/per-colo, not a global spending cap.
-
-## Admin authorization and operator configuration
-
-Both route wrappers pass only `Astro.locals.steamProfile?.steamID` to the
-handlers. Middleware obtains that identity from the verified signed Steam session;
-request bodies, query parameters, MOTD hints and the legacy display cookie cannot
-authorize a caller. Signed sessions alone do not grant access: the shared
-server-side `isCheckAdmin(steamID, allowlist)` helper in `src/lib/check-admin.ts`
-also requires membership in `CHECK_ADMIN_STEAM64_ALLOWLIST`.
-
-A separate authorized operator must set that Cloudflare Worker **secret** to
-comma-separated canonical public individual Steam64 IDs, with no whitespace,
-empty entries or duplicates. Derive eligible members from local
-`/home/muso/dev/srcds/lama-srcds/cstrike/addons/sourcemod/configs/sourcebans/sb_admins.cfg`:
-eligible roles are exactly `Owner`, `Root`, and `Head Admin`. Convert their Steam
-IDs losslessly to canonical Steam64 and deduplicate before configuring the secret.
-Do not include other roles. This is an operator-maintained snapshot, not a live
-SourceBans lookup; update it when membership changes or access is revoked.
-
-No production allowlist values belong in code, public/build variables, rendered
-markup, client bundles or logs. The runtime reads only the server-side binding.
-Missing, malformed, duplicate or noncanonical configuration, invalid caller IDs,
-absent identity and nonmembers all deny with sanitized 403 and `no-store`, before
-KV/provider work. These implementation changes do not set secrets or deploy.
 
 Search additionally requires server-only `MIZAN_API_KEY`. It must never appear
 in public vars, query strings, rendered markup, client code or logs.
@@ -133,12 +111,12 @@ including 404 do not mean clean. No entitlement, free quota or global cap is ass
 
 `/api/check/authorize`, `/roster` and `/source-roster` remain separate and keep
 their existing authentication, IP, signing, schema, freshness, sealing and rate
-guards. They do not supply admin players/search or grant allowlist membership. Neither ingestion endpoint
+guards. They do not supply public players/search. Neither ingestion endpoint
 automatically queries Mizan. Legacy ingest secrets remain optional unless these
 endpoints are intentionally used. Do not deploy a SourceMod Mizan plugin.
 
 ## Focused local validation
 
-`node --test src/lib/check-admin.test.mjs src/lib/check.test.mjs src/lib/check-steam-names.test.mjs src/lib/hlstats-motd.test.mjs`
+`node --test src/lib/check.test.mjs src/lib/hlstats-motd.test.mjs`
 and `pnpm typecheck`. Tests mock bindings/provider and do not establish live
 Cloudflare header guarantees, global ordering, deployment or Mizan entitlement.

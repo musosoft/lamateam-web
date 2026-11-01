@@ -7,7 +7,6 @@ export const checkHandlers = createCheckHandlers({
   ingestSecret: bindings.CHECK_ROSTER_INGEST_SECRET,
   sourceIngestToken: bindings.CHECK_SOURCE_INGEST_TOKEN,
   authSecret: bindings.CHECK_AUTH_SECRET,
-  adminSteam64Allowlist: bindings.CHECK_ADMIN_STEAM64_ALLOWLIST,
   mizanKey: bindings.MIZAN_API_KEY,
   steamKey: import.meta.env.DEV
     ? import.meta.env.STEAM_API_KEY

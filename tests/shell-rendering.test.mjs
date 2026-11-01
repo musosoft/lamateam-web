@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { parse } from "parse5";
 import { pageCopy } from "../src/lib/page-copy.ts";
@@ -12,27 +12,23 @@ import {
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-test("Admins embeds private player lookup only behind the server-side allowlist", () => {
+test("Admins links to the public review-only tool without a Steam login gate", () => {
   const admins = read("../src/pages/admins.astro");
-  assert.match(admins, /import \{ env \} from 'cloudflare:workers'/);
-  assert.match(
-    admins,
-    /import \{ isCheckAdmin \} from '\.\.\/lib\/check-admin'/,
-  );
-  assert.match(
-    admins,
-    /const showCheck = isCheckAdmin\(\s*Astro\.locals\.steamProfile\?\.steamID,\s*env\.CHECK_ADMIN_STEAM64_ALLOWLIST,?\s*\)/,
-  );
-  assert.match(admins, /headers\.set\('Cache-Control', 'private, no-store'\)/);
-  assert.match(
-    admins,
-    /\{showCheck && \([\s\S]*?data-check-page[\s\S]*?<h2 class="font-semibold">Check recent players<\/h2>[\s\S]*?\)\}\s*<header>[\s\S]*?\{t\('Admin Rules'\)\}[\s\S]*?\{admins\.map[\s\S]*?\{t\('1\. Basic Admin Responsibilities'\)\}/,
-  );
-  assert.doesNotMatch(admins, /href="\/check"|data-check-results/);
-  assert.equal(
-    existsSync(new URL("../src/pages/check.astro", import.meta.url)),
-    false,
-  );
+  assert.match(admins, /href="\/check"/);
+  assert.doesNotMatch(admins, /isCheckAdmin|showCheck|data-check-page/);
+  const check = read("../src/pages/check.astro");
+  assert.match(check, /export const prerender = false/);
+  assert.match(check, /headers\.set\('Cache-Control', 'private, no-store'\)/);
+  assert.match(check, /data-check-page/);
+  assert.match(check, /spoofable, not\s+authentication credentials/);
+  assert.match(check, /never bans players automatically/);
+  assert.match(check, /No checks run\s+automatically/);
+  assert.doesNotMatch(check, /isCheckAdmin|steamProfile|CHECK_ADMIN_STEAM64_ALLOWLIST/);
+  for (const action of ["players", "search"]) {
+    const route = read(`../src/pages/api/check/${action}.ts`);
+    assert.match(route, new RegExp(`checkHandlers\\.${action}\\(request\\)`));
+    assert.doesNotMatch(route, /locals|communityid|steamProfile/);
+  }
   for (const title of [
     "2. Enforcement Procedure",
     "3. Dealing with Cheaters",

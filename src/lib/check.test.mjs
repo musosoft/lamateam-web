@@ -14,8 +14,6 @@ import {
   recordCheckPlayer,
 } from "./check-players.ts";
 import { createHlstatsMotdHandler } from "./hlstats-motd.ts";
-import { issueSteamSession, STEAM_AUTH_COOKIE } from "./steam-session.ts";
-import { readSteamProfile } from "./steam-profile.ts";
 
 const epoch = 1_800_000_000_000;
 const id = "76561197960265732";
@@ -84,7 +82,6 @@ function fixture(overrides = {}) {
   const deps = {
     kv,
     authSecret: secret,
-    adminSteam64Allowlist: id,
     ingestSecret: secret,
     sourceIngestToken: secret,
     mizanKey: "offline-provider-key",
@@ -107,67 +104,6 @@ function fixture(overrides = {}) {
     handlers: createCheckHandlers(deps),
   };
 }
-
-test("both APIs require a signed allowlisted caller, not request input or display cookies", async () => {
-  const nonmember = "76561197960265733";
-  for (const action of ["players", "search"]) {
-    for (const caller of [undefined, id, nonmember]) {
-      const f = fixture();
-      const cookie = caller
-        ? `${STEAM_AUTH_COOKIE}=${await issueSteamSession(caller, secret)}`
-        : `session=${encodeURIComponent(JSON.stringify({ steamID: id }))}`;
-      const req = request(action, { communityId: id }, { cookie });
-      const profile = await readSteamProfile(req, secret);
-      const response = await f.handlers[action](req, profile?.steamID);
-      assert.equal(response.status, caller === id ? 200 : 403);
-      assert.equal(response.headers.get("cache-control"), "no-store");
-      assert.equal(response.headers.get("cdn-cache-control"), "no-store");
-      if (caller !== id) {
-        assert.deepEqual(await response.json(), { error: "Access denied" });
-        assert.equal(f.calls.length, 0);
-        assert.equal(f.gets.length, 0);
-        assert.equal(f.lists.length, 0);
-        assert.equal(f.writes.length, 0);
-      }
-    }
-    // Even a signed cookie is not read by the handler: only verified locals count.
-    const f = fixture();
-    assert.equal(
-      (
-        await f.handlers[action](
-          request(
-            action,
-            { communityId: id },
-            {
-              cookie: `${STEAM_AUTH_COOKIE}=${await issueSteamSession(id, secret)}`,
-            },
-          ),
-        )
-      ).status,
-      403,
-    );
-    for (const adminSteam64Allowlist of [
-      undefined,
-      "",
-      `${id},BOT`,
-      `${id},${id}`,
-      `${id},`,
-    ]) {
-      const invalid = fixture({ adminSteam64Allowlist });
-      assert.equal(
-        (
-          await invalid.handlers[action](
-            request(action, { communityId: id }),
-            id,
-          )
-        ).status,
-        403,
-      );
-      assert.equal(invalid.calls.length, 0);
-      assert.equal(invalid.lists.length, 0);
-    }
-  }
-});
 
 test("normalizes public individual Steam64/Steam3/Steam2 losslessly and rejects invalid input", () => {
   for (const input of [id, "[U:1:4]", "STEAM_0:0:2", "STEAM_1:0:2"])
@@ -257,17 +193,16 @@ test("bootstraps the actual recent log snapshot and expires it at its observed a
   assert.deepEqual(expired, { observedAt: null, players: [] });
 });
 
-test("admin GET works without roster, is minimized, and never calls Mizan", async () => {
+test("public GET works without cookies or roster, is minimized, and never calls Mizan", async () => {
   const f = fixture();
   assert.deepEqual(
-    await (await f.handlers.players(request("players"), id)).json(),
+    await (await f.handlers.players(request("players"))).json(),
     { observedAt: null, players: [] },
   );
   await recordCheckPlayer(f.kv, id, epoch, epoch);
   f.values.set(CHECK_ROSTER_KEY, "corrupt unrelated legacy snapshot");
   const response = await f.handlers.players(
     request("players", null, { cookie: "invalid" }),
-    id,
   );
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "no-store");
@@ -278,47 +213,37 @@ test("admin GET works without roster, is minimized, and never calls Mizan", asyn
   assert.equal(f.calls.length, 0);
 });
 
-test("admin players enriches names only in the response and fails soft on Steam errors", async () => {
-  for (const providerFails of [false, true]) {
-    let calls = 0;
-    const f = fixture({
-      steamKey: "offline-steam-key",
-      fetch: async (input) => {
-        calls++;
-        assert.equal(new URL(input).hostname, "api.steampowered.com");
-        if (providerFails) throw new Error("provider unavailable");
-        return Response.json({
-          response: { players: [{ steamid: id, personaname: "Player Ž" }] },
-        });
-      },
-    });
-    await recordCheckPlayer(f.kv, id, epoch, epoch);
-    const before = [...f.values];
-    const writes = f.writes.length;
-    const response = await f.handlers.players(request("players"), id);
-    assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), {
-      observedAt: epoch,
-      players: [
-        {
-          communityId: id,
-          lastSeen: epoch,
-          displayName: providerFails ? null : "Player Ž",
-        },
-      ],
-    });
-    assert.equal(calls, 1);
-    assert.equal(f.writes.length, writes);
-    assert.deepEqual([...f.values], before);
-  }
+test("public names retain bounded Steam enrichment without treating MOTD query hints as auth", async () => {
+  const calls = [];
+  const f = fixture({
+    steamKey: "offline-steam-key",
+    fetch: async (url) => {
+      calls.push(new URL(url));
+      return Response.json({ response: { players: [
+        { steamid: id, personaname: "<b>Public name</b>" },
+      ] } });
+    },
+  });
+  await recordCheckPlayer(f.kv, id, epoch, epoch);
+  const response = await f.handlers.players(new Request(
+    `${origin}/api/check/players?communityid=76561197960265731`,
+    { headers: { "cf-connecting-ip": "192.0.2.1" } },
+  ));
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).players, [
+    { communityId: id, lastSeen: epoch, displayName: "<b>Public name</b>" },
+  ]);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].origin, "https://api.steampowered.com");
+  assert.equal(calls[0].searchParams.get("steamids"), id);
+  assert.equal(f.writes.length, 1);
 });
 
-test("admin manual search accepts normalized target outside roster and makes exactly one bounded read", async () => {
+test("public manual search accepts normalized identity outside roster and makes exactly one bounded read", async () => {
   for (const communityId of [id, "STEAM_0:0:2", "[U:1:4]"]) {
     const f = fixture();
     const response = await f.handlers.search(
       request("search", { communityId }),
-      id,
     );
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), {
@@ -351,14 +276,13 @@ test("manual input rejects extras, old contract, invalid identity, bad JSON and 
     "{",
   ])
     assert.equal(
-      (await f.handlers.search(request("search", body), id)).status,
+      (await f.handlers.search(request("search", body))).status,
       400,
     );
   assert.equal(
     (
       await f.handlers.search(
         request("search", "x".repeat(1025), { "content-length": "1" }),
-        id,
       )
     ).status,
     413,
@@ -366,7 +290,7 @@ test("manual input rejects extras, old contract, invalid identity, bad JSON and 
   assert.equal(f.calls.length, 0);
 });
 
-test("both admin actions preserve HTTPS, same-origin, per-IP rate limit and fail-closed bindings", async () => {
+test("both public actions preserve HTTPS, same-origin, per-IP rate limit and fail-closed bindings", async () => {
   for (const action of ["players", "search"]) {
     const f = fixture();
     for (const headers of [
@@ -378,7 +302,6 @@ test("both admin actions preserve HTTPS, same-origin, per-IP rate limit and fail
         (
           await f.handlers[action](
             request(action, { communityId: id }, headers),
-            id,
           )
         ).status,
         403,
@@ -388,7 +311,6 @@ test("both admin actions preserve HTTPS, same-origin, per-IP rate limit and fail
       (
         await f.handlers[action](
           new Request(insecure.url.replace("https:", "http:"), insecure),
-          id,
         )
       ).status,
       403,
@@ -409,7 +331,6 @@ test("both admin actions preserve HTTPS, same-origin, per-IP rate limit and fail
         (
           await fixture(overrides).handlers[action](
             request(action, { communityId: id }),
-            id,
           )
         ).status,
         503,
@@ -419,7 +340,6 @@ test("both admin actions preserve HTTPS, same-origin, per-IP rate limit and fail
     });
     const response = await limited.handlers[action](
       request(action, { communityId: id }),
-      id,
     );
     assert.equal(response.status, 429);
     assert.equal(response.headers.get("retry-after"), "60");
@@ -428,7 +348,7 @@ test("both admin actions preserve HTTPS, same-origin, per-IP rate limit and fail
   const f = fixture();
   const missingOrigin = request("search", { communityId: id });
   missingOrigin.headers.delete("origin");
-  assert.equal((await f.handlers.search(missingOrigin, id)).status, 403);
+  assert.equal((await f.handlers.search(missingOrigin)).status, 403);
   assert.equal(
     (
       await f.handlers.search(
@@ -437,7 +357,6 @@ test("both admin actions preserve HTTPS, same-origin, per-IP rate limit and fail
           { communityId: id },
           { "content-type": "text/plain" },
         ),
-        id,
       )
     ).status,
     415,
@@ -463,10 +382,7 @@ test("KV failure, missing list, or incomplete fixed-size page returns sanitized 
       },
     },
   ]) {
-    const response = await fixture({ kv }).handlers.players(
-      request("players"),
-      id,
-    );
+    const response = await fixture({ kv }).handlers.players(request("players"));
     assert.equal(response.status, 503);
     assert.deepEqual(await response.json(), { error: "Check unavailable" });
   }
@@ -563,7 +479,6 @@ test("provider errors, redirects, malformed/oversized bodies and wrong content t
     });
     const response = await f.handlers.search(
       request("search", { communityId: id }),
-      id,
     );
     assert.equal(response.status, 502);
     assert.deepEqual(await response.json(), { error: "Check unavailable" });
@@ -611,7 +526,7 @@ test("Mizan schema rejects mismatched identities, flags, counts, labels and date
       (
         await fixture({
           fetch: async () => Response.json(data),
-        }).handlers.search(request("search", { communityId: id }), id)
+        }).handlers.search(request("search", { communityId: id }))
       ).status,
       502,
     );
@@ -620,7 +535,6 @@ test("Mizan schema rejects mismatched identities, flags, counts, labels and date
     (
       await fixture({ mizanKey: undefined }).handlers.search(
         request("search", { communityId: id }),
-        id,
       )
     ).status,
     503,
@@ -649,7 +563,6 @@ test("provider deadlines cover headers and stalled response streams", async () =
         (
           await fixture({ fetch, timeoutMs: 10 }).handlers.search(
             request("search", { communityId: id }),
-            id,
           )
         ).status,
         504,

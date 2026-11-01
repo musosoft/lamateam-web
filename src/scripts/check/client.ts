@@ -103,19 +103,18 @@ function initCheck() {
   const refresh = get<HTMLButtonElement>("[data-check-refresh]");
   const playerStatus = get("[data-check-players-status]");
   const observed = get("[data-check-observed]");
+  const stale = get("[data-check-stale]");
+  const results = get("[data-check-results]");
+  const searchStatus = get("[data-check-search-status]");
+  const resultContent = get("[data-check-result-content]");
   const playerList = get<HTMLUListElement>("[data-check-players]");
   let snapshot: Snapshot | null = null;
-  let active: ReturnType<typeof createResult> | null = null;
-  let searchController: AbortController | null = null;
-  let searchVersion = 0;
+  let searching = false;
   let refreshing = false;
+  let snapshotFailed = false;
   let queriedAt: Timestamp | null = null;
 
-  async function request(
-    path: string,
-    body?: object,
-    searchSignal?: AbortSignal,
-  ) {
+  async function request(path: string, body?: object) {
     const response = await fetch(path, {
       method: body ? "POST" : "GET",
       credentials: "same-origin",
@@ -123,11 +122,7 @@ function initCheck() {
       redirect: "error",
       headers: body ? { "Content-Type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.any([
-        signal,
-        ...(searchSignal ? [searchSignal] : []),
-        AbortSignal.timeout(30_000),
-      ]),
+      signal: AbortSignal.any([signal, AbortSignal.timeout(30_000)]),
     });
     if (!response.ok) throw new RequestFailure(response.status);
     return response;
@@ -140,155 +135,47 @@ function initCheck() {
   }
 
   function updateStaleness() {
-    if (active)
-      active.get("[data-check-result-stale]").hidden =
-        queriedAt === null ||
-        Date.now() - new Date(queriedAt).getTime() <= 120_000;
-  }
-
-  function createResult(button: HTMLButtonElement, index: number) {
-    const panel = document.createElement("div");
-    panel.className = "check-results";
-    panel.id = `check-player-result-${index}`;
-    panel.hidden = true;
-    panel.setAttribute("role", "region");
-    panel.setAttribute("aria-labelledby", button.id);
-    panel.setAttribute("aria-busy", "false");
-    button.setAttribute("aria-controls", panel.id);
-    button.setAttribute("aria-expanded", "false");
-    const nodes = new Map<string, HTMLElement>();
-    function add(
-      tag: string,
-      key: string,
-      parent: HTMLElement = panel,
-      text = "",
-    ) {
-      const node = document.createElement(tag);
-      node.textContent = text;
-      node.setAttribute(`data-check-${key}`, "");
-      nodes.set(`[data-check-${key}]`, node);
-      parent.appendChild(node);
-      return node;
-    }
-    const status = add("p", "search-status");
-    status.setAttribute("role", "status");
-    status.setAttribute("aria-live", "polite");
-    const content = add("div", "result-content");
-    content.hidden = true;
-    add("p", "query-time", content);
-    const old = add(
-      "p",
-      "result-stale",
-      content,
-      "Result is over two minutes old. Reopen to check again.",
-    );
-    old.hidden = true;
-    const details = document.createElement("dl");
-    content.appendChild(details);
-    for (const [key, label] of [
-      ["bans-active", "Active bans"],
-      ["bans-total", "Total bans"],
-      ["bans-sources", "Sources"],
-      ["bans-conduct", "Conduct bans"],
-      ["cheater", "Cheater"],
-      ["trolling", "Trolling"],
-      ["categories", "Categories"],
-      ["games", "Games"],
-      ["last-ban", "Last ban time"],
-    ]) {
-      const group = document.createElement("div");
-      const term = document.createElement("dt");
-      term.textContent = label;
-      group.appendChild(term);
-      add("dd", key, group);
-      details.appendChild(group);
-    }
-    add("a", "profile", content, "Verify source profile ↗").hidden = true;
-    add(
-      "p",
-      "profile-unavailable",
-      content,
-      "Source profile link unavailable.",
-    ).hidden = true;
-    return {
-      panel,
-      button,
-      get: <T extends HTMLElement = HTMLElement>(key: string) =>
-        nodes.get(key) as T,
-    };
-  }
-
-  function closeResult() {
-    searchController?.abort();
-    searchVersion++;
-    if (active) {
-      active.panel.hidden = true;
-      active.panel.setAttribute("aria-busy", "false");
-      active.button.setAttribute("aria-expanded", "false");
-    }
-    active = null;
-    queriedAt = null;
-  }
-
-  function playerIdentity(player: Player) {
-    const name = player.displayName?.trim();
-    return name ? `${name} (${player.communityId})` : player.communityId;
-  }
-
-  function renderIdentity(container: HTMLElement, player: Player) {
-    const displayName = player.displayName?.trim();
-    const name = document.createElement("strong");
-    name.textContent = displayName || player.communityId;
-    name.translate = false;
-    container.replaceChildren(name);
-    if (displayName) {
-      const identifier = document.createElement("small");
-      identifier.textContent = player.communityId;
-      identifier.translate = false;
-      container.appendChild(identifier);
-    }
+    stale.hidden =
+      !snapshot ||
+      (!snapshotFailed &&
+        (snapshot.observedAt === null ||
+          Date.now() - new Date(snapshot.observedAt).getTime() <= 120_000));
+    get("[data-check-result-stale]").hidden =
+      queriedAt === null ||
+      Date.now() - new Date(queriedAt).getTime() <= 120_000;
   }
 
   function renderPlayers(players: Player[]) {
-    closeResult();
     playerList.replaceChildren();
-    for (const [index, player] of players.entries()) {
+    for (const player of players) {
       const row = document.createElement("li");
-      const info = document.createElement("span");
+      const info = document.createElement("div");
       info.className = "check-player-info";
-      renderIdentity(info, player);
+      const name = document.createElement("strong");
+      const displayName = player.displayName?.trim();
+      name.textContent = displayName || player.communityId;
+      name.translate = false;
       const time = document.createElement("small");
       time.textContent = `Last seen: ${formatTime(player.lastSeen)}`;
+      info.appendChild(name);
+      if (displayName) {
+        const identifier = document.createElement("small");
+        identifier.textContent = player.communityId;
+        identifier.translate = false;
+        info.appendChild(identifier);
+      }
       info.appendChild(time);
       const button = document.createElement("button");
       button.type = "button";
-      button.id = `check-player-toggle-${index}`;
-      button.className = "check-player-toggle";
+      button.textContent = "Check Mizan";
       button.setAttribute(
         "aria-label",
-        `Ban results for ${playerIdentity(player)}`,
+        `Check Mizan for CommunityID ${player.communityId}`,
       );
-      button.appendChild(info);
-      const indicator = document.createElement("span");
-      indicator.textContent = "Check ▾";
-      indicator.setAttribute("aria-hidden", "true");
-      button.appendChild(indicator);
-      const entry = createResult(button, index);
-      button.addEventListener(
-        "click",
-        () => {
-          const wasOpen = active === entry;
-          closeResult();
-          if (wasOpen) return;
-          active = entry;
-          entry.panel.hidden = false;
-          button.setAttribute("aria-expanded", "true");
-          void research(player, entry);
-        },
-        { signal },
-      );
+      button.disabled = searching;
+      button.addEventListener("click", () => void research(player), { signal });
+      row.appendChild(info);
       row.appendChild(button);
-      row.appendChild(entry.panel);
       playerList.appendChild(row);
     }
   }
@@ -312,24 +199,25 @@ function initCheck() {
           )
           .slice(0, 30),
       };
+      snapshotFailed = false;
       renderPlayers(snapshot.players);
       observed.textContent =
         value.observedAt === null
           ? "No recent observations available."
-          : `Latest observation: ${formatTime(value.observedAt)}`;
+          : `List updated: ${formatTime(value.observedAt)}`;
       updateStaleness();
       playerStatus.textContent = snapshot.players.length
-        ? ""
+        ? `${snapshot.players.length} recent ${snapshot.players.length === 1 ? "identity" : "identities"}.`
         : "No recent MOTD identities yet. Refresh after a player opens the MOTD.";
     } catch (error) {
       if (signal.aborted) return;
       playerStatus.textContent =
         error instanceof RequestFailure && error.status === 429
           ? "Too many requests. Wait a minute before refreshing."
-          : snapshot
-            ? "Refresh failed. Showing the previous list; try again."
-            : "Could not load recent identities. Try refreshing.";
-      if (!snapshot) observed.textContent = "Snapshot unavailable";
+          : "Could not load recent identities. Try refreshing. No new list has been confirmed.";
+      snapshotFailed = true;
+      if (snapshot) stale.hidden = false;
+      else observed.textContent = "Snapshot unavailable";
     } finally {
       refreshing = false;
       refresh.disabled = false;
@@ -337,31 +225,27 @@ function initCheck() {
     }
   }
 
-  async function research(
-    player: Player,
-    entry: ReturnType<typeof createResult>,
-  ) {
-    const version = searchVersion;
-    searchController = new AbortController();
-    const get = entry.get;
-    const results = entry.panel;
-    const searchStatus = get("[data-check-search-status]");
-    const resultContent = get("[data-check-result-content]");
+  async function research(player: Player) {
+    if (searching) return;
+    searching = true;
     const started = Date.now();
     resultContent.hidden = true;
     results.setAttribute("aria-busy", "true");
-    searchStatus.textContent = `Checking bans for ${playerIdentity(player)}…`;
+    searchStatus.textContent = `Checking Mizan for ${player.communityId}…`;
+    for (const button of root.querySelectorAll<HTMLButtonElement>(
+      ".check-player-list button",
+    ))
+      button.disabled = true;
+    get("#check-results-title").focus({ preventScroll: true });
     try {
       const value: unknown = await (
-        await request(
-          "/api/check/search",
-          { communityId: player.communityId },
-          searchController.signal,
-        )
+        await request("/api/check/search", { communityId: player.communityId })
       ).json();
-      if (signal.aborted || version !== searchVersion) return;
+      if (signal.aborted) return;
       if (!isSearchResult(value) || value.steamId64 !== player.communityId)
         throw new Error("Unexpected ban check response");
+      get("[data-check-result-player]").textContent =
+        `CommunityID ${player.communityId}`;
       queriedAt = value.queriedAt;
       get("[data-check-query-time]").textContent =
         `Query completed: ${formatTime(value.queriedAt)} · ${((Date.now() - started) / 1000).toFixed(1)} s`;
@@ -370,15 +254,17 @@ function initCheck() {
       }
       for (const key of ["cheater", "trolling"] as const) {
         const flag = get(`[data-check-${key}]`);
-        flag.textContent = value[key] ? "Flagged" : "Not flagged";
+        flag.textContent = value[key]
+          ? "Flagged by Mizan"
+          : "Not flagged by Mizan";
         flag.dataset.flagged = String(value[key]);
       }
       get("[data-check-categories]").textContent = value.bans.categories.length
         ? value.bans.categories.join(", ")
-        : "None reported";
+        : "None reported by Mizan";
       get("[data-check-games]").textContent = value.bans.games.length
         ? value.bans.games.join(", ")
-        : "None reported";
+        : "None reported by Mizan";
       get("[data-check-last-ban]").textContent =
         value.bans.lastAt === null
           ? "No last ban time reported"
@@ -396,16 +282,21 @@ function initCheck() {
       resultContent.hidden = false;
       searchStatus.textContent =
         value.bans.total === 0 && !value.cheater && !value.trolling
-          ? "No bans or flags reported. This is not proof of innocence."
-          : "Bans or flags reported. Verify the source before acting.";
+          ? "No bans or flags reported by Mizan. This is not proof of innocence."
+          : "Mizan returned bans or flags. These are leads to verify, not a verdict.";
     } catch (error) {
-      if (signal.aborted || version !== searchVersion) return;
+      if (signal.aborted) return;
       searchStatus.textContent =
         error instanceof RequestFailure && error.status === 429
-          ? "Check rate limit reached. Wait a minute, then retry. No conclusion can be drawn."
-          : "Ban check unavailable or response invalid. Reopen to retry. No conclusion can be drawn.";
+          ? "Mizan rate limit reached. Wait a minute before selecting Check Mizan again. No conclusion can be drawn."
+          : "Mizan check unavailable or response invalid. Select Check Mizan to try again. No conclusion can be drawn from this error.";
     } finally {
-      if (version === searchVersion) results.setAttribute("aria-busy", "false");
+      searching = false;
+      results.setAttribute("aria-busy", "false");
+      for (const button of root.querySelectorAll<HTMLButtonElement>(
+        ".check-player-list button",
+      ))
+        button.disabled = false;
     }
   }
 
