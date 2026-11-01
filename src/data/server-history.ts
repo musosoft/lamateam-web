@@ -71,7 +71,8 @@ export const historyNetworkRows: {
   {
     id: "vcielka",
     lane: "branch",
-    context: "Community ended · participants joined around the AGT/ZonaX merge",
+    context:
+      "Independent coexisted with ZonaX · continued until ~2015 · members joined Rivals",
   },
   {
     id: "aggressive-zone",
@@ -383,7 +384,7 @@ export const historyNodes: HistoryNode[] = [
   oralNode(
     "vcielka",
     "Vcielka",
-    "Vcielka's community ended around the AGT/ZonaX merge and its participants joined. This is not an ownership merger; the exact date is unknown.",
+    "Vcielka coexisted separately with ZonaX, continued from the ZonaX community after its merger with AGT/Aggressive Zone, and ended around 2015. Its members joined Rivals. This is not an ownership merger; the exact date is unknown.",
   ),
   oralNode(
     "vega",
@@ -508,7 +509,7 @@ export const historyLinks: HistoryLink[] = [
     "vcielka",
     "aggressive-zone",
     "participant-move",
-    "Vcielka's community ended around the AGT/ZonaX merge and participants joined. This is not a takeover or organizational merger.",
+    "Vcielka coexisted separately with ZonaX, continued from the ZonaX community after its merger with AGT/Aggressive Zone, and ended around 2015. Members joined Rivals. This is not a takeover or organizational merger.",
   ),
   oralLink(
     "vega",
@@ -781,9 +782,9 @@ export const historyEvents: HistoryEvent[] = [
   ),
   oralEvent(
     "vcielka-joining",
-    "Vcielka joins after a community closes",
-    "Vcielka's community ended around the AGT/ZonaX merge and participants joined. The exact date is unknown; this does not imply acquisition of the former community.",
-    ["vcielka", "aggressive-zone"],
+    "Vcielka continues until ~2015 and members join Rivals",
+    "Vcielka coexisted separately with ZonaX, continued from the ZonaX community after its merger with AGT/Aggressive Zone, and ended around 2015. Members joined Rivals. The exact date is unknown; this does not imply acquisition of the former community.",
+    ["vcielka", "aggressive-zone", "rivals"],
   ),
   oralEvent(
     "subsequent-additions",

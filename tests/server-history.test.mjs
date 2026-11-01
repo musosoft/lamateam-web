@@ -344,7 +344,9 @@ test("participant joins and independent partnerships never become ownership merg
     assert.ok(moves.length);
     assert.ok(moves.every((item) => item.kind === "participant-move"));
   }
-  assert.match(node("vcielka").summary, /around the AGT\/ZonaX merge/);
+  assert.match(node("vcielka").summary, /coexisted separately with ZonaX/i);
+  assert.match(node("vcielka").summary, /around 2015/i);
+  assert.match(node("vcielka").summary, /members joined Rivals/i);
   assert.match(node("vega").summary, /Zly Kocur ran alongside Aggressive Zone/);
   link("vega", "aggressive-zone", "parallel");
   assert.match(node("noobstyle").summary, /ended in 2016/i);

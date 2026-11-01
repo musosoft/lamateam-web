@@ -18,7 +18,13 @@ interface Props {
 
 const { nodes } = Astro.props;
 const names = new Map(nodes.map(({ id, name }) => [id, name]));
-const x = (year: number) => 90 + (year - 2006) * 110;
+// Preserve room for the dense early history, with a compact later-year scale.
+const x = (year: number) =>
+  90 + (Math.min(year, 2020) - 2006) * 110 + Math.max(0, year - 2020) * 50;
+const currentYear = new Date().getUTCFullYear();
+const horizon = Math.max(2030, Math.ceil((currentYear + 1) / 5) * 5);
+const graphWidth = x(horizon) + 100;
+const graphHeight = 930;
 
 // Approximate editorial positions, not researched launch/closure timestamps.
 // Archive captures establish observations only. In particular, the AGZ website
@@ -26,7 +32,10 @@ const x = (year: number) => 90 + (year - 2006) * 110;
 // The topology follows the owner's latest correction, not the older links prop.
 const position = {
   agt: x(2006),
-  zonax: x(2011.8),
+  zonax: x(2009),
+  vcielka: x(2010),
+  vcielkaEnd: x(2015),
+  vcielkaJoin: x(2016.35),
   zoneMerge: x(2013.5),
   zoneWebEnd: x(2016.8),
   battleStart: x(2013.25),
@@ -35,25 +44,35 @@ const position = {
   birdsStart: x(2013),
   birdsMerge: x(2014.5),
   rivalsMerge: x(2015.55),
-  noobStart: x(2012.2),
+  noobStart: x(2011),
   noobEnd: x(2016),
   noobJoin: x(2016.7),
   redReopens: x(2015.8),
   jzdStart: x(2014),
   jzdMerge: x(2017),
   lamaMerge: x(2018),
-  end: x(2020),
+  zaparitStart: x(2007),
+  zaparitEnd: x(2015),
+  zaparitJoin: x(2015.15),
+  vegaStart: x(2010),
+  vegaEnd: x(2014.3),
+  vegaJoin: x(2014.55),
+  tweakStart: x(2008),
+  tweakEnd: x(2012.8),
+  end: x(Math.max(currentYear + 1, 2027)),
 };
 const lane = {
-  main: 220,
-  zonax: 92,
-  battle: 145,
-  birds: 350,
-  red: 395,
-  jzd: 440,
-  reopened: 495,
-  noob: 550,
-  zaparit: 620,
+  main: 280,
+  vcielka: 70,
+  zonax: 145,
+  battle: 200,
+  birds: 410,
+  red: 465,
+  jzd: 540,
+  noob: 630,
+  zaparit: 720,
+  vega: 800,
+  tweak: 885,
 };
 const color = {
   main: '#b8a0ff',
@@ -64,6 +83,9 @@ const color = {
   jzd: '#74d69d',
   noob: '#8cb7f8',
   zaparit: '#d4c27d',
+  vcielka: '#7dd5e8',
+  vega: '#c9a0da',
+  tweak: '#a7c784',
 };
 
 type Marker = {
@@ -80,21 +102,21 @@ const markers: Marker[] = [
     id: 'agteam',
     x: position.agt,
     y: lane.main,
-    labelY: 192,
+    labelY: lane.main - 28,
     color: color.main,
   },
   {
     id: 'zonax',
     x: position.zonax,
     y: lane.zonax,
-    labelY: 67,
+    labelY: lane.zonax - 24,
     color: color.zonax,
   },
   {
     id: 'aggressive-zone',
     x: position.zoneMerge,
     y: lane.main,
-    labelY: 185,
+    labelY: lane.main - 35,
     color: color.main,
     labelX: position.zoneMerge - 18,
     anchor: 'end' as const,
@@ -103,7 +125,7 @@ const markers: Marker[] = [
     id: 'battleforce',
     x: position.battleStart,
     y: lane.battle,
-    labelY: 121,
+    labelY: lane.battle - 24,
     labelX: position.battleStart - 16,
     anchor: 'end' as const,
     color: color.battle,
@@ -112,52 +134,79 @@ const markers: Marker[] = [
     id: 'rivals',
     x: position.rivalsMerge,
     y: lane.main,
-    labelY: 192,
+    labelY: lane.main - 28,
     color: color.main,
   },
   {
     id: 'red-skillers',
     x: position.redStart,
     y: lane.red,
-    labelY: 375,
+    labelY: lane.red - 24,
     color: color.red,
   },
   {
     id: 'black-birds',
     x: position.birdsStart,
     y: lane.birds,
-    labelY: 325,
+    labelY: lane.birds - 24,
     color: color.birds,
   },
   {
     id: 'red-skillers',
     x: position.redReopens,
-    y: lane.reopened,
-    labelY: 520,
+    y: lane.red,
+    labelY: lane.red - 24,
     color: color.red,
   },
   {
     id: 'jzd',
     x: position.jzdStart,
     y: lane.jzd,
-    labelY: 472,
+    labelY: lane.jzd + 32,
     color: color.jzd,
   },
   {
     id: 'lamateam',
     x: position.lamaMerge,
     y: lane.main,
-    labelY: 192,
+    labelY: lane.main - 28,
     color: color.jzd,
   },
   {
     id: 'noobstyle',
     x: position.noobStart,
     y: lane.noob,
-    labelY: 530,
+    labelY: lane.noob - 24,
     color: color.noob,
   },
-  { id: 'zaparit', x: 470, y: lane.zaparit, labelY: 598, color: color.zaparit },
+  {
+    id: 'zaparit',
+    x: position.zaparitStart,
+    y: lane.zaparit,
+    labelY: lane.zaparit - 24,
+    color: color.zaparit,
+  },
+  {
+    id: 'vcielka',
+    x: position.vcielka,
+    y: lane.vcielka,
+    labelY: lane.vcielka - 20,
+    color: color.vcielka,
+  },
+  {
+    id: 'vega',
+    x: position.vegaStart,
+    y: lane.vega,
+    labelY: lane.vega - 24,
+    color: color.vega,
+  },
+  {
+    id: 'tweakgaming',
+    x: position.tweakStart,
+    y: lane.tweak,
+    labelY: lane.tweak - 24,
+    color: color.tweak,
+  },
 ].filter(({ id }) => names.has(id));
 
 const paths = [
@@ -208,7 +257,7 @@ const paths = [
   },
   {
     ids: ['red-skillers', 'jzd'],
-    d: `M ${position.redReopens} ${lane.reopened} H ${position.jzdMerge} V ${lane.jzd}`,
+    d: `M ${position.redReopens} ${lane.red} H ${position.jzdMerge} V ${lane.jzd}`,
     color: color.red,
   },
   {
@@ -229,9 +278,46 @@ const paths = [
   },
   {
     ids: ['zaparit', 'battleforce'],
-    d: `M 470 ${lane.zaparit} H ${position.battleMerge - 38} V 305 H ${position.battleMerge} V ${lane.main}`,
+    d: `M ${position.zaparitEnd} ${lane.zaparit} H ${position.zaparitJoin} V ${lane.main}`,
     color: color.zaparit,
     movement: true,
+  },
+  {
+    ids: ['zaparit'],
+    d: `M ${position.zaparitStart} ${lane.zaparit} H ${position.zaparitEnd}`,
+    color: color.zaparit,
+  },
+  {
+    ids: ['vcielka'],
+    d: `M ${position.vcielka} ${lane.vcielka} H ${position.vcielkaEnd}`,
+    color: color.vcielka,
+  },
+  {
+    ids: ['zonax', 'vcielka'],
+    d: `M ${position.zoneMerge} ${lane.zonax} V ${lane.vcielka}`,
+    color: color.zonax,
+  },
+  {
+    ids: ['vcielka', 'rivals'],
+    d: `M ${position.vcielkaEnd} ${lane.vcielka} H ${position.vcielkaJoin} V ${lane.main}`,
+    color: color.vcielka,
+    movement: true,
+  },
+  {
+    ids: ['vega'],
+    d: `M ${position.vegaStart} ${lane.vega} H ${position.vegaEnd}`,
+    color: color.vega,
+  },
+  {
+    ids: ['vega', 'aggressive-zone'],
+    d: `M ${position.vegaEnd} ${lane.vega} H ${position.vegaJoin} V ${lane.main}`,
+    color: color.vega,
+    movement: true,
+  },
+  {
+    ids: ['tweakgaming'],
+    d: `M ${position.tweakStart} ${lane.tweak} H ${position.tweakEnd}`,
+    color: color.tweak,
   },
 ].filter(({ ids }) => ids.every((id) => names.has(id)));
 
@@ -240,6 +326,11 @@ const junctions = [
   { x: position.birdsMerge, y: lane.birds, color: color.red },
   { x: position.jzdMerge, y: lane.jzd, color: color.red },
   { x: position.noobEnd, y: lane.noob, color: color.noob },
+  { x: position.zoneMerge, y: lane.vcielka, color: color.zonax },
+  { x: position.vcielkaEnd, y: lane.vcielka, color: color.vcielka },
+  { x: position.zaparitEnd, y: lane.zaparit, color: color.zaparit },
+  { x: position.vegaEnd, y: lane.vega, color: color.vega },
+  { x: position.tweakEnd, y: lane.tweak, color: color.tweak },
 ];
 ---
 
@@ -255,7 +346,8 @@ const junctions = [
     aria-label="Horizontal server history; scroll to explore"
   >
     <svg
-      viewBox="0 0 1790 660"
+      viewBox={`0 0 ${graphWidth} ${graphHeight}`}
+      style={`min-width: ${Math.min(graphWidth, 1900)}px`}
       role="img"
       aria-labelledby="history-network-title history-network-desc"
     >
@@ -271,20 +363,32 @@ const junctions = [
         archived website presence, not a proven server lifespan. Battleforce's
         early portal and noobstyle's archive captures are observations, not
         founding dates. JZD's approximate era follows the owner's oral account.
+        Vcielka coexists with ZonaX, receives its community continuation when
+        ZonaX merges into Aggressive Zone, then closes and its members join
+        Rivals. Red Skillers has two separate active spans on the same lane,
+        with a gap between its first merger and reopening. Vega remains separate
+        before its members join the Aggressive Zone thread. Tweakgaming is an
+        independent server with a code-source relationship, not a community
+        merger.
       </desc>
       <g class="calendar">
-        {Array.from({ length: 15 }, (_, i) => 2006 + i).map((year) => (
-          <g>
-            <path d={`M ${x(year)} 48 V 635`} class="year-grid" />
-            <text x={x(year)} y="28" text-anchor="middle" class="year-label">
-              {year}
-            </text>
-          </g>
-        ))}
+        {Array.from({ length: horizon - 2006 + 1 }, (_, i) => 2006 + i).map(
+          (year) => (
+            <g>
+              <path
+                d={`M ${x(year)} 48 V ${graphHeight - 20}`}
+                class="year-grid"
+              />
+              <text x={x(year)} y="28" text-anchor="middle" class="year-label">
+                {year}
+              </text>
+            </g>
+          ),
+        )}
       </g>
       {names.has('aggressive-zone') && (
         <path
-          d={`M ${position.zoneMerge} ${lane.main} V 280 H ${position.zoneWebEnd}`}
+          d={`M ${position.zoneMerge} ${lane.main} V 340 H ${position.zoneWebEnd}`}
           stroke={color.main}
           class="website-trail"
         >
@@ -352,7 +456,7 @@ const junctions = [
     color: #b8a0ff;
     margin-right: 6px;
   }
-  @media (width < 1608px) {
+  @media (width < 2400px) {
     .scroll-cue {
       display: block;
     }
