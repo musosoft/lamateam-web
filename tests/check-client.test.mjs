@@ -226,12 +226,12 @@ test("renders names as text with secondary Steam64 IDs and inline results", asyn
   assert.equal(info.children[1].translate, false);
   assert.equal(
     page.buttons()[0].attributes["aria-label"],
-    `Mizan results for ${displayName} (${id(1)})`,
+    `Ban results for ${displayName} (${id(1)})`,
   );
   page.buttons()[0].events.click();
   assert.equal(
     page.get("[data-check-search-status]").textContent,
-    `Checking Mizan for ${displayName} (${id(1)})…`,
+    `Checking bans for ${displayName} (${id(1)})…`,
   );
   await settle();
   assert.equal(page.get("[data-check-result-content]").hidden, false);
@@ -316,8 +316,12 @@ test("embedded copy stays concise and rendering never uses HTML sinks", () => {
     new URL("../src/pages/admins.astro", import.meta.url),
     "utf8",
   );
-  assert.match(page, /IDs can be spoofed/);
-  assert.match(page, /Verify on Mizan before acting/);
+  assert.doesNotMatch(
+    page,
+    /Mizan|MOTD IDs can be spoofed|List may be out of date|data-check-stale/,
+  );
+  assert.doesNotMatch(source, /Mizan|data-check-stale/);
+  assert.ok(page.indexOf("data-check-players") < page.indexOf("{admins.map"));
   assert.match(source, /not proof of innocence/);
   assert.doesNotMatch(
     page,
@@ -363,7 +367,6 @@ test("null observedAt is an empty state only when the backend players list is em
     page.get("[data-check-observed]").textContent,
     "No recent observations available.",
   );
-  assert.equal(page.get("[data-check-stale]").hidden, true);
   assert.equal(page.get("[data-check-refresh]").disabled, false);
   assert.equal(page.buttons().length, 0);
   assert.equal(page.calls.length, 1);
@@ -382,7 +385,7 @@ test("null observedAt is an empty state only when the backend players list is em
   assert.equal(invalid.buttons().length, 0);
 });
 
-test("failed refresh keeps the last list with a stale warning and never searches", async () => {
+test("failed refresh keeps the last list with a clear status and never searches", async () => {
   let fail = false;
   const page = mount(() =>
     fail
@@ -394,6 +397,69 @@ test("failed refresh keeps the last list with a stale warning and never searches
   page.get("[data-check-refresh]").events.click();
   await settle();
   assert.equal(page.buttons().length, 1);
-  assert.equal(page.get("[data-check-stale]").hidden, false);
+  assert.match(
+    page.get("[data-check-players-status]").textContent,
+    /Refresh failed. Showing the previous list/,
+  );
+  assert.equal(page.get("[data-check-refresh]").disabled, false);
+  fail = false;
+  page.get("[data-check-refresh]").events.click();
+  await settle();
+  assert.equal(page.calls.length, 3);
+  assert.doesNotMatch(
+    page.get("[data-check-players-status]").textContent,
+    /failed/,
+  );
   assert.ok(page.calls.every((call) => call.path === "/api/check/players"));
+});
+
+test("refresh rereads without caching and renders a newly observed player", async () => {
+  let value = {
+    observedAt: 1700000000000,
+    players: [{ communityId: id(1), lastSeen: 1700000000000 }],
+  };
+  let finish;
+  const page = mount(() =>
+    finish
+      ? new Promise((resolve) => {
+          finish = resolve;
+        })
+      : ok(value),
+  );
+  await settle();
+  const refresh = page.get("[data-check-refresh]");
+  refresh.events.click();
+  await settle();
+  assert.equal(page.calls.length, 2);
+  assert.match(
+    page.get("[data-check-observed]").textContent,
+    /^Latest observation:/,
+  );
+  value = {
+    observedAt: 1700000010000,
+    players: [{ communityId: id(2), lastSeen: 1700000010000 }],
+  };
+  finish = true;
+  refresh.events.click();
+  assert.equal(refresh.disabled, true);
+  assert.equal(
+    page.get("[data-check-players]").attributes["aria-busy"],
+    "true",
+  );
+  refresh.events.click();
+  assert.equal(page.calls.length, 3);
+  finish(ok(value));
+  await settle();
+  assert.equal(page.buttons()[0].children[0].children[0].textContent, id(2));
+  assert.equal(refresh.disabled, false);
+  assert.equal(
+    page.get("[data-check-players]").attributes["aria-busy"],
+    "false",
+  );
+  for (const call of page.calls) {
+    assert.equal(call.path, "/api/check/players");
+    assert.equal(call.method, "GET");
+    assert.equal(call.cache, "no-store");
+    assert.equal(call.credentials, "same-origin");
+  }
 });

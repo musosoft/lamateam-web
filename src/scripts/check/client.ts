@@ -103,14 +103,12 @@ function initCheck() {
   const refresh = get<HTMLButtonElement>("[data-check-refresh]");
   const playerStatus = get("[data-check-players-status]");
   const observed = get("[data-check-observed]");
-  const stale = get("[data-check-stale]");
   const playerList = get<HTMLUListElement>("[data-check-players]");
   let snapshot: Snapshot | null = null;
   let active: ReturnType<typeof createResult> | null = null;
   let searchController: AbortController | null = null;
   let searchVersion = 0;
   let refreshing = false;
-  let snapshotFailed = false;
   let queriedAt: Timestamp | null = null;
 
   async function request(
@@ -142,11 +140,6 @@ function initCheck() {
   }
 
   function updateStaleness() {
-    stale.hidden =
-      !snapshot ||
-      (!snapshotFailed &&
-        (snapshot.observedAt === null ||
-          Date.now() - new Date(snapshot.observedAt).getTime() <= 120_000));
     if (active)
       active.get("[data-check-result-stale]").hidden =
         queriedAt === null ||
@@ -210,12 +203,12 @@ function initCheck() {
       add("dd", key, group);
       details.appendChild(group);
     }
-    add("a", "profile", content, "Verify on Mizan ↗").hidden = true;
+    add("a", "profile", content, "Verify source profile ↗").hidden = true;
     add(
       "p",
       "profile-unavailable",
       content,
-      "Safe Mizan profile link unavailable.",
+      "Source profile link unavailable.",
     ).hidden = true;
     return {
       panel,
@@ -273,11 +266,11 @@ function initCheck() {
       button.className = "check-player-toggle";
       button.setAttribute(
         "aria-label",
-        `Mizan results for ${playerIdentity(player)}`,
+        `Ban results for ${playerIdentity(player)}`,
       );
       button.appendChild(info);
       const indicator = document.createElement("span");
-      indicator.textContent = "Mizan ▾";
+      indicator.textContent = "Check ▾";
       indicator.setAttribute("aria-hidden", "true");
       button.appendChild(indicator);
       const entry = createResult(button, index);
@@ -319,12 +312,11 @@ function initCheck() {
           )
           .slice(0, 30),
       };
-      snapshotFailed = false;
       renderPlayers(snapshot.players);
       observed.textContent =
         value.observedAt === null
           ? "No recent observations available."
-          : `List updated: ${formatTime(value.observedAt)}`;
+          : `Latest observation: ${formatTime(value.observedAt)}`;
       updateStaleness();
       playerStatus.textContent = snapshot.players.length
         ? `${snapshot.players.length} recent ${snapshot.players.length === 1 ? "identity" : "identities"}.`
@@ -334,10 +326,10 @@ function initCheck() {
       playerStatus.textContent =
         error instanceof RequestFailure && error.status === 429
           ? "Too many requests. Wait a minute before refreshing."
-          : "Could not load recent identities. Try refreshing.";
-      snapshotFailed = true;
-      if (snapshot) stale.hidden = false;
-      else observed.textContent = "Snapshot unavailable";
+          : snapshot
+            ? "Refresh failed. Showing the previous list; try again."
+            : "Could not load recent identities. Try refreshing.";
+      if (!snapshot) observed.textContent = "Snapshot unavailable";
     } finally {
       refreshing = false;
       refresh.disabled = false;
@@ -358,7 +350,7 @@ function initCheck() {
     const started = Date.now();
     resultContent.hidden = true;
     results.setAttribute("aria-busy", "true");
-    searchStatus.textContent = `Checking Mizan for ${playerIdentity(player)}…`;
+    searchStatus.textContent = `Checking bans for ${playerIdentity(player)}…`;
     try {
       const value: unknown = await (
         await request(
@@ -378,17 +370,15 @@ function initCheck() {
       }
       for (const key of ["cheater", "trolling"] as const) {
         const flag = get(`[data-check-${key}]`);
-        flag.textContent = value[key]
-          ? "Flagged by Mizan"
-          : "Not flagged by Mizan";
+        flag.textContent = value[key] ? "Flagged" : "Not flagged";
         flag.dataset.flagged = String(value[key]);
       }
       get("[data-check-categories]").textContent = value.bans.categories.length
         ? value.bans.categories.join(", ")
-        : "None reported by Mizan";
+        : "None reported";
       get("[data-check-games]").textContent = value.bans.games.length
         ? value.bans.games.join(", ")
-        : "None reported by Mizan";
+        : "None reported";
       get("[data-check-last-ban]").textContent =
         value.bans.lastAt === null
           ? "No last ban time reported"
@@ -406,14 +396,14 @@ function initCheck() {
       resultContent.hidden = false;
       searchStatus.textContent =
         value.bans.total === 0 && !value.cheater && !value.trolling
-          ? "No bans or flags reported by Mizan. This is not proof of innocence."
-          : "Bans or flags reported. Verify on Mizan before acting.";
+          ? "No bans or flags reported. This is not proof of innocence."
+          : "Bans or flags reported. Verify the source before acting.";
     } catch (error) {
       if (signal.aborted || version !== searchVersion) return;
       searchStatus.textContent =
         error instanceof RequestFailure && error.status === 429
-          ? "Mizan rate limit reached. Wait a minute, then retry. No conclusion can be drawn."
-          : "Mizan check unavailable or response invalid. Reopen to retry. No conclusion can be drawn.";
+          ? "Check rate limit reached. Wait a minute, then retry. No conclusion can be drawn."
+          : "Ban check unavailable or response invalid. Reopen to retry. No conclusion can be drawn.";
     } finally {
       if (version === searchVersion) results.setAttribute("aria-busy", "false");
     }

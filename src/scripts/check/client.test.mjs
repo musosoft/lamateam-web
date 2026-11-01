@@ -163,7 +163,7 @@ test("VM strips all client imports and loads recent IDs without authorization or
     );
     assert.equal(
       row.children[0].attributes["aria-label"],
-      `Mizan results for ${steamId64}`,
+      `Ban results for ${steamId64}`,
     );
   }
 });
@@ -212,18 +212,15 @@ test("manual ban check renders structured counts and untrusted labels as text, n
   assert.equal(app.get("[data-check-bans-total]").textContent, "3");
   assert.equal(app.get("[data-check-bans-sources]").textContent, "2");
   assert.equal(app.get("[data-check-bans-conduct]").textContent, "1");
-  assert.equal(app.get("[data-check-cheater]").textContent, "Flagged by Mizan");
-  assert.equal(
-    app.get("[data-check-trolling]").textContent,
-    "Not flagged by Mizan",
-  );
+  assert.equal(app.get("[data-check-cheater]").textContent, "Flagged");
+  assert.equal(app.get("[data-check-trolling]").textContent, "Not flagged");
   const profile = app.get("[data-check-profile]");
   assert.equal(profile.href, profileUrl);
   assert.equal(profile.target, "_blank");
   assert.equal(profile.rel, "noopener noreferrer");
   assert.match(
     app.get("[data-check-search-status]").textContent,
-    /Verify on Mizan before acting/,
+    /Verify the source before acting/,
   );
   assert.match(
     app.get("[data-check-query-time]").textContent,
@@ -258,14 +255,8 @@ test("zero matches are qualified and empty labels are explicit without undocumen
     app.get("[data-check-search-status]").textContent,
     /not proof of innocence/,
   );
-  assert.match(
-    app.get("[data-check-categories]").textContent,
-    /None reported by Mizan/,
-  );
-  assert.match(
-    app.get("[data-check-games]").textContent,
-    /None reported by Mizan/,
-  );
+  assert.match(app.get("[data-check-categories]").textContent, /None reported/);
+  assert.match(app.get("[data-check-games]").textContent, /None reported/);
   assert.equal(
     app.get("[data-check-last-ban]").textContent,
     "No last ban time reported",

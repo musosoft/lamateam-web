@@ -25,16 +25,6 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
       <h1 class="fl-text-2xl/4xl font-bold tracking-tight">{t('Admins')}</h1>
     </header>
     <article class="space-y-6 panel fl-p-3/6 text-gray-200">
-      <ul
-        translate="no"
-        class="flex flex-wrap items-center fl-gap-2/4 fl-text-sm/base text-gray-200"
-      >
-        {admins.map((name) => (
-          <li class="rounded-lg border border-gray-700 bg-gray-950/70 px-3 py-2 font-semibold">
-            {name}
-          </li>
-        ))}
-      </ul>
       <header>
         <h2 class="fl-text-xl/3xl font-bold tracking-tight">
           {t('Admin Rules')}
@@ -51,19 +41,13 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
           aria-label="Player lookup"
         >
           <div class="check-toolbar">
-            <h3 class="font-semibold">Player lookup · Mizan</h3>
+            <h3 class="font-semibold">Player lookup</h3>
             <button type="button" data-check-refresh>
               Refresh
             </button>
           </div>
           <p class="check-muted" data-check-observed>
             Loading recent visits…
-          </p>
-          <p class="check-muted">
-            MOTD IDs can be spoofed. Verify on Mizan before acting.
-          </p>
-          <p class="check-stale" role="status" data-check-stale hidden>
-            List may be out of date. Refresh before checking.
           </p>
           <p role="status" aria-live="polite" data-check-players-status>
             Loading identities…
@@ -77,6 +61,16 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
           <noscript>JavaScript is required for player lookup.</noscript>
         </section>
       )}
+      <ul
+        translate="no"
+        class="flex flex-wrap items-center fl-gap-2/4 fl-text-sm/base text-gray-200"
+      >
+        {admins.map((name) => (
+          <li class="rounded-lg border border-gray-700 bg-gray-950/70 px-3 py-2 font-semibold">
+            {name}
+          </li>
+        ))}
+      </ul>
       <section>
         <h3 class="fl-text-lg/2xl font-bold">
           {t('1. Basic Admin Responsibilities')}
@@ -247,7 +241,6 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
     color: #9ca3af;
     font-size: 0.8rem;
   }
-  .check-stale,
   .check-tool :global([data-flagged='true']) {
     color: #fde68a;
   }
