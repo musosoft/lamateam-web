@@ -3,14 +3,25 @@
 The review UI is embedded directly on `/admins` above the admin roster and
 rules. Localized admin pages link to `/admins#player-review`; `/check` is removed
 (404), with no alternate public review page. The existing `/api/check/*` endpoint
-names are unchanged. The tool needs no Steam login and runs checks only on click.
+names are unchanged. The tool needs no Steam login. Its compact “Check recent
+players” section only fetches `/api/check/players` on load and Refresh, displaying
+name, CommunityID and last seen. It has no per-player action, external registry
+UI, or search request. Existing backend search functionality below is not exposed
+by this client.
 
 No SourceMod publisher is required or installed. Identity is explicitly spoofable:
 MOTD query hints are observations, **not proof of identity, online status, admin
 membership or cheating**. Manual Mizan results are review leads only. No bans,
 RCON, SourceBans writes, automatic batch checks or AI summaries are performed.
 
-## Designer contract
+## Client and retained API contracts
+
+The current client renders at most 30 newest players using DOM `textContent`.
+Refresh is the only control; loading disables it and concurrent requests are
+suppressed. Empty, unavailable and rate-limited states stay concise. Failed
+refreshes retain the last list with a stale indicator; lists older than two
+minutes are also marked stale. The timer only updates that indicator, never polls.
+The client aborts pending fetches when Astro navigates away.
 
 - `GET /api/check/players` → `{observedAt, players:[{communityId,lastSeen,displayName}]}`.
   Canonical Steam64 strings, integer Unix-millisecond times, latest first;

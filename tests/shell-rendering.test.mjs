@@ -29,14 +29,17 @@ test("Admins embeds the only public review tool without a Steam login gate", () 
   );
   assert.match(admins, /headers\.set\('Cache-Control', 'private, no-store'\)/);
   assert.match(check, /data-check-page/);
-  assert.match(check, /spoofable, not\s+authentication credentials/);
-  assert.match(check, /never bans players automatically/);
-  assert.match(check, /No checks run\s+automatically/);
+  assert.match(check, /Check recent players/);
+  assert.doesNotMatch(
+    check,
+    /Mizan|mizan|data-check-results|data-check-search|check-notice/,
+  );
+  assert.equal((check.match(/<button\b/g) || []).length, 1);
   assert.doesNotMatch(
     check,
     /isCheckAdmin|steamProfile|CHECK_ADMIN_STEAM64_ALLOWLIST/,
   );
-  for (const action of ["players", "search"]) {
+  for (const action of ["players"]) {
     const route = read(`../src/pages/api/check/${action}.ts`);
     assert.match(route, new RegExp(`checkHandlers\\.${action}\\(request\\)`));
     assert.doesNotMatch(route, /locals|communityid|steamProfile/);
@@ -87,6 +90,8 @@ test(
     const html = await response.text();
     assert.match(html, /data-check-page/);
     assert.match(html, /data-check-refresh/);
+    assert.match(html, /Check recent players/);
+    assert.doesNotMatch(html, /Mizan|data-check-results|data-check-search/);
     assert.match(html, /Admin Rules/);
     assert.match(html, /Crazy69/);
     assert.doesNotMatch(html, /href="\/check"/);

@@ -11,8 +11,9 @@ const source = readFileSync(
 const id = (n) => String(76561198000000000n + BigInt(n));
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
-function element() {
+function element(tagName = "div") {
   return {
+    tagName,
     dataset: {},
     hidden: false,
     disabled: false,
@@ -48,20 +49,28 @@ function mount(respond) {
   const root = element();
   root.querySelector = get;
   root.querySelectorAll = () =>
-    get("[data-check-players]").children.map((row) => row.children[1]);
+    get("[data-check-players]").children.flatMap((row) =>
+      row.children.filter((child) => child.tagName === "button"),
+    );
   const events = {};
   const calls = [];
+  let tick;
   const context = {
     exports: {},
     AbortController,
     AbortSignal,
     Date,
-    require: () => ({ safeSourceUrl: (url) => url }),
     fetch: async (path, options) => {
       calls.push({ path, ...options });
       return respond(path, options);
     },
-    window: { setInterval: () => 1, clearInterval() {} },
+    window: {
+      setInterval: (handler) => {
+        tick = handler;
+        return 1;
+      },
+      clearInterval() {},
+    },
     document: {
       documentElement: { lang: "en" },
       querySelector: () => root,
@@ -81,15 +90,29 @@ function mount(respond) {
     context,
   );
   events["astro:page-load"]();
-  return { get, calls, buttons: () => root.querySelectorAll(), events };
+  return {
+    get,
+    calls,
+    buttons: () => root.querySelectorAll(),
+    events,
+    tick: () => tick(),
+  };
 }
 const ok = (value) => ({ ok: true, json: async () => value });
 const snapshot = (players) => ({ observedAt: Date.now(), players });
 
 test("public Steam display names remain text and keep the canonical ID visible", async () => {
-  const page = mount(() => ok(snapshot([
-    { communityId: id(1), displayName: "<img src=x onerror=alert(1)>", lastSeen: Date.now() },
-  ])));
+  const page = mount(() =>
+    ok(
+      snapshot([
+        {
+          communityId: id(1),
+          displayName: "<img src=x onerror=alert(1)>",
+          lastSeen: Date.now(),
+        },
+      ]),
+    ),
+  );
   await settle();
   const info = page.get("[data-check-players]").children[0].children[0];
   assert.equal(info.children[0].textContent, "<img src=x onerror=alert(1)>");
@@ -120,74 +143,38 @@ test("loads only the latest 30 API identities, newest first, without lookups or 
   assert.equal(rows[0].children[0].children[0].textContent, id(34));
   assert.equal(rows[29].children[0].children[0].textContent, id(5));
   assert.doesNotMatch(JSON.stringify(rows), /DO NOT DISPLAY|private log/);
-  assert.equal(page.buttons()[0].textContent, "Check Mizan");
+  assert.ok(rows.every((row) => row.children.length === 1));
+  assert.equal(page.calls[0].method, "GET");
+  assert.equal(page.calls[0].body, undefined);
 });
 
-test("manual search posts only communityId and suppresses concurrent lookups", async () => {
+test("refresh suppresses concurrent list requests and never submits data", async () => {
   let finish;
-  const page = mount((path) =>
-    path.endsWith("players")
-      ? ok(snapshot([{ communityId: id(1), lastSeen: Date.now() }]))
-      : new Promise((resolve) => {
-          finish = resolve;
-        }),
+  const page = mount(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
   );
   await settle();
-  page.buttons()[0].events.click();
-  page.buttons()[0].events.click();
-  assert.equal(page.calls.length, 2);
-  assert.equal(page.calls[1].path, "/api/check/search");
-  assert.deepEqual(JSON.parse(page.calls[1].body), { communityId: id(1) });
-  assert.equal(page.buttons()[0].disabled, true);
+  page.get("[data-check-refresh]").events.click();
+  page.get("[data-check-refresh]").events.click();
+  assert.equal(page.calls.length, 1);
+  assert.equal(page.calls[0].path, "/api/check/players");
+  assert.equal(page.calls[0].body, undefined);
+  assert.equal(page.get("[data-check-refresh]").disabled, true);
   finish({ ok: false, status: 429 });
   await settle();
   assert.match(
-    page.get("[data-check-search-status]").textContent,
-    /rate limit/,
+    page.get("[data-check-players-status]").textContent,
+    /Too many requests/,
   );
-  assert.equal(page.buttons()[0].disabled, false);
-});
-
-test("renders a validated result for the selected identity", async () => {
-  const page = mount((path) =>
-    ok(
-      path.endsWith("players")
-        ? snapshot([{ communityId: id(1), lastSeen: Date.now() }])
-        : {
-            queriedAt: Date.now(),
-            steamId64: id(1),
-            profileUrl: `https://mizan.ac/players/steam/${id(1)}`,
-            cheater: false,
-            trolling: false,
-            bans: {
-              total: 0,
-              active: 0,
-              conduct: 0,
-              sources: 0,
-              categories: [],
-              games: [],
-              lastAt: null,
-            },
-          },
-    ),
-  );
-  await settle();
-  page.buttons()[0].events.click();
-  await settle();
-  assert.equal(page.get("[data-check-result-content]").hidden, false);
-  assert.match(
-    page.get("[data-check-search-status]").textContent,
-    /not proof of innocence/,
-  );
-  assert.equal(
-    page.get("[data-check-result-player]").textContent,
-    `CommunityID ${id(1)}`,
-  );
+  assert.equal(page.get("[data-check-refresh]").disabled, false);
 });
 
 test("handles empty, malformed, failed and rate-limited list responses", async () => {
   for (const [response, expected] of [
-    [ok(snapshot([])), /No recent MOTD identities/],
+    [ok(snapshot([])), /No recent players/],
     [
       ok(snapshot([{ communityId: "invalid", lastSeen: Date.now() }])),
       /Could not load/,
@@ -216,7 +203,7 @@ test("null observedAt is an empty state only when the backend players list is em
   await settle();
   assert.match(
     page.get("[data-check-players-status]").textContent,
-    /No recent MOTD identities/,
+    /No recent players/,
   );
   assert.equal(
     page.get("[data-check-observed]").textContent,
@@ -252,7 +239,31 @@ test("failed refresh keeps the last list with a stale warning and never searches
   fail = true;
   page.get("[data-check-refresh]").events.click();
   await settle();
-  assert.equal(page.buttons().length, 1);
+  assert.equal(page.get("[data-check-players]").children.length, 1);
+  assert.equal(page.buttons().length, 0);
   assert.equal(page.get("[data-check-stale]").hidden, false);
   assert.ok(page.calls.every((call) => call.path === "/api/check/players"));
+});
+
+test("stale lists refresh manually, clear their stale state and never poll", async () => {
+  let observedAt = Date.now() - 121_000;
+  const page = mount(() =>
+    ok({ observedAt, players: [{ communityId: id(1), lastSeen: observedAt }] }),
+  );
+  await settle();
+  assert.equal(page.get("[data-check-stale]").hidden, false);
+  page.tick();
+  assert.equal(page.calls.length, 1);
+  observedAt = Date.now();
+  page.get("[data-check-refresh]").events.click();
+  await settle();
+  assert.equal(page.get("[data-check-stale]").hidden, true);
+  assert.match(page.get("[data-check-observed]").textContent, /Last updated:/);
+  assert.equal(page.calls.length, 2);
+  page.events["astro:page-load"]();
+  assert.equal(page.calls.length, 2);
+  page.events["astro:before-swap"]();
+  assert.equal(page.calls[0].signal.aborted, true);
+  page.get("[data-check-refresh]").events.click();
+  assert.equal(page.calls.length, 2);
 });
