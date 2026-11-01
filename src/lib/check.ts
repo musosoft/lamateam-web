@@ -1,4 +1,5 @@
 import { latestCheckPlayers } from "./check-players.ts";
+import { enrichCheckPlayerNames } from "./check-steam-names.ts";
 
 /** Legacy ingestion/authorization remains gated; players/search are public review only. */
 export const CHECK_SERVER_ID = "82.208.17.101:27516";
@@ -28,6 +29,7 @@ interface Dependencies {
   sourceIngestToken?: string;
   authSecret?: string;
   mizanKey?: string;
+  steamKey?: string;
   rateLimiter?: {
     limit(options: { key: string }): Promise<{ success: boolean }>;
   };
@@ -497,7 +499,17 @@ export function createCheckHandlers(deps: Dependencies) {
     if (limit.success !== true) fail(limit.success === false ? 429 : 503);
     if (action === "roster") return ingest(request);
     if (action === "source-roster") return ingest(request, true);
-    if (action === "players") return json(await latestCheckPlayers(deps.kv, now()));
+    if (action === "players") {
+      const snapshot = await latestCheckPlayers(deps.kv, now());
+      return json({
+        ...snapshot,
+        players: await enrichCheckPlayerNames(snapshot.players, {
+          apiKey: deps.steamKey,
+          fetch: fetcher,
+          timeoutMs: deps.timeoutMs,
+        }),
+      });
+    }
     if (action === "search") {
       const body = object(parseJSON(await boundedText(request.body, 1024, 413)));
       fields(body, ["communityId"]);

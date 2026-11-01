@@ -137,11 +137,12 @@ test("manual search posts only communityId and suppresses concurrent lookups", a
   assert.equal(page.buttons()[0].disabled, false);
 });
 
-test("renders a validated result for the selected identity", async () => {
+test("renders names as text with secondary Steam64 IDs in list and result", async () => {
+  const displayName = '<img src=x onerror="alert(1)"> & Player';
   const page = mount((path) =>
     ok(
       path.endsWith("players")
-        ? snapshot([{ communityId: id(1), lastSeen: Date.now() }])
+        ? snapshot([{ communityId: id(1), displayName, lastSeen: Date.now() }])
         : {
             queriedAt: Date.now(),
             steamId64: id(1),
@@ -161,7 +162,19 @@ test("renders a validated result for the selected identity", async () => {
     ),
   );
   await settle();
+  const info = page.get("[data-check-players]").children[0].children[0];
+  assert.equal(info.children[0].textContent, displayName);
+  assert.equal(info.children[1].textContent, id(1));
+  assert.equal(info.children[1].translate, false);
+  assert.equal(
+    page.buttons()[0].attributes["aria-label"],
+    `Check Mizan for ${displayName} (${id(1)})`,
+  );
   page.buttons()[0].events.click();
+  assert.equal(
+    page.get("[data-check-search-status]").textContent,
+    `Checking Mizan for ${displayName} (${id(1)})…`,
+  );
   await settle();
   assert.equal(page.get("[data-check-result-content]").hidden, false);
   assert.match(
@@ -169,9 +182,96 @@ test("renders a validated result for the selected identity", async () => {
     /not proof of innocence/,
   );
   assert.equal(
-    page.get("[data-check-result-player]").textContent,
-    `CommunityID ${id(1)}`,
+    page.get("[data-check-result-player]").children[0].textContent,
+    displayName,
   );
+  assert.equal(
+    page.get("[data-check-result-player]").children[1].textContent,
+    id(1),
+  );
+});
+
+test("missing, null and blank names fall back to the ID in list and results", async () => {
+  for (const displayName of [undefined, null, "", "  \t "]) {
+    const page = mount((path) =>
+      ok(
+        path.endsWith("players")
+          ? snapshot([
+              { communityId: id(1), displayName, lastSeen: Date.now() },
+            ])
+          : {
+              queriedAt: Date.now(),
+              steamId64: id(1),
+              profileUrl: `https://mizan.ac/players/steam/${id(1)}`,
+              cheater: false,
+              trolling: false,
+              bans: {
+                total: 0,
+                active: 0,
+                sources: 0,
+                conduct: 0,
+                categories: [],
+                games: [],
+                lastAt: null,
+              },
+            },
+      ),
+    );
+    await settle();
+    const info = page.get("[data-check-players]").children[0].children[0];
+    assert.equal(info.children[0].textContent, id(1));
+    assert.equal(info.children.length, 2); // ID and last-seen time, no duplicate ID.
+    page.buttons()[0].events.click();
+    await settle();
+    const result = page.get("[data-check-result-player]");
+    assert.equal(result.children.length, 1);
+    assert.equal(result.children[0].textContent, id(1));
+  }
+});
+
+test("trims display names and rejects values outside the optional string/null contract", async () => {
+  const page = mount(() =>
+    ok(
+      snapshot([
+        { communityId: id(1), displayName: "  Player  ", lastSeen: Date.now() },
+      ]),
+    ),
+  );
+  await settle();
+  assert.equal(
+    page.get("[data-check-players]").children[0].children[0].children[0]
+      .textContent,
+    "Player",
+  );
+  const invalid = mount(() =>
+    ok(
+      snapshot([{ communityId: id(1), displayName: 42, lastSeen: Date.now() }]),
+    ),
+  );
+  await settle();
+  assert.match(
+    invalid.get("[data-check-players-status]").textContent,
+    /Could not load/,
+  );
+  assert.equal(invalid.buttons().length, 0);
+});
+
+test("copy stays concise while retaining manual usage and identity safety guidance", () => {
+  const page = readFileSync(
+    new URL("../src/pages/check.astro", import.meta.url),
+    "utf8",
+  );
+  assert.match(page, /one manual check/);
+  assert.match(page, /Refresh only updates the list/);
+  assert.match(page, /IDs are spoofable/);
+  assert.match(page, /Steam names are labels, not authentication/);
+  assert.match(page, /No automatic\s+bans/);
+  assert.match(page, /zero matches are not proof of innocence/);
+  assert.doesNotMatch(
+    page,
+    /No checks run\s+automatically|not a complete history\. Zero|no safe canonical URL was/,
+  );
+  assert.doesNotMatch(source, /innerHTML|insertAdjacentHTML/);
 });
 
 test("handles empty, malformed, failed and rate-limited list responses", async () => {

@@ -149,7 +149,7 @@ test("VM strips all client imports and loads recent IDs without authorization or
     assert.equal(row.children[0].children[0].textContent, steamId64);
     assert.equal(
       row.children[1].attributes["aria-label"],
-      `Check Mizan for CommunityID ${steamId64}`,
+      `Check Mizan for ${steamId64}`,
     );
   }
 });
@@ -210,7 +210,7 @@ test("manual ban check renders structured counts and untrusted labels as text, n
   assert.equal(profile.rel, "noopener noreferrer");
   assert.match(
     app.get("[data-check-search-status]").textContent,
-    /leads to verify, not a verdict/,
+    /Verify on Mizan before acting/,
   );
   assert.match(
     app.get("[data-check-query-time]").textContent,

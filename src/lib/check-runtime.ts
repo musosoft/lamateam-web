@@ -8,5 +8,8 @@ export const checkHandlers = createCheckHandlers({
   sourceIngestToken: bindings.CHECK_SOURCE_INGEST_TOKEN,
   authSecret: bindings.CHECK_AUTH_SECRET,
   mizanKey: bindings.MIZAN_API_KEY,
+  steamKey: import.meta.env.DEV
+    ? import.meta.env.STEAM_API_KEY
+    : bindings.STEAM_API_KEY,
   rateLimiter: bindings.CHECK_RATE_LIMITER,
 });

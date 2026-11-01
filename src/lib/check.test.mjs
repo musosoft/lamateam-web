@@ -208,9 +208,44 @@ test("public GET works without cookies or roster, is minimized, and never calls 
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.deepEqual(await response.json(), {
     observedAt: epoch,
-    players: [{ communityId: id, lastSeen: epoch }],
+    players: [{ communityId: id, lastSeen: epoch, displayName: null }],
   });
   assert.equal(f.calls.length, 0);
+});
+
+test("public players enriches names only in the response and fails soft on Steam errors", async () => {
+  for (const providerFails of [false, true]) {
+    let calls = 0;
+    const f = fixture({
+      steamKey: "offline-steam-key",
+      fetch: async (input) => {
+        calls++;
+        assert.equal(new URL(input).hostname, "api.steampowered.com");
+        if (providerFails) throw new Error("provider unavailable");
+        return Response.json({
+          response: { players: [{ steamid: id, personaname: "Player Ž" }] },
+        });
+      },
+    });
+    await recordCheckPlayer(f.kv, id, epoch, epoch);
+    const before = [...f.values];
+    const writes = f.writes.length;
+    const response = await f.handlers.players(request("players"));
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      observedAt: epoch,
+      players: [
+        {
+          communityId: id,
+          lastSeen: epoch,
+          displayName: providerFails ? null : "Player Ž",
+        },
+      ],
+    });
+    assert.equal(calls, 1);
+    assert.equal(f.writes.length, writes);
+    assert.deepEqual([...f.values], before);
+  }
 });
 
 test("public manual search accepts normalized identity outside roster and makes exactly one bounded read", async () => {

@@ -3,6 +3,7 @@ import { safeSourceUrl } from "./safety.mjs";
 type Timestamp = string | number;
 type Player = {
   communityId: string;
+  displayName?: string | null;
   lastSeen: Timestamp;
 };
 type Snapshot = {
@@ -35,6 +36,9 @@ const isPlayer = (value: unknown): value is Player =>
   isRecord(value) &&
   typeof value.communityId === "string" &&
   /^7656119\d{10}$/.test(value.communityId) &&
+  (value.displayName === undefined ||
+    value.displayName === null ||
+    typeof value.displayName === "string") &&
   isTime(value.lastSeen);
 const isSnapshot = (value: unknown): value is Snapshot =>
   isRecord(value) &&
@@ -141,25 +145,41 @@ function initCheck() {
       Date.now() - new Date(queriedAt).getTime() <= 120_000;
   }
 
+  function playerIdentity(player: Player) {
+    const name = player.displayName?.trim();
+    return name ? `${name} (${player.communityId})` : player.communityId;
+  }
+
+  function renderIdentity(container: HTMLElement, player: Player) {
+    const displayName = player.displayName?.trim();
+    const name = document.createElement("strong");
+    name.textContent = displayName || player.communityId;
+    name.translate = false;
+    container.replaceChildren(name);
+    if (displayName) {
+      const identifier = document.createElement("small");
+      identifier.textContent = player.communityId;
+      identifier.translate = false;
+      container.appendChild(identifier);
+    }
+  }
+
   function renderPlayers(players: Player[]) {
     playerList.replaceChildren();
     for (const player of players) {
       const row = document.createElement("li");
       const info = document.createElement("div");
       info.className = "check-player-info";
-      const name = document.createElement("strong");
-      name.textContent = player.communityId;
-      name.translate = false;
+      renderIdentity(info, player);
       const time = document.createElement("small");
       time.textContent = `Last seen: ${formatTime(player.lastSeen)}`;
-      info.appendChild(name);
       info.appendChild(time);
       const button = document.createElement("button");
       button.type = "button";
       button.textContent = "Check Mizan";
       button.setAttribute(
         "aria-label",
-        `Check Mizan for CommunityID ${player.communityId}`,
+        `Check Mizan for ${playerIdentity(player)}`,
       );
       button.disabled = searching;
       button.addEventListener("click", () => void research(player), { signal });
@@ -203,7 +223,7 @@ function initCheck() {
       playerStatus.textContent =
         error instanceof RequestFailure && error.status === 429
           ? "Too many requests. Wait a minute before refreshing."
-          : "Could not load recent identities. Try refreshing. No new list has been confirmed.";
+          : "Could not load recent identities. Try refreshing.";
       snapshotFailed = true;
       if (snapshot) stale.hidden = false;
       else observed.textContent = "Snapshot unavailable";
@@ -220,7 +240,7 @@ function initCheck() {
     const started = Date.now();
     resultContent.hidden = true;
     results.setAttribute("aria-busy", "true");
-    searchStatus.textContent = `Checking Mizan for ${player.communityId}…`;
+    searchStatus.textContent = `Checking Mizan for ${playerIdentity(player)}…`;
     for (const button of root.querySelectorAll<HTMLButtonElement>(
       ".check-player-list button",
     ))
@@ -233,8 +253,7 @@ function initCheck() {
       if (signal.aborted) return;
       if (!isSearchResult(value) || value.steamId64 !== player.communityId)
         throw new Error("Unexpected ban check response");
-      get("[data-check-result-player]").textContent =
-        `CommunityID ${player.communityId}`;
+      renderIdentity(get("[data-check-result-player]"), player);
       queriedAt = value.queriedAt;
       get("[data-check-query-time]").textContent =
         `Query completed: ${formatTime(value.queriedAt)} · ${((Date.now() - started) / 1000).toFixed(1)} s`;
@@ -272,13 +291,13 @@ function initCheck() {
       searchStatus.textContent =
         value.bans.total === 0 && !value.cheater && !value.trolling
           ? "No bans or flags reported by Mizan. This is not proof of innocence."
-          : "Mizan returned bans or flags. These are leads to verify, not a verdict.";
+          : "Bans or flags reported. Verify on Mizan before acting.";
     } catch (error) {
       if (signal.aborted) return;
       searchStatus.textContent =
         error instanceof RequestFailure && error.status === 429
-          ? "Mizan rate limit reached. Wait a minute before selecting Check Mizan again. No conclusion can be drawn."
-          : "Mizan check unavailable or response invalid. Select Check Mizan to try again. No conclusion can be drawn from this error.";
+          ? "Mizan rate limit reached. Wait a minute, then retry. No conclusion can be drawn."
+          : "Mizan check unavailable or response invalid. Retry Check Mizan. No conclusion can be drawn.";
     } finally {
       searching = false;
       results.setAttribute("aria-busy", "false");
