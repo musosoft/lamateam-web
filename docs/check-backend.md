@@ -1,4 +1,9 @@
-# Public review-only `/check` backend
+# Public review-only `/admins` backend
+
+The review UI is embedded directly on `/admins` above the admin roster and
+rules. Localized admin pages link to `/admins#player-review`; `/check` is removed
+(404), with no alternate public review page. The existing `/api/check/*` endpoint
+names are unchanged. The tool needs no Steam login and runs checks only on click.
 
 No SourceMod publisher is required or installed. Identity is explicitly spoofable:
 MOTD query hints are observations, **not proof of identity, online status, admin

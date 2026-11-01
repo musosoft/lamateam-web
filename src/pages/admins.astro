@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PlayerReview from '../components/PlayerReview.astro';
 import { translator } from '../lib/page-copy';
 import { localeFromPath, type SiteLocale } from '../lib/localized-content';
 interface Props {
@@ -9,6 +10,13 @@ const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
 const t = translator(locale);
 
 const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
+// Localized admin rules remain informational; the public tool lives only here.
+const showPlayerReview = Astro.url.pathname.replace(/\/$/, '') === '/admins';
+if (showPlayerReview) {
+  Astro.response.headers.set('Cache-Control', 'private, no-store');
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  Astro.response.headers.set('Referrer-Policy', 'same-origin');
+}
 ---
 
 <Layout title={t('Admins | LaMaTeAm')} lang={locale}>
@@ -16,15 +24,14 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
     <header class="fl-mb-4/6 page-heading flex flex-wrap items-center justify-between gap-4">
       <h1 class="fl-text-2xl/4xl font-bold tracking-tight">{t('Admins')}</h1>
       <a
-        href="/check"
+        href={showPlayerReview ? '#player-review' : '/admins#player-review'}
+        hreflang="en"
         class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-gray-700 bg-gray-950/70 px-4 py-2 fl-text-sm/base font-semibold text-cyan-300 underline"
       >
         {t('Open player review tool')}
-        <span translate="no" class="text-gray-300">
-          /check
-        </span>
       </a>
     </header>
+    {showPlayerReview && <PlayerReview />}
     <article class="space-y-6 panel fl-p-3/6 text-gray-200">
       <ul
         translate="no"

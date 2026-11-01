@@ -45,7 +45,7 @@ class Anchor extends Element {}
 
 function harness(
   respond,
-  url = "https://lamateam.eu/check?communityid=76561197960265731",
+  url = "https://lamateam.eu/admins?communityid=76561197960265731",
 ) {
   const elements = new Map();
   const get = (selector) => {
@@ -137,7 +137,7 @@ test("VM strips all client imports and loads recent IDs without authorization or
   ]) {
     const app = harness(
       () => response(200, recentIds()),
-      `https://lamateam.eu/check${query}`,
+      `https://lamateam.eu/admins${query}`,
     );
     await settle();
     assert.deepEqual(
@@ -277,7 +277,7 @@ test("opaque record and Steam fields are ignored; bounded string arrays are acce
     assert.equal(element.textContent.includes(opaque), false);
   }
   const page = readFileSync(
-    new URL("../../pages/check.astro", import.meta.url),
+    new URL("../../components/PlayerReview.astro", import.meta.url),
     "utf8",
   );
   assert.doesNotMatch(

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { parse } from "parse5";
 import { pageCopy } from "../src/lib/page-copy.ts";
@@ -12,18 +12,30 @@ import {
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-test("Admins links to the public review-only tool without a Steam login gate", () => {
+test("Admins embeds the only public review tool without a Steam login gate", () => {
   const admins = read("../src/pages/admins.astro");
-  assert.match(admins, /href="\/check"/);
-  assert.doesNotMatch(admins, /isCheckAdmin|showCheck|data-check-page/);
-  const check = read("../src/pages/check.astro");
-  assert.match(check, /export const prerender = false/);
-  assert.match(check, /headers\.set\('Cache-Control', 'private, no-store'\)/);
+  assert.match(admins, /showPlayerReview && <PlayerReview \/>/);
+  assert.match(admins, /=== '\/admins'/);
+  assert.match(admins, /'#player-review' : '\/admins#player-review'/);
+  assert.match(admins, /hreflang="en"/);
+  assert.doesNotMatch(admins, /isCheckAdmin|href="\/check"/);
+  assert.equal(
+    existsSync(new URL("../src/pages/check.astro", import.meta.url)),
+    false,
+  );
+  const check = read("../src/components/PlayerReview.astro").replace(
+    /\s+/g,
+    " ",
+  );
+  assert.match(admins, /headers\.set\('Cache-Control', 'private, no-store'\)/);
   assert.match(check, /data-check-page/);
   assert.match(check, /spoofable, not\s+authentication credentials/);
   assert.match(check, /never bans players automatically/);
   assert.match(check, /No checks run\s+automatically/);
-  assert.doesNotMatch(check, /isCheckAdmin|steamProfile|CHECK_ADMIN_STEAM64_ALLOWLIST/);
+  assert.doesNotMatch(
+    check,
+    /isCheckAdmin|steamProfile|CHECK_ADMIN_STEAM64_ALLOWLIST/,
+  );
   for (const action of ["players", "search"]) {
     const route = read(`../src/pages/api/check/${action}.ts`);
     assert.match(route, new RegExp(`checkHandlers\\.${action}\\(request\\)`));
@@ -64,6 +76,29 @@ test("shared shell bypasses request-time HTML localization; only localized home 
 });
 
 const base = process.env.SSR_BASE_URL;
+test(
+  "only canonical Admins renders review hooks and the old check route is gone",
+  { skip: !base },
+  async () => {
+    const response = await fetch(new URL("/admins", base));
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "private, no-store");
+    assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
+    const html = await response.text();
+    assert.match(html, /data-check-page/);
+    assert.match(html, /data-check-refresh/);
+    assert.match(html, /Admin Rules/);
+    assert.match(html, /Crazy69/);
+    assert.doesNotMatch(html, /href="\/check"/);
+    assert.equal(
+      (await fetch(new URL("/check", base), { redirect: "manual" })).status,
+      404,
+    );
+    const localized = await fetch(new URL(localePath("cs", "admins"), base));
+    assert.equal(localized.status, 200);
+    assert.doesNotMatch(await localized.text(), /data-check-page/);
+  },
+);
 test(
   "production shell retains localized navigation, flags and selector without the legacy DOM translator",
   { skip: !base },

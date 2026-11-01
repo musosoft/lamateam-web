@@ -1,0 +1,373 @@
+<section
+  id="player-review"
+  class="check-page w-full fl-py-2/5 text-left text-gray-100"
+  lang="en"
+  aria-labelledby="player-review-title"
+  data-check-page
+>
+  <header class="page-heading fl-mb-4/6">
+    <p class="check-eyebrow">LaMaTeAm · moderation tools</p>
+    <h2
+      id="player-review-title"
+      class="fl-text-xl/3xl font-bold tracking-tight"
+    >
+      Recent identity review
+    </h2>
+    <p class="check-intro">
+      Review the latest 30 MOTD identities. Choose an individual CommunityID to
+      check Mizan.
+    </p>
+  </header>
+
+  <div data-check-workspace>
+    <aside class="check-notice">
+      <strong>Leads, not a verdict.</strong> Mizan is one external registry, not
+      a complete history. Zero matches are not proof of innocence. Verify
+      flagged records and the player’s identity on the source community or Mizan
+      profile. CommunityIDs from MOTD visits are spoofable, not authentication
+      credentials or proof of a player’s identity. This tool never bans players
+      automatically.
+    </aside>
+
+    <div class="check-columns">
+      <section class="panel fl-p-3/6" aria-labelledby="check-players-title">
+        <div class="check-section-heading">
+          <h3 id="check-players-title">Recent MOTD identities</h3>
+          <button
+            type="button"
+            class="check-button check-button-secondary"
+            data-check-refresh
+          >
+            Refresh
+          </button>
+        </div>
+        <p class="check-muted" data-check-observed>
+          Loading recent visits…
+        </p>
+        <p class="check-muted">
+          Newest first · up to 30 identities. Checks run only when you select
+          “Check Mizan”, one at a time. Refreshing this list does not run
+          checks.
+        </p>
+        <p class="check-stale" role="status" data-check-stale hidden>
+          This list may be out of date. Refresh before choosing an identity.
+        </p>
+        <p role="status" aria-live="polite" data-check-players-status>
+          Loading identities…
+        </p>
+        <ul
+          class="check-player-list"
+          aria-label="Recent CommunityIDs"
+          aria-busy="true"
+          data-check-players
+        ></ul>
+        <noscript>
+          <p class="check-muted">
+            JavaScript is required to load recent identities and manually check
+            Mizan.
+          </p>
+        </noscript>
+      </section>
+
+      <section
+        class="panel fl-p-3/6 check-results"
+        aria-labelledby="check-results-title"
+        aria-busy="false"
+        data-check-results
+      >
+        <p class="check-eyebrow">Mizan · external ban registry</p>
+        <h3 id="check-results-title" tabindex="-1">
+          Ban check results
+        </h3>
+        <p
+          class="check-muted"
+          role="status"
+          aria-live="polite"
+          data-check-search-status
+        >
+          Choose “Check Mizan” beside an identity. No checks run automatically.
+        </p>
+        <div data-check-result-content hidden>
+          <p
+            class="check-result-player"
+            translate="no"
+            data-check-result-player
+          ></p>
+          <p class="check-muted" data-check-query-time></p>
+          <p class="check-stale" role="status" data-check-result-stale hidden>
+            This result is over two minutes old. Check the identity again for
+            updated registry data.
+          </p>
+          <h4>Bans reported by Mizan</h4>
+          <dl class="check-counts">
+            <div class="check-count-primary">
+              <dt>Active bans</dt>
+              <dd data-check-bans-active>—</dd>
+            </div>
+            <div>
+              <dt>Total bans</dt>
+              <dd data-check-bans-total>—</dd>
+            </div>
+            <div>
+              <dt>Sources</dt>
+              <dd data-check-bans-sources>—</dd>
+            </div>
+            <div>
+              <dt>Conduct bans</dt>
+              <dd data-check-bans-conduct>—</dd>
+            </div>
+          </dl>
+          <h4>Mizan flags</h4>
+          <dl class="check-flags">
+            <div>
+              <dt>Cheater</dt>
+              <dd data-check-cheater>—</dd>
+            </div>
+            <div>
+              <dt>Trolling</dt>
+              <dd data-check-trolling>—</dd>
+            </div>
+          </dl>
+          <p class="check-muted">
+            “Not flagged” describes Mizan’s response only. It is not an
+            independent assessment.
+          </p>
+          <dl class="check-details">
+            <div>
+              <dt>Categories</dt>
+              <dd data-check-categories>—</dd>
+            </div>
+            <div>
+              <dt>Games</dt>
+              <dd data-check-games>—</dd>
+            </div>
+            <div>
+              <dt>Last ban time</dt>
+              <dd data-check-last-ban>—</dd>
+            </div>
+          </dl>
+          <a
+            class="check-profile"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-check-profile
+            hidden
+          >
+            Verify on Mizan profile{' '}
+            <span class="check-muted">(opens in a new tab)</span>
+          </a>
+          <p class="check-muted" data-check-profile-unavailable hidden>
+            Mizan profile link unavailable: no safe canonical URL was returned.
+          </p>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+
+<script>
+  import '../scripts/check/client';
+</script>
+
+<style>
+  .check-eyebrow {
+    color: #fbbf24;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.65rem;
+  }
+  .check-intro,
+  .check-muted {
+    color: #9ca3af;
+  }
+  .check-intro {
+    margin-top: 0.65rem;
+  }
+  .check-muted {
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  .check-notice {
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #665329;
+    border-radius: 0.75rem;
+    background: #fbbf240a;
+    color: #d1d5db;
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+  .check-notice strong {
+    color: #fde68a;
+  }
+  .check-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .check-columns > section {
+    min-width: 0;
+  }
+  .check-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  h4 {
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.65rem;
+  }
+  .check-button {
+    min-height: 2.75rem;
+    padding: 0.6rem 1rem;
+    border-radius: 0.5rem;
+    background: #fbbf24;
+    color: #111827;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .check-button-secondary {
+    background: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #4b5563;
+  }
+  .check-button:hover {
+    filter: brightness(1.12);
+  }
+  .check-button:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+  .check-page :is(button, a, [tabindex]):focus-visible,
+  .check-player-list :global(button:focus-visible) {
+    outline: 2px solid #fbbf24;
+    outline-offset: 4px;
+  }
+  .check-stale {
+    color: #fde68a;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+  }
+  .check-player-list {
+    list-style: none;
+    padding: 0;
+  }
+  .check-player-list :global(li) {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #374151;
+  }
+  .check-player-list :global(.check-player-info) {
+    flex: 1;
+    min-width: min(100%, 12rem);
+    overflow-wrap: anywhere;
+  }
+  .check-player-list :global(strong) {
+    display: block;
+    color: #f3f4f6;
+  }
+  .check-player-list :global(small) {
+    display: block;
+    color: #9ca3af;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+  .check-player-list :global(button) {
+    min-height: 2.75rem;
+    border: 1px solid #665329;
+    color: #fbbf24;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .check-player-list :global(button:hover) {
+    background: #fbbf2410;
+  }
+  .check-player-list :global(button:disabled) {
+    opacity: 0.55;
+    cursor: wait;
+  }
+  .check-result-player {
+    margin-top: 1.25rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .check-counts,
+  .check-flags {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .check-counts > div,
+  .check-flags > div {
+    padding: 1rem;
+    border: 1px solid #374151;
+    border-radius: 0.65rem;
+    background: #111827;
+  }
+  .check-counts .check-count-primary {
+    border-color: #665329;
+  }
+  dt {
+    color: #9ca3af;
+    font-size: 0.875rem;
+  }
+  dd {
+    margin: 0.35rem 0 0;
+    overflow-wrap: anywhere;
+  }
+  .check-counts dd {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .check-count-primary dd {
+    color: #fbbf24;
+  }
+  .check-flags dd {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .check-flags dd[data-flagged='true'] {
+    color: #fde68a;
+  }
+  .check-details {
+    margin-block: 1.5rem;
+  }
+  .check-details > div {
+    padding-block: 0.75rem;
+    border-top: 1px solid #374151;
+  }
+  .check-profile {
+    display: inline-block;
+    padding-block: 0.75rem;
+    color: #fbbf24;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  @media (min-width: 64rem) {
+    .check-columns {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    }
+  }
+</style>
