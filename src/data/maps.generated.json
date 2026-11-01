@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-31T15:25:45.508Z",
+  "generatedAt": "2026-11-01T12:47:20.653Z",
   "total": 100,
-  "ok": 100,
+  "ok": 99,
   "items": [
     {
       "map": "$2000$",
@@ -309,9 +309,9 @@
       "source": "cache"
     },
     {
-      "map": "de_playboydolls_2010_b8",
-      "image": "/assets/map-cache/de_playboydolls_2010_b8.jpg",
-      "source": "cache"
+      "map": "de_dolls_2008_fixed",
+      "image": "/assets/map-placeholder.svg",
+      "source": "placeholder"
     },
     {
       "map": "de_port",
