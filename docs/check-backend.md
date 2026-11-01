@@ -2,13 +2,16 @@
 
 The review UI is embedded directly on `/admins` above the admin roster and
 rules. There is no header jump link. Localized admin pages show the roster and
-native rule accordions without duplicating the player list; `/check` is removed
+plain rule sections without duplicating the player list; `/check` is removed
 (404), with no alternate public review page. The existing `/api/check/*` endpoint
 names are unchanged. The tool needs no Steam login. Its compact “Check recent
-players” section only fetches `/api/check/players` on load and Refresh, displaying
-name, CommunityID and last seen. It has no per-player action, external registry
-UI, or search request. Existing backend search functionality below is not exposed
-by this client.
+players” section fetches `/api/check/players` on load and Refresh, displaying
+name, CommunityID and last seen. Opening a player’s native accordion manually
+POSTs their CommunityID to `/api/check/search` and shows a concise Mizan status.
+No checks run on load. Validated results are reused for two minutes; in-flight
+checks are globally serialized, 429 responses impose a one-minute cooldown,
+and other errors have a five-second retry guard. Close/reopen explicitly retries
+after expiry; there are no automatic retries or batch checks.
 
 No SourceMod publisher is required or installed. Identity is explicitly spoofable:
 MOTD query hints are observations, **not proof of identity, online status, admin
@@ -18,7 +21,7 @@ RCON, SourceBans writes, automatic batch checks or AI summaries are performed.
 ## Client and retained API contracts
 
 The current client renders at most 30 newest players using DOM `textContent`.
-Refresh is the only control; loading disables it and concurrent requests are
+Refresh reloads the list; loading disables it and concurrent list requests are
 suppressed. Empty, unavailable and rate-limited states stay concise. Failed
 refreshes retain the last list with a stale indicator; lists older than two
 minutes are also marked stale. The timer only updates that indicator, never polls.

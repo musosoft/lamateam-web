@@ -54,22 +54,17 @@ test("Admins embeds the only public review tool without a Steam login gate", () 
     assert.ok(admins.includes(title));
 });
 
-test("admin rules use seven native, initially collapsed disclosures with heading summaries", () => {
+test("admin rules remain seven plain sections, never accordions", () => {
   const admins = read("../src/pages/admins.astro");
   const rules = [
-    ...admins.matchAll(/<details class="admin-rule">([\s\S]*?)<\/details>/g),
+    ...admins.matchAll(/<section>\s*<h3[^>]*>([\s\S]*?)<\/section>/g),
   ];
   assert.equal(rules.length, 7);
   for (const [index, rule] of rules.entries()) {
-    assert.match(
-      rule[1],
-      new RegExp(`<summary>\\s*<h3[^>]*>\\s*\\{t\\('${index + 1}\\.`),
-    );
-    assert.match(rule[1], /<\/h3>\s*<\/summary>\s*<ul/);
-    assert.doesNotMatch(rule[0], /\bopen(?:=|\s|>)/);
+    assert.match(rule[1], new RegExp(`\\{t\\('${index + 1}\\.`));
+    assert.match(rule[1], /<\/h3>\s*<ul/);
   }
-  assert.match(admins, /summary:focus-visible/);
-  assert.match(admins, /summary::marker/);
+  assert.doesNotMatch(admins, /<details|<summary/);
 });
 
 test("shared shell bypasses request-time HTML localization; only localized home content needs the adapter", () => {
@@ -120,16 +115,7 @@ test(
       for (const child of node.childNodes || []) visit(child);
     };
     visit(tree);
-    assert.equal(details.length, 7);
-    for (const rule of details) {
-      assert.equal(
-        rule.attrs.some((a) => a.name === "open"),
-        false,
-      );
-      const summary = rule.childNodes.find((n) => n.tagName);
-      assert.equal(summary.tagName, "summary");
-      assert.ok(summary.childNodes.some((n) => n.tagName === "h3"));
-    }
+    assert.equal(details.length, 0);
     assert.doesNotMatch(html, /Mizan|data-check-results|data-check-search/);
     assert.match(html, /Admin Rules/);
     assert.match(html, /Crazy69/);
@@ -147,7 +133,7 @@ test(
     );
     assert.equal(
       (localizedHtml.match(/<details\b[^>]*class="admin-rule"/g) || []).length,
-      7,
+      0,
     );
   },
 );

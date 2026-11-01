@@ -5,6 +5,25 @@ type Player = {
   lastSeen: Timestamp;
 };
 type Snapshot = { observedAt: Timestamp | null; players: Player[] };
+type MizanResult = {
+  steamId64: string;
+  queriedAt: Timestamp;
+  cheater: boolean;
+  trolling: boolean;
+  bans: { active: number; total: number };
+};
+const isCount = (value: unknown): value is number =>
+  typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+const isResult = (value: unknown, id: string): value is MizanResult =>
+  isRecord(value) &&
+  value.steamId64 === id &&
+  isTime(value.queriedAt) &&
+  typeof value.cheater === "boolean" &&
+  typeof value.trolling === "boolean" &&
+  isRecord(value.bans) &&
+  isCount(value.bans.active) &&
+  isCount(value.bans.total) &&
+  value.bans.active <= value.bans.total;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -51,6 +70,67 @@ function initCheck() {
   let snapshot: Snapshot | null = null;
   let refreshing = false;
   let snapshotFailed = false;
+  // Shared across refreshed rows: no duplicate in-flight checks or cached reopens.
+  const checks = new Map<string, { text: string; expires: number }>();
+  let searching: string | null = null;
+  let searchCooldown = 0;
+
+  async function checkPlayer(id: string, status: HTMLElement) {
+    if (signal.aborted) return;
+    const cached = checks.get(id);
+    if (cached && cached.expires > Date.now()) {
+      status.textContent = cached.text;
+      return;
+    }
+    if (Date.now() < searchCooldown) {
+      status.textContent =
+        "Mizan rate limit reached. Wait a minute, then close and reopen.";
+      return;
+    }
+    if (searching) {
+      status.textContent =
+        searching === id
+          ? "Checking Mizan…"
+          : "Another check is running. Close and reopen to try again.";
+      return;
+    }
+    searching = id;
+    status.setAttribute("aria-busy", "true");
+    status.textContent = "Checking Mizan…";
+    try {
+      const response = await fetch("/api/check/search", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        redirect: "error",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ communityId: id }),
+        signal: AbortSignal.any([signal, AbortSignal.timeout(30_000)]),
+      });
+      if (!response.ok) throw new RequestFailure(response.status);
+      const value: unknown = await response.json();
+      if (signal.aborted) return;
+      if (!isResult(value, id)) throw new Error("Invalid result");
+      const text = `Mizan: ${value.bans.active} active / ${value.bans.total} total bans · Cheater: ${value.cheater ? "flagged" : "not flagged"} · Trolling: ${value.trolling ? "flagged" : "not flagged"}. Leads only, not a verdict. Checked: ${formatTime(value.queriedAt)}`;
+      checks.set(id, { text, expires: Date.now() + 120_000 });
+      status.textContent = text;
+    } catch (error) {
+      if (signal.aborted) return;
+      const limited = error instanceof RequestFailure && error.status === 429;
+      if (limited) searchCooldown = Date.now() + 60_000;
+      const text = limited
+        ? "Mizan rate limit reached. Wait a minute, then close and reopen."
+        : "Mizan unavailable. Close and reopen to retry. No conclusion.";
+      checks.set(id, {
+        text,
+        expires: Date.now() + (limited ? 60_000 : 5_000),
+      });
+      status.textContent = text;
+    } finally {
+      searching = null;
+      status.setAttribute("aria-busy", "false");
+    }
+  }
 
   function formatTime(value: Timestamp) {
     return new Date(value).toLocaleString(
@@ -70,6 +150,8 @@ function initCheck() {
     playerList.replaceChildren();
     for (const player of players) {
       const row = document.createElement("li");
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
       const info = document.createElement("div");
       info.className = "check-player-info";
       const name = document.createElement("strong");
@@ -86,7 +168,21 @@ function initCheck() {
       const time = document.createElement("small");
       time.textContent = `Last seen: ${formatTime(player.lastSeen)}`;
       info.appendChild(time);
-      row.appendChild(info);
+      summary.appendChild(info);
+      const status = document.createElement("p");
+      status.className = "check-row-status";
+      status.setAttribute("role", "status");
+      status.setAttribute("aria-live", "polite");
+      details.appendChild(summary);
+      details.appendChild(status);
+      details.addEventListener(
+        "toggle",
+        () => {
+          if (details.open) void checkPlayer(player.communityId, status);
+        },
+        { signal },
+      );
+      row.appendChild(details);
       playerList.appendChild(row);
     }
   }

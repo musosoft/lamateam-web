@@ -44,12 +44,10 @@ if (showPlayerReview) {
           <em>{t('Not knowing the rules is no excuse.')}</em>
         </p>
       </header>
-      <details class="admin-rule">
-        <summary>
-          <h3 class="fl-text-lg/2xl font-bold">
-            {t('1. Basic Admin Responsibilities')}
-          </h3>
-        </summary>
+      <section>
+        <h3 class="fl-text-lg/2xl font-bold">
+          {t('1. Basic Admin Responsibilities')}
+        </h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
           <li>
             <strong>{t('Atmosphere and conduct')}</strong>{' '}
@@ -70,13 +68,11 @@ if (showPlayerReview) {
             )}
           </li>
         </ul>
-      </details>
-      <details class="admin-rule">
-        <summary>
-          <h3 class="fl-text-lg/2xl font-bold">
-            {t('2. Enforcement Procedure')}
-          </h3>
-        </summary>
+      </section>
+      <section>
+        <h3 class="fl-text-lg/2xl font-bold">
+          {t('2. Enforcement Procedure')}
+        </h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
           <li>
             <strong>{t('Escalation')}</strong>{' '}
@@ -103,13 +99,11 @@ if (showPlayerReview) {
             )}
           </li>
         </ul>
-      </details>
-      <details class="admin-rule">
-        <summary>
-          <h3 class="fl-text-lg/2xl font-bold">
-            {t('3. Dealing with Cheaters')}
-          </h3>
-        </summary>
+      </section>
+      <section>
+        <h3 class="fl-text-lg/2xl font-bold">
+          {t('3. Dealing with Cheaters')}
+        </h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
           <li>{t('Observe the suspected player discreetly.')}</li>
           <li>
@@ -122,26 +116,22 @@ if (showPlayerReview) {
           </li>
           <li>{t('Issue a ban when the cheating is clear.')}</li>
         </ul>
-      </details>
-      <details class="admin-rule">
-        <summary>
-          <h3 class="fl-text-lg/2xl font-bold">
-            {t('4. Conduct Toward Players')}
-          </h3>
-        </summary>
+      </section>
+      <section>
+        <h3 class="fl-text-lg/2xl font-bold">
+          {t('4. Conduct Toward Players')}
+        </h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
           <li>{t('Help players, but do not grant unreasonable requests.')}</li>
           <li>
             {t('Handle insults and spam progressively (mute/gag, kick, ban).')}
           </li>
         </ul>
-      </details>
-      <details class="admin-rule">
-        <summary>
-          <h3 class="fl-text-lg/2xl font-bold">
-            {t('5. Commands and Team Management')}
-          </h3>
-        </summary>
+      </section>
+      <section>
+        <h3 class="fl-text-lg/2xl font-bold">
+          {t('5. Commands and Team Management')}
+        </h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
           <li>{t('Use admin commands appropriately for the situation.')}</li>
           <li>
@@ -153,13 +143,9 @@ if (showPlayerReview) {
             )}
           </li>
         </ul>
-      </details>
-      <details class="admin-rule">
-        <summary>
-          <h3 class="fl-text-lg/2xl font-bold">
-            {t('6. Penalties for Admins')}
-          </h3>
-        </summary>
+      </section>
+      <section>
+        <h3 class="fl-text-lg/2xl font-bold">{t('6. Penalties for Admins')}</h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
           <li>{t('Head admins may review logs and evidence.')}</li>
           <li>
@@ -171,11 +157,9 @@ if (showPlayerReview) {
             {t('Head admins decide whether privileges will be restored.')}
           </li>
         </ul>
-      </details>
-      <details class="admin-rule">
-        <summary>
-          <h3 class="fl-text-lg/2xl font-bold">{t('7. Final Notes')}</h3>
-        </summary>
+      </section>
+      <section>
+        <h3 class="fl-text-lg/2xl font-bold">{t('7. Final Notes')}</h3>
         <ul class="mt-2 list-disc space-y-2 pl-5">
           <li>
             {t('Admins are here to support the community and fair play.')}
@@ -183,30 +167,7 @@ if (showPlayerReview) {
           <li>{t('Stay calm and communicate respectfully.')}</li>
           <li>{t('Contact the head admins if anything is unclear.')}</li>
         </ul>
-      </details>
+      </section>
     </article>
   </section>
 </Layout>
-
-<style>
-  .admin-rule {
-    border-top: 1px solid var(--edge);
-    padding-top: 0.5rem;
-  }
-  .admin-rule summary {
-    cursor: pointer;
-    min-height: 2.75rem;
-    padding-block: 0.5rem;
-  }
-  .admin-rule summary h3 {
-    display: inline;
-  }
-  .admin-rule summary::marker {
-    color: var(--link);
-  }
-  .admin-rule summary:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 4px;
-    border-radius: 0.25rem;
-  }
-</style>
