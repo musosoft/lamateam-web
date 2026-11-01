@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-01T12:47:20.653Z",
+  "generatedAt": "2026-11-01T14:27:16.438Z",
   "total": 100,
-  "ok": 99,
+  "ok": 100,
   "items": [
     {
       "map": "$2000$",
@@ -194,6 +194,11 @@
       "source": "cache"
     },
     {
+      "map": "de_dolls_2008_fixed",
+      "image": "/assets/map-cache/de_dolls_2008_fixed.jpg",
+      "source": "cache"
+    },
+    {
       "map": "de_dust_small_lt2025",
       "image": "/assets/map-cache/de_dust_small_lt2025.jpg",
       "source": "cache"
@@ -307,11 +312,6 @@
       "map": "de_piranesi",
       "image": "/assets/map-cache/de_piranesi.jpg",
       "source": "cache"
-    },
-    {
-      "map": "de_dolls_2008_fixed",
-      "image": "/assets/map-placeholder.svg",
-      "source": "placeholder"
     },
     {
       "map": "de_port",
@@ -479,6 +479,11 @@
       "source": "cache"
     },
     {
+      "map": "fy_simpsons",
+      "image": "/assets/map-cache/fy_simpsons.jpg",
+      "source": "cache"
+    },
+    {
       "map": "fy_snow",
       "image": "/assets/map-cache/fy_snow.jpg",
       "source": "cache"
@@ -496,11 +501,6 @@
     {
       "map": "knas_Sandland_CSS",
       "image": "/assets/map-cache/knas_Sandland_CSS.jpg",
-      "source": "cache"
-    },
-    {
-      "map": "fy_simpsons",
-      "image": "/assets/map-cache/fy_simpsons.jpg",
       "source": "cache"
     }
   ]
