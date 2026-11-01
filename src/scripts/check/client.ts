@@ -104,17 +104,20 @@ function initCheck() {
   const playerStatus = get("[data-check-players-status]");
   const observed = get("[data-check-observed]");
   const stale = get("[data-check-stale]");
-  const results = get("[data-check-results]");
-  const searchStatus = get("[data-check-search-status]");
-  const resultContent = get("[data-check-result-content]");
   const playerList = get<HTMLUListElement>("[data-check-players]");
   let snapshot: Snapshot | null = null;
-  let searching = false;
+  let active: ReturnType<typeof createResult> | null = null;
+  let searchController: AbortController | null = null;
+  let searchVersion = 0;
   let refreshing = false;
   let snapshotFailed = false;
   let queriedAt: Timestamp | null = null;
 
-  async function request(path: string, body?: object) {
+  async function request(
+    path: string,
+    body?: object,
+    searchSignal?: AbortSignal,
+  ) {
     const response = await fetch(path, {
       method: body ? "POST" : "GET",
       credentials: "same-origin",
@@ -122,7 +125,11 @@ function initCheck() {
       redirect: "error",
       headers: body ? { "Content-Type": "application/json" } : undefined,
       body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.any([signal, AbortSignal.timeout(30_000)]),
+      signal: AbortSignal.any([
+        signal,
+        ...(searchSignal ? [searchSignal] : []),
+        AbortSignal.timeout(30_000),
+      ]),
     });
     if (!response.ok) throw new RequestFailure(response.status);
     return response;
@@ -140,9 +147,94 @@ function initCheck() {
       (!snapshotFailed &&
         (snapshot.observedAt === null ||
           Date.now() - new Date(snapshot.observedAt).getTime() <= 120_000));
-    get("[data-check-result-stale]").hidden =
-      queriedAt === null ||
-      Date.now() - new Date(queriedAt).getTime() <= 120_000;
+    if (active)
+      active.get("[data-check-result-stale]").hidden =
+        queriedAt === null ||
+        Date.now() - new Date(queriedAt).getTime() <= 120_000;
+  }
+
+  function createResult(button: HTMLButtonElement, index: number) {
+    const panel = document.createElement("div");
+    panel.className = "check-results";
+    panel.id = `check-player-result-${index}`;
+    panel.hidden = true;
+    panel.setAttribute("role", "region");
+    panel.setAttribute("aria-labelledby", button.id);
+    panel.setAttribute("aria-busy", "false");
+    button.setAttribute("aria-controls", panel.id);
+    button.setAttribute("aria-expanded", "false");
+    const nodes = new Map<string, HTMLElement>();
+    function add(
+      tag: string,
+      key: string,
+      parent: HTMLElement = panel,
+      text = "",
+    ) {
+      const node = document.createElement(tag);
+      node.textContent = text;
+      node.setAttribute(`data-check-${key}`, "");
+      nodes.set(`[data-check-${key}]`, node);
+      parent.appendChild(node);
+      return node;
+    }
+    const status = add("p", "search-status");
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    const content = add("div", "result-content");
+    content.hidden = true;
+    add("p", "query-time", content);
+    const old = add(
+      "p",
+      "result-stale",
+      content,
+      "Result is over two minutes old. Reopen to check again.",
+    );
+    old.hidden = true;
+    const details = document.createElement("dl");
+    content.appendChild(details);
+    for (const [key, label] of [
+      ["bans-active", "Active bans"],
+      ["bans-total", "Total bans"],
+      ["bans-sources", "Sources"],
+      ["bans-conduct", "Conduct bans"],
+      ["cheater", "Cheater"],
+      ["trolling", "Trolling"],
+      ["categories", "Categories"],
+      ["games", "Games"],
+      ["last-ban", "Last ban time"],
+    ]) {
+      const group = document.createElement("div");
+      const term = document.createElement("dt");
+      term.textContent = label;
+      group.appendChild(term);
+      add("dd", key, group);
+      details.appendChild(group);
+    }
+    add("a", "profile", content, "Verify on Mizan ↗").hidden = true;
+    add(
+      "p",
+      "profile-unavailable",
+      content,
+      "Safe Mizan profile link unavailable.",
+    ).hidden = true;
+    return {
+      panel,
+      button,
+      get: <T extends HTMLElement = HTMLElement>(key: string) =>
+        nodes.get(key) as T,
+    };
+  }
+
+  function closeResult() {
+    searchController?.abort();
+    searchVersion++;
+    if (active) {
+      active.panel.hidden = true;
+      active.panel.setAttribute("aria-busy", "false");
+      active.button.setAttribute("aria-expanded", "false");
+    }
+    active = null;
+    queriedAt = null;
   }
 
   function playerIdentity(player: Player) {
@@ -165,10 +257,11 @@ function initCheck() {
   }
 
   function renderPlayers(players: Player[]) {
+    closeResult();
     playerList.replaceChildren();
-    for (const player of players) {
+    for (const [index, player] of players.entries()) {
       const row = document.createElement("li");
-      const info = document.createElement("div");
+      const info = document.createElement("span");
       info.className = "check-player-info";
       renderIdentity(info, player);
       const time = document.createElement("small");
@@ -176,15 +269,33 @@ function initCheck() {
       info.appendChild(time);
       const button = document.createElement("button");
       button.type = "button";
-      button.textContent = "Check Mizan";
+      button.id = `check-player-toggle-${index}`;
+      button.className = "check-player-toggle";
       button.setAttribute(
         "aria-label",
-        `Check Mizan for ${playerIdentity(player)}`,
+        `Mizan results for ${playerIdentity(player)}`,
       );
-      button.disabled = searching;
-      button.addEventListener("click", () => void research(player), { signal });
-      row.appendChild(info);
+      button.appendChild(info);
+      const indicator = document.createElement("span");
+      indicator.textContent = "Mizan ▾";
+      indicator.setAttribute("aria-hidden", "true");
+      button.appendChild(indicator);
+      const entry = createResult(button, index);
+      button.addEventListener(
+        "click",
+        () => {
+          const wasOpen = active === entry;
+          closeResult();
+          if (wasOpen) return;
+          active = entry;
+          entry.panel.hidden = false;
+          button.setAttribute("aria-expanded", "true");
+          void research(player, entry);
+        },
+        { signal },
+      );
       row.appendChild(button);
+      row.appendChild(entry.panel);
       playerList.appendChild(row);
     }
   }
@@ -234,26 +345,31 @@ function initCheck() {
     }
   }
 
-  async function research(player: Player) {
-    if (searching) return;
-    searching = true;
+  async function research(
+    player: Player,
+    entry: ReturnType<typeof createResult>,
+  ) {
+    const version = searchVersion;
+    searchController = new AbortController();
+    const get = entry.get;
+    const results = entry.panel;
+    const searchStatus = get("[data-check-search-status]");
+    const resultContent = get("[data-check-result-content]");
     const started = Date.now();
     resultContent.hidden = true;
     results.setAttribute("aria-busy", "true");
     searchStatus.textContent = `Checking Mizan for ${playerIdentity(player)}…`;
-    for (const button of root.querySelectorAll<HTMLButtonElement>(
-      ".check-player-list button",
-    ))
-      button.disabled = true;
-    get("#check-results-title").focus({ preventScroll: true });
     try {
       const value: unknown = await (
-        await request("/api/check/search", { communityId: player.communityId })
+        await request(
+          "/api/check/search",
+          { communityId: player.communityId },
+          searchController.signal,
+        )
       ).json();
-      if (signal.aborted) return;
+      if (signal.aborted || version !== searchVersion) return;
       if (!isSearchResult(value) || value.steamId64 !== player.communityId)
         throw new Error("Unexpected ban check response");
-      renderIdentity(get("[data-check-result-player]"), player);
       queriedAt = value.queriedAt;
       get("[data-check-query-time]").textContent =
         `Query completed: ${formatTime(value.queriedAt)} · ${((Date.now() - started) / 1000).toFixed(1)} s`;
@@ -293,18 +409,13 @@ function initCheck() {
           ? "No bans or flags reported by Mizan. This is not proof of innocence."
           : "Bans or flags reported. Verify on Mizan before acting.";
     } catch (error) {
-      if (signal.aborted) return;
+      if (signal.aborted || version !== searchVersion) return;
       searchStatus.textContent =
         error instanceof RequestFailure && error.status === 429
           ? "Mizan rate limit reached. Wait a minute, then retry. No conclusion can be drawn."
-          : "Mizan check unavailable or response invalid. Retry Check Mizan. No conclusion can be drawn.";
+          : "Mizan check unavailable or response invalid. Reopen to retry. No conclusion can be drawn.";
     } finally {
-      searching = false;
-      results.setAttribute("aria-busy", "false");
-      for (const button of root.querySelectorAll<HTMLButtonElement>(
-        ".check-player-list button",
-      ))
-        button.disabled = false;
+      if (version === searchVersion) results.setAttribute("aria-busy", "false");
     }
   }
 

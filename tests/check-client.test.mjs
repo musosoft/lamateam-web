@@ -39,16 +39,31 @@ function element() {
   };
 }
 
-function mount(respond) {
+function mount(respond, visible = true) {
   const nodes = new Map();
   const get = (selector) => {
+    const find = (node) => {
+      if (
+        selector.startsWith("[data-check-") &&
+        selector.slice(1, -1) in node.attributes
+      )
+        return node;
+      for (const child of node.children) {
+        const match = find(child);
+        if (match) return match;
+      }
+    };
+    const match =
+      nodes.has("[data-check-players]") &&
+      find(nodes.get("[data-check-players]"));
+    if (match) return match;
     if (!nodes.has(selector)) nodes.set(selector, element());
     return nodes.get(selector);
   };
   const root = element();
   root.querySelector = get;
   root.querySelectorAll = () =>
-    get("[data-check-players]").children.map((row) => row.children[1]);
+    get("[data-check-players]").children.map((row) => row.children[0]);
   const events = {};
   const calls = [];
   const context = {
@@ -64,7 +79,7 @@ function mount(respond) {
     window: { setInterval: () => 1, clearInterval() {} },
     document: {
       documentElement: { lang: "en" },
-      querySelector: () => root,
+      querySelector: () => (visible ? root : null),
       createElement: element,
       addEventListener: (name, handler) => {
         events[name] = handler;
@@ -86,6 +101,51 @@ function mount(respond) {
 const ok = (value) => ({ ok: true, json: async () => value });
 const snapshot = (players) => ({ observedAt: Date.now(), players });
 
+test("does not fetch when SSR did not render the authorized lookup", async () => {
+  const page = mount(() => {
+    throw new Error("unexpected request");
+  }, false);
+  await settle();
+  assert.equal(page.calls.length, 0);
+});
+
+test("one accordion opens at a time; switching aborts and ignores a late response", async () => {
+  const pending = [];
+  const page = mount((path) =>
+    path.endsWith("players")
+      ? ok(
+          snapshot(
+            [1, 2].map((n) => ({
+              communityId: id(n),
+              lastSeen: Date.now() - n,
+            })),
+          ),
+        )
+      : new Promise((resolve) => pending.push(resolve)),
+  );
+  await settle();
+  const rows = page.get("[data-check-players]").children;
+  const [first, second] = page.buttons();
+  first.events.click();
+  assert.equal(rows[0].children[1].hidden, false);
+  second.events.click();
+  assert.equal(page.calls[1].signal.aborted, true);
+  assert.equal(rows[0].children[1].hidden, true);
+  assert.equal(first.attributes["aria-expanded"], "false");
+  assert.equal(second.attributes["aria-expanded"], "true");
+  assert.equal(rows[1].children[1].attributes["aria-busy"], "true");
+  pending[0]({ ok: false, status: 429 });
+  await settle();
+  assert.match(rows[1].children[1].children[0].textContent, /Checking/);
+  pending[1]({ ok: false, status: 429 });
+  await settle();
+  assert.match(rows[1].children[1].children[0].textContent, /rate limit/);
+  assert.equal(rows[1].children[1].attributes["aria-busy"], "false");
+  second.events.click();
+  assert.equal(rows[1].children[1].hidden, true);
+  assert.equal(page.calls.length, 3);
+});
+
 test("loads only the latest 30 API identities, newest first, without lookups or raw fields", async () => {
   const page = mount(() =>
     ok(
@@ -106,13 +166,13 @@ test("loads only the latest 30 API identities, newest first, without lookups or 
   );
   const rows = page.get("[data-check-players]").children;
   assert.equal(rows.length, 30);
-  assert.equal(rows[0].children[0].children[0].textContent, id(34));
-  assert.equal(rows[29].children[0].children[0].textContent, id(5));
+  assert.equal(rows[0].children[0].children[0].children[0].textContent, id(34));
+  assert.equal(rows[29].children[0].children[0].children[0].textContent, id(5));
   assert.doesNotMatch(JSON.stringify(rows), /DO NOT DISPLAY|private log/);
-  assert.equal(page.buttons()[0].textContent, "Check Mizan");
+  assert.equal(page.buttons()[0].attributes["aria-expanded"], "false");
 });
 
-test("manual search posts only communityId and suppresses concurrent lookups", async () => {
+test("manual search posts only communityId; collapse aborts a pending lookup", async () => {
   let finish;
   const page = mount((path) =>
     path.endsWith("players")
@@ -127,17 +187,14 @@ test("manual search posts only communityId and suppresses concurrent lookups", a
   assert.equal(page.calls.length, 2);
   assert.equal(page.calls[1].path, "/api/check/search");
   assert.deepEqual(JSON.parse(page.calls[1].body), { communityId: id(1) });
-  assert.equal(page.buttons()[0].disabled, true);
+  assert.equal(page.buttons()[0].attributes["aria-expanded"], "false");
+  assert.equal(page.calls[1].signal.aborted, true);
   finish({ ok: false, status: 429 });
   await settle();
-  assert.match(
-    page.get("[data-check-search-status]").textContent,
-    /rate limit/,
-  );
-  assert.equal(page.buttons()[0].disabled, false);
+  assert.equal(page.get("[data-check-result-content]").hidden, true);
 });
 
-test("renders names as text with secondary Steam64 IDs in list and result", async () => {
+test("renders names as text with secondary Steam64 IDs and inline results", async () => {
   const displayName = '<img src=x onerror="alert(1)"> & Player';
   const page = mount((path) =>
     ok(
@@ -162,13 +219,14 @@ test("renders names as text with secondary Steam64 IDs in list and result", asyn
     ),
   );
   await settle();
-  const info = page.get("[data-check-players]").children[0].children[0];
+  const row = page.get("[data-check-players]").children[0];
+  const info = row.children[0].children[0];
   assert.equal(info.children[0].textContent, displayName);
   assert.equal(info.children[1].textContent, id(1));
   assert.equal(info.children[1].translate, false);
   assert.equal(
     page.buttons()[0].attributes["aria-label"],
-    `Check Mizan for ${displayName} (${id(1)})`,
+    `Mizan results for ${displayName} (${id(1)})`,
   );
   page.buttons()[0].events.click();
   assert.equal(
@@ -181,13 +239,11 @@ test("renders names as text with secondary Steam64 IDs in list and result", asyn
     page.get("[data-check-search-status]").textContent,
     /not proof of innocence/,
   );
+  assert.equal(row.children[1].hidden, false);
+  assert.equal(row.children[0].attributes["aria-controls"], row.children[1].id);
   assert.equal(
-    page.get("[data-check-result-player]").children[0].textContent,
-    displayName,
-  );
-  assert.equal(
-    page.get("[data-check-result-player]").children[1].textContent,
-    id(1),
+    row.children[1].attributes["aria-labelledby"],
+    row.children[0].id,
   );
 });
 
@@ -218,14 +274,13 @@ test("missing, null and blank names fall back to the ID in list and results", as
       ),
     );
     await settle();
-    const info = page.get("[data-check-players]").children[0].children[0];
+    const info = page.get("[data-check-players]").children[0].children[0]
+      .children[0];
     assert.equal(info.children[0].textContent, id(1));
     assert.equal(info.children.length, 2); // ID and last-seen time, no duplicate ID.
     page.buttons()[0].events.click();
     await settle();
-    const result = page.get("[data-check-result-player]");
-    assert.equal(result.children.length, 1);
-    assert.equal(result.children[0].textContent, id(1));
+    assert.equal(page.get("[data-check-result-content]").hidden, false);
   }
 });
 
@@ -240,7 +295,7 @@ test("trims display names and rejects values outside the optional string/null co
   await settle();
   assert.equal(
     page.get("[data-check-players]").children[0].children[0].children[0]
-      .textContent,
+      .children[0].textContent,
     "Player",
   );
   const invalid = mount(() =>
@@ -256,17 +311,14 @@ test("trims display names and rejects values outside the optional string/null co
   assert.equal(invalid.buttons().length, 0);
 });
 
-test("copy stays concise while retaining manual usage and identity safety guidance", () => {
+test("embedded copy stays concise and rendering never uses HTML sinks", () => {
   const page = readFileSync(
-    new URL("../src/pages/check.astro", import.meta.url),
+    new URL("../src/pages/admins.astro", import.meta.url),
     "utf8",
   );
-  assert.match(page, /one manual check/);
-  assert.match(page, /Refresh only updates the list/);
-  assert.match(page, /IDs are spoofable/);
-  assert.match(page, /Steam names are labels, not authentication/);
-  assert.match(page, /No automatic\s+bans/);
-  assert.match(page, /zero matches are not proof of innocence/);
+  assert.match(page, /IDs can be spoofed/);
+  assert.match(page, /Verify on Mizan before acting/);
+  assert.match(source, /not proof of innocence/);
   assert.doesNotMatch(
     page,
     /No checks run\s+automatically|not a complete history\. Zero|no safe canonical URL was/,

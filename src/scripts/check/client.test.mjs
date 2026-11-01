@@ -45,17 +45,28 @@ class Anchor extends Element {}
 
 function harness(
   respond,
-  url = "https://lamateam.eu/check?communityid=76561197960265731",
+  url = "https://lamateam.eu/admins?communityid=76561197960265731",
 ) {
   const elements = new Map();
   const get = (selector) => {
+    const find = (node) => {
+      if (selector.slice(1, -1) in node.attributes) return node;
+      for (const child of node.children) {
+        const match = find(child);
+        if (match) return match;
+      }
+    };
+    const match =
+      elements.has("[data-check-players]") &&
+      find(elements.get("[data-check-players]"));
+    if (match) return match;
     if (!elements.has(selector)) elements.set(selector, new Element());
     return elements.get(selector);
   };
   const root = get("[data-check-page]");
   root.querySelector = get;
   root.querySelectorAll = () =>
-    get("[data-check-players]").children.map((row) => row.children[1]);
+    get("[data-check-players]").children.map((row) => row.children[0]);
   const handlers = {};
   const calls = [];
   const redirects = [];
@@ -137,7 +148,7 @@ test("VM strips all client imports and loads recent IDs without authorization or
   ]) {
     const app = harness(
       () => response(200, recentIds()),
-      `https://lamateam.eu/check${query}`,
+      `https://lamateam.eu/admins${query}`,
     );
     await settle();
     assert.deepEqual(
@@ -146,10 +157,13 @@ test("VM strips all client imports and loads recent IDs without authorization or
     );
     assert.deepEqual(app.redirects, []);
     const row = app.get("[data-check-players]").children[0];
-    assert.equal(row.children[0].children[0].textContent, steamId64);
     assert.equal(
-      row.children[1].attributes["aria-label"],
-      `Check Mizan for ${steamId64}`,
+      row.children[0].children[0].children[0].textContent,
+      steamId64,
+    );
+    assert.equal(
+      row.children[0].attributes["aria-label"],
+      `Mizan results for ${steamId64}`,
     );
   }
 });
@@ -161,7 +175,7 @@ function checkHarness(result) {
 }
 async function runCheck(app) {
   await settle();
-  app.get("[data-check-players]").children[0].children[1].handlers.click();
+  app.get("[data-check-players]").children[0].children[0].handlers.click();
   await settle();
 }
 
@@ -185,10 +199,9 @@ test("manual ban check renders structured counts and untrusted labels as text, n
     return response(200, result);
   });
   await settle();
-  assert.equal(app.get("[data-check-workspace]").hidden, false);
   const row = app.get("[data-check-players]").children[0];
-  assert.equal(row.children[0].children[0].textContent, steamId64);
-  row.children[1].handlers.click();
+  assert.equal(row.children[0].children[0].children[0].textContent, steamId64);
+  row.children[0].handlers.click();
   await settle();
   assert.deepEqual(JSON.parse(app.calls[1].options.body), {
     communityId: "76561197960265731",
@@ -277,7 +290,7 @@ test("opaque record and Steam fields are ignored; bounded string arrays are acce
     assert.equal(element.textContent.includes(opaque), false);
   }
   const page = readFileSync(
-    new URL("../../pages/check.astro", import.meta.url),
+    new URL("../../pages/admins.astro", import.meta.url),
     "utf8",
   );
   assert.doesNotMatch(
@@ -342,7 +355,9 @@ test("invalid structured responses fail closed instead of displaying counts", as
       /unavailable or response invalid/,
     );
     assert.equal(
-      app.get("[data-check-results]").attributes["aria-busy"],
+      app.get("[data-check-players]").children[0].children[1].attributes[
+        "aria-busy"
+      ],
       "false",
     );
   }
@@ -358,6 +373,7 @@ test("stale registry results are labelled and a failed retry hides prior counts"
   });
   await runCheck(app);
   assert.equal(app.get("[data-check-result-stale]").hidden, false);
+  app.get("[data-check-players]").children[0].children[0].handlers.click();
   await runCheck(app);
   assert.equal(app.get("[data-check-result-content]").hidden, true);
   assert.match(

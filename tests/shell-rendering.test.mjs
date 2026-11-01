@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { parse } from "parse5";
 import { pageCopy } from "../src/lib/page-copy.ts";
@@ -12,23 +12,36 @@ import {
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-test("Admins heading always exposes the translated /check link", () => {
+test("Admins embeds private player lookup only behind the server-side allowlist", () => {
   const admins = read("../src/pages/admins.astro");
-  const heading = admins.match(/<header\b[^>]*>[\s\S]*?<\/header>/)?.[0];
-  assert.ok(heading);
-  // Direct siblings, with no auth/client condition or hidden wrapper.
+  assert.match(admins, /import \{ env \} from 'cloudflare:workers'/);
   assert.match(
-    heading,
-    /<h1\b[^>]*>\{t\('Admins'\)\}<\/h1>\s*<a\s+href="\/check"\s+class="[^"]*"\s*>\s*\{t\('Open player review tool'\)\}\s*<span translate="no" class="[^"]*">\s*\/check\s*<\/span>\s*<\/a>\s*<\/header>/,
+    admins,
+    /import \{ isCheckAdmin \} from '\.\.\/lib\/check-admin'/,
   );
-  assert.doesNotMatch(heading, /\b(?:hidden|sr-only|justify-between)\b/);
-  for (const locale of locales) {
-    const label = pageCopy[locale]["Open player review tool"];
-    assert.ok(label?.trim(), locale);
-    assert.ok(!label.includes("/check"), locale);
-    if (locale !== "en")
-      assert.notEqual(label, pageCopy.en["Open player review tool"], locale);
-  }
+  assert.match(
+    admins,
+    /const showCheck = isCheckAdmin\(\s*Astro\.locals\.steamProfile\?\.steamID,\s*env\.CHECK_ADMIN_STEAM64_ALLOWLIST,?\s*\)/,
+  );
+  assert.match(admins, /headers\.set\('Cache-Control', 'private, no-store'\)/);
+  assert.match(
+    admins,
+    /\{t\('Admin Rules'\)\}[\s\S]*?\{showCheck && \([\s\S]*?data-check-page[\s\S]*?\)\}[\s\S]*?\{t\('1\. Basic Admin Responsibilities'\)\}/,
+  );
+  assert.doesNotMatch(admins, /href="\/check"|data-check-results/);
+  assert.equal(
+    existsSync(new URL("../src/pages/check.astro", import.meta.url)),
+    false,
+  );
+  for (const title of [
+    "2. Enforcement Procedure",
+    "3. Dealing with Cheaters",
+    "4. Conduct Toward Players",
+    "5. Commands and Team Management",
+    "6. Penalties for Admins",
+    "7. Final Notes",
+  ])
+    assert.ok(admins.includes(title));
 });
 
 test("shared shell bypasses request-time HTML localization; only localized home content needs the adapter", () => {

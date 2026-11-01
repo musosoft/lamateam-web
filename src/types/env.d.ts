@@ -5,6 +5,7 @@ declare namespace Cloudflare {
     CHECK_ROSTER_INGEST_SECRET?: string;
     CHECK_SOURCE_INGEST_TOKEN?: string;
     CHECK_AUTH_SECRET?: string;
+    CHECK_ADMIN_STEAM64_ALLOWLIST?: string;
     MIZAN_API_KEY?: string;
     CHECK_RATE_LIMITER?: {
       limit(options: { key: string }): Promise<{ success: boolean }>;

@@ -1,7 +1,8 @@
 import { latestCheckPlayers } from "./check-players.ts";
 import { enrichCheckPlayerNames } from "./check-steam-names.ts";
+import { isCheckAdmin } from "./check-admin.ts";
 
-/** Legacy ingestion/authorization remains gated; players/search are public review only. */
+/** Players/search require a verified, allowlisted Steam identity. */
 export const CHECK_SERVER_ID = "82.208.17.101:27516";
 export const CHECK_ROSTER_KEY = "check:v1:roster";
 export const CHECK_COOKIE = "__Host-check_cap";
@@ -30,6 +31,7 @@ interface Dependencies {
   authSecret?: string;
   mizanKey?: string;
   steamKey?: string;
+  adminSteam64Allowlist?: string;
   rateLimiter?: {
     limit(options: { key: string }): Promise<{ success: boolean }>;
   };
@@ -458,10 +460,19 @@ export function createCheckHandlers(deps: Dependencies) {
     // No automatic Mizan calls: detailed checks are explicitly manual only.
     return json({ accepted: true, observedAt: roster.generatedAt });
   }
-  async function execute(action: Action, request: Request) {
+  async function execute(
+    action: Action,
+    request: Request,
+    verifiedSteamID?: string | null,
+  ) {
     const method = action === "players" ? "GET" : "POST";
     if (request.method !== method)
       return json({ error: "Method not allowed" }, 405, { Allow: method });
+    if (
+      (action === "players" || action === "search") &&
+      !isCheckAdmin(verifiedSteamID, deps.adminSteam64Allowlist)
+    )
+      fail(403);
     if (
       !deps.kv ||
       !deps.authSecret ||
@@ -511,7 +522,9 @@ export function createCheckHandlers(deps: Dependencies) {
       });
     }
     if (action === "search") {
-      const body = object(parseJSON(await boundedText(request.body, 1024, 413)));
+      const body = object(
+        parseJSON(await boundedText(request.body, 1024, 413)),
+      );
       fields(body, ["communityId"]);
       const id = checkSteamId(body.communityId);
       if (!id) fail(400);
@@ -575,9 +588,10 @@ export function createCheckHandlers(deps: Dependencies) {
     }
   }
   function handler(action: Action) {
-    return async (request: Request) => {
+    // Only route wrappers may supply the identity, from verified Astro locals.
+    return async (request: Request, verifiedSteamID?: string | null) => {
       try {
-        return await execute(action, request);
+        return await execute(action, request, verifiedSteamID);
       } catch (error) {
         const status = error instanceof Failure ? error.status : 503;
         return json(

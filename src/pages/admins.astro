@@ -1,5 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { env } from 'cloudflare:workers';
+import { isCheckAdmin } from '../lib/check-admin';
 import { translator } from '../lib/page-copy';
 import { localeFromPath, type SiteLocale } from '../lib/localized-content';
 interface Props {
@@ -7,6 +9,12 @@ interface Props {
 }
 const locale = Astro.props.locale ?? localeFromPath(Astro.url.pathname);
 const t = translator(locale);
+export const prerender = false;
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+const showCheck = isCheckAdmin(
+  Astro.locals.steamProfile?.steamID,
+  env.CHECK_ADMIN_STEAM64_ALLOWLIST,
+);
 
 const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
 ---
@@ -15,15 +23,6 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
   <section class="w-full fl-py-2/5 text-left text-gray-100">
     <header class="fl-mb-4/6 page-heading flex flex-wrap items-center gap-4">
       <h1 class="fl-text-2xl/4xl font-bold tracking-tight">{t('Admins')}</h1>
-      <a
-        href="/check"
-        class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-gray-700 bg-gray-950/70 px-4 py-2 fl-text-sm/base font-semibold text-cyan-300 underline"
-      >
-        {t('Open player review tool')}
-        <span translate="no" class="text-gray-300">
-          /check
-        </span>
-      </a>
     </header>
     <article class="space-y-6 panel fl-p-3/6 text-gray-200">
       <ul
@@ -44,6 +43,40 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
           <em>{t('Not knowing the rules is no excuse.')}</em>
         </p>
       </header>
+      {showCheck && (
+        <section
+          class="check-tool"
+          data-check-page
+          lang="en"
+          aria-label="Player lookup"
+        >
+          <div class="check-toolbar">
+            <h3 class="font-semibold">Player lookup · Mizan</h3>
+            <button type="button" data-check-refresh>
+              Refresh
+            </button>
+          </div>
+          <p class="check-muted" data-check-observed>
+            Loading recent visits…
+          </p>
+          <p class="check-muted">
+            MOTD IDs can be spoofed. Verify on Mizan before acting.
+          </p>
+          <p class="check-stale" role="status" data-check-stale hidden>
+            List may be out of date. Refresh before checking.
+          </p>
+          <p role="status" aria-live="polite" data-check-players-status>
+            Loading identities…
+          </p>
+          <ul
+            class="check-player-list"
+            aria-label="Recent players"
+            aria-busy="true"
+            data-check-players
+          />
+          <noscript>JavaScript is required for player lookup.</noscript>
+        </section>
+      )}
       <section>
         <h3 class="fl-text-lg/2xl font-bold">
           {t('1. Basic Admin Responsibilities')}
@@ -171,3 +204,103 @@ const admins = ['Crazy69', 'Ipos', 'muso.sk', 'Zuzule'];
     </article>
   </section>
 </Layout>
+
+<script>
+  import '../scripts/check/client';
+</script>
+
+<style>
+  .check-tool {
+    border: 1px solid #374151;
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+  .check-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .check-tool :global([hidden]) {
+    display: none !important;
+  }
+  .check-tool :global(button),
+  .check-tool :global(a) {
+    min-height: 2.75rem;
+  }
+  .check-tool :global(button) {
+    cursor: pointer;
+  }
+  .check-tool :global(button:focus-visible),
+  .check-tool :global(a:focus-visible) {
+    outline: 2px solid #fbbf24;
+    outline-offset: 3px;
+  }
+  .check-toolbar button {
+    border: 1px solid #4b5563;
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.8rem;
+  }
+  .check-muted,
+  .check-tool :global(small),
+  .check-tool :global(dt) {
+    color: #9ca3af;
+    font-size: 0.8rem;
+  }
+  .check-stale,
+  .check-tool :global([data-flagged='true']) {
+    color: #fde68a;
+  }
+  .check-player-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 0.5rem;
+  }
+  .check-player-list :global(li) {
+    border-top: 1px solid #374151;
+  }
+  .check-player-list :global(.check-player-toggle) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.65rem 0;
+    text-align: left;
+  }
+  .check-player-list :global(.check-player-toggle:hover),
+  .check-player-list :global(.check-player-toggle[aria-expanded='true']) {
+    color: #fbbf24;
+  }
+  .check-player-list :global(.check-player-info) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .check-player-list :global(strong),
+  .check-player-list :global(small) {
+    display: block;
+  }
+  .check-player-list :global(.check-results) {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 0.5rem;
+    background: #111827;
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+  }
+  .check-player-list :global(dl) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+    gap: 0.75rem;
+    margin-block: 0.75rem;
+  }
+  .check-player-list :global(dd) {
+    margin: 0;
+  }
+  .check-player-list :global(a) {
+    display: inline-flex;
+    align-items: center;
+    color: #fbbf24;
+    text-decoration: underline;
+  }
+</style>
