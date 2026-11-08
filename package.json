@@ -33,12 +33,12 @@
     "cookie": "^2.0.2",
     "parse5": "^8.1.0",
     "qrcode": "^1.5.4",
-    "tailwindcss": "^4.3.4",
+    "tailwindcss": "^4.3.5",
     "typescript": "^7.0.2"
   },
   "packageManager": "pnpm@11.27.0",
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.4",
+    "@tailwindcss/vite": "^4.3.5",
     "@types/qrcode": "^1.5.6",
     "@typescript-eslint/parser": "^8.72.1",
     "eslint": "^10.14.0",
