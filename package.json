@@ -46,7 +46,7 @@
     "fluid-tailwindcss": "^1.1.8",
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^1.1.2",
-    "stylelint": "^17.16.0",
+    "stylelint": "^18.0.0",
     "stylelint-config-html": "^2.0.0",
     "wrangler": "^4.158.0"
   }
