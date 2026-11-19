@@ -81,7 +81,7 @@ test("visual lanes expose all public branches, not just a false linear successio
     "jzd",
     "lamateam",
     "vcielka",
-    "vega",
+    "old-vega",
     "noobstyle",
     "zaparit",
     "games-community",
@@ -249,12 +249,16 @@ test("Battleforce joining and closure remain oral claims, separate from dated ad
 
 test("independent rivals combine into one Rivals, not a direct Battleforce rename", () => {
   assert.match(
+    node("black-birds").summary,
+    /St.Páni - Black Birds started when Red-Skillers ended around 2015/i,
+  );
+  assert.match(
     node("red-skillers").summary,
     /independent rival.*copying servers and bans/i,
   );
   assert.match(
     node("red-skillers").summary,
-    /first merged into Black Birds.*later merged into Rivals/,
+    /first merged into St.Páni - Black Birds.*later merged into Rivals/,
   );
   assert.match(
     node("red-skillers").summary,
@@ -264,11 +268,11 @@ test("independent rivals combine into one Rivals, not a direct Battleforce renam
   link("battleforce", "red-skillers", "participant-move");
   assert.match(
     event("rivals-merge").account,
-    /Muso improved Black Birds.*trimmed customized base.*Noaco/,
+    /Muso improved St.Páni - Black Birds.*trimmed customized base.*Noaco/,
   );
   assert.match(
     event("rivals-merge").account,
-    /Red Skillers first merged into Black Birds/,
+    /St.Páni - Black Birds began when Red-Skillers ended around 2015/,
   );
   assert.match(
     event("rivals-merge").account,
@@ -277,7 +281,7 @@ test("independent rivals combine into one Rivals, not a direct Battleforce renam
   assert.equal(event("rivals-merge").year, 2015);
   assert.match(
     link("red-skillers", "black-birds", "merge").period,
-    /Undated.*sequence recalled, not dated/,
+    /Circa 2015.*St\.Páni - Black Birds starts as Red-Skillers ends/,
   );
   assert.match(
     link("black-birds", "rivals", "merge").period,
@@ -309,7 +313,7 @@ test("main line pauses for Red Skillers and resumes through JZD into LaMaTeAm", 
   assert.match(reopen.account, /players left the main line.*around 2018/);
   assert.match(
     reopen.account,
-    /off-line through the Red Skillers-to-JZD transition/,
+    /off-line through the Red-Skillers-to-JZD transition/,
   );
   assert.deepEqual(reopen.nodeIds, ["red-skillers", "jzd", "lamateam"]);
   assert.deepEqual(reopen.sources, []);
@@ -324,7 +328,7 @@ test("main line pauses for Red Skillers and resumes through JZD into LaMaTeAm", 
   assert.match(jzdJoin.provenance, /oral account/);
   const playerMove = link("rivals", "red-skillers", "participant-move");
   assert.match(playerMove.period, /2018–2024.*approximate/);
-  assert.match(playerMove.account, /players left to play at Red Skillers/);
+  assert.match(playerMove.account, /players left to play at Red-Skillers/);
   const redToJzd = link("red-skillers", "jzd", "merge");
   assert.match(redToJzd.period, /After circa 2018.*around 2024/);
   assert.match(redToJzd.account, /community moved\/merged into JZD/);
@@ -396,7 +400,7 @@ test("JZD fork is distinct from server continuation and restored maintained code
 });
 
 test("participant joins and independent partnerships never become ownership mergers", () => {
-  for (const id of ["vcielka", "vega", "noobstyle", "zaparit"]) {
+  for (const id of ["vcielka", "old-vega", "noobstyle", "zaparit"]) {
     const moves = historyLinks.filter(
       (item) => item.from === id && item.kind !== "parallel",
     );
@@ -404,24 +408,65 @@ test("participant joins and independent partnerships never become ownership merg
     assert.ok(moves.every((item) => item.kind === "participant-move"));
   }
   assert.match(node("vcielka").summary, /coexisted separately with ZonaX/i);
+  assert.match(
+    node("vcielka").summary,
+    /members joined ZonaX's line shortly before Aggressive Zone formed in circa 2013–14/i,
+  );
+  assert.match(
+    node("vcielka").summary,
+    /continued independently until around 2015 and ended without being absorbed/i,
+  );
   assert.match(node("vcielka").summary, /around 2015/i);
   assert.match(node("vcielka").summary, /members joined Rivals/i);
-  assert.match(node("vega").summary, /Zly Kocur ran alongside Aggressive Zone/);
-  link("vega", "aggressive-zone", "parallel");
-  assert.match(node("noobstyle").summary, /ended in 2016/i);
-  assert.match(node("noobstyle").summary, /players joined Rivals\.cz/i);
-  const noobstyleMove = link("noobstyle", "rivals", "participant-move");
-  assert.match(noobstyleMove.account, /exact player-movement date is unknown/i);
-  assert.match(noobstyleMove.period, /After closure in 2016.*date unknown/);
+  const vcielkaMove = link("vcielka", "zonax", "participant-move");
+  assert.match(vcielkaMove.account, /members joined ZonaX's line/i);
+  assert.match(vcielkaMove.account, /shortly before Aggressive Zone formed/i);
+  assert.match(
+    vcielkaMove.account,
+    /continued independently until around 2015/i,
+  );
+  assert.match(
+    event("vcielka-joining").account,
+    /members joined ZonaX's line shortly before Aggressive Zone formed/i,
+  );
+  assert.match(
+    node("old-vega").summary,
+    /Old VEGA ran alongside Aggressive Zone/i,
+  );
+  link("old-vega", "aggressive-zone", "parallel");
+  link("old-vega", "black-birds", "participant-move");
+  // Player move from NOOBSTYLE.SK to main line before 2014; observations continued until 2016
+  assert.match(
+    node("noobstyle").summary,
+    /Players moved from NOOBSTYLE\.SK.*Aggressive Zone.*before 2014/i,
+  );
+  assert.match(
+    node("noobstyle").summary,
+    /Server observations continued until 2016/i,
+  );
+  const noobstyleMove = link(
+    "noobstyle",
+    "aggressive-zone",
+    "participant-move",
+  );
+  assert.match(
+    noobstyleMove.account,
+    /Players moved from NOOBSTYLE\.SK.*Aggressive Zone.*before 2014/i,
+  );
+  assert.match(noobstyleMove.period, /Before 2014/);
   assert.match(
     historyNetworkRows.find((row) => row.id === "noobstyle").context,
-    /Ended 2016.*later joined Rivals\.cz.*move date unknown/,
+    /Players joined main line before 2014.*observations through 2016/i,
   );
   assert.equal(noobstyleMove.targetScope, undefined);
   assert.equal(event("noobstyle-closure").year, 2016);
   assert.match(
     event("noobstyle-closure").account,
-    /players later joined Rivals\.cz/,
+    /players moved to Aggressive Zone\/the main line before 2014/i,
+  );
+  assert.match(
+    event("noobstyle-closure").account,
+    /observations continued until 2016/i,
   );
   assert.match(
     link("zaparit", "battleforce", "participant-move").period,
@@ -429,49 +474,84 @@ test("participant joins and independent partnerships never become ownership merg
   );
   assert.match(
     link("zaparit", "battleforce", "participant-move").account,
-    /Aggressive Zone\/Battleforce line.*date is unknown/i,
-  );
-  assert.match(
-    link("zaparit", "battleforce", "participant-move").account,
     /After Zaparit\.cz's servers ended.*players joined/,
   );
-  assert.equal(node("zaparit").name, "[CZ] www.Zaparit.cz");
+  assert.equal(node("zaparit").name, "Zaparit.cz");
   assert.match(
     node("zaparit").period,
     /Observed 2007–2015.*not inferred lifespan/,
   );
   assert.match(
     historyNetworkRows.find((row) => row.id === "zaparit").context,
-    /Observed 2007–2015.*\[CZ\] www\.Zaparit\.cz/,
+    /Observed 2007–2015.*Zaparit\.cz/,
   );
   assert.match(
     node("zaparit").summary,
     /joined the Aggressive Zone\/Battleforce line/i,
   );
+  assert.match(node("zaparit").summary, /GameTracker observed.*not uptime/i);
   assert.match(
     node("zaparit").summary,
-    /GameTracker observed.*195\.47\.67\.228.*not uptime/,
+    /195\.47\.67\.228.*89\.185\.242\.231.*81\.0\.217\.175/i,
+  );
+  const zaparitSources = node("zaparit").sources;
+  assert.ok(
+    zaparitSources.some((source) =>
+      source.url.includes(
+        "/89.185.242.231:27019/CZ_Zaparit.cz__Small_Maps_-ImageBanners.html",
+      ),
+    ),
+  );
+  assert.ok(
+    zaparitSources.some((source) =>
+      source.url.includes("/81.0.217.175:27284/CZ_www.Zaparit.cz__Surf_.html"),
+    ),
+  );
+  assert.match(
+    zaparitSources.find((source) => source.url.includes("89.185.242.231"))
+      .label,
+    /title\/address observation only/,
   );
   link("agteam", "fakaheda", "partnership");
   link("aggressive-zone", "fakaheda", "partnership");
   link("aggressive-zone", "tweakgaming", "partnership");
-  link("gamers-germany", "aggressive-zone", "partnership");
+  const tweakgamingProvision = link("agteam", "tweakgaming", "partnership");
   assert.match(
-    node("gamers-germany").summary,
-    /remained independent.*GameME.*exchanged players/,
+    tweakgamingProvision.account,
+    /Tweakgaming providing servers to AGT around 2011.*own servers were struggling/i,
   );
+  assert.match(tweakgamingProvision.period, /Circa 2011.*owner-recalled/i);
+  link("gamers-germany", "agteam", "partnership");
+  assert.match(node("gamers-germany").summary, /remained independent/);
+  assert.match(node("gamers-germany").summary, /GameME/);
+  assert.match(node("gamers-germany").summary, /exchanged players/);
+  assert.match(node("gamers-germany").summary, /closed circa 2018/);
+  assert.match(node("gamers-germany").summary, /owner-recalled\/approximate/);
+  assert.match(node("gamers-germany").summary, /not publicly verified/);
   assert.match(
     node("tweakgaming").summary,
-    /GameTracker observed NL Tweakgaming.*2008–2012.*not inferred uptime/,
+    /GameTracker observed NL Tweakgaming/i,
+  );
+  assert.match(node("tweakgaming").summary, /2008–2012/);
+  assert.match(node("tweakgaming").summary, /not inferred uptime/);
+  assert.match(
+    node("tweakgaming").summary,
+    /providing servers to the community around 2011/i,
+  );
+  assert.match(node("tweakgaming").summary, /servers ended around 2012/i);
+  assert.match(node("tweakgaming").summary, /owner-recalled\/approximate/i);
+  assert.match(
+    node("tweakgaming").summary,
+    /GameTracker captures.*2008–2012.*do not establish continuous uptime/i,
   );
   assert.equal(node("tweakgaming").name, "NL Tweakgaming");
   assert.match(
     node("tweakgaming").period,
-    /Observed 2008–2012.*not inferred lifespan/,
+    /Observed 2008–2012.*archive capture range.*not inferred lifespan.*servers provided around 2011.*closure around 2012.*owner-recalled\/approximate/i,
   );
   assert.match(
     node("tweakgaming").summary,
-    /Jailbreak server.*Partnership, not merger/,
+    /Jailbreak server.*Partnership, not merger/i,
   );
 });
 

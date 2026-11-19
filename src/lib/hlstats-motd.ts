@@ -163,7 +163,9 @@ export function createHlstatsMotdHandler(options: {
     // not break the existing MOTD stats surface; never log identity or URL.
     try {
       await options.recordObservation?.(steamID, now());
-    } catch { /* best-effort durable observation, retried on future MOTD visits */ }
+    } catch {
+      /* best-effort durable observation, retried on future MOTD visits */
+    }
     const result = await load(steamID);
     if (!result.available)
       return fail(

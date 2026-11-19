@@ -3,6 +3,8 @@ import Layout from '../layouts/Layout.astro';
 import { Icon } from 'astro-icon/components';
 import MapRatings from '../components/MapRatings.astro';
 import ServerRules from '../components/ServerRules.astro';
+import HistoryNetwork from '../components/HistoryNetwork.astro';
+import { historyLinks, historyNodes } from '../data/server-history';
 import { translator } from '../lib/page-copy';
 import { localeFromPath } from '../lib/localized-content';
 import { isGameUserAgent, selectHomeLocale } from '../lib/motd-locale';
@@ -398,7 +400,127 @@ const motdGuides = pages
     )}
   </div>
 
+  {!isGame && (
+    <section
+      class="home-history panel fl-p-4/10"
+      aria-labelledby="history-title"
+      lang="en"
+      data-no-translate
+    >
+      <header class="history-heading">
+        <p class="eyebrow fl-mb-2/3">Our shared roots</p>
+        <h2 id="history-title" class="fl-text-lg/3xl font-bold fl-mb-3/5">
+          How did we get here? The history of our server base.
+        </h2>
+        <div class="history-lead">
+          <p>
+            Today's LaMaTeAm was shaped by the Czech and Slovak Counter-Strike
+            server scene. Returning after years away? You may recognise old
+            community names and friends, and feel at home with familiar
+            traditions. New here? There's a long story to discover.
+          </p>
+          <p>
+            Behind the scenes, friendships and partnerships helped shape the
+            server we play on today. Follow those connections below to see how a
+            relatively young server carries so much history.
+          </p>
+        </div>
+      </header>
+      <p class="history-hint">
+        Scroll sideways to explore the years. Focus the graph and use the arrow
+        keys if you're browsing with a keyboard.
+      </p>
+      <div class="history-graph">
+        <HistoryNetwork nodes={historyNodes} links={historyLinks} />
+      </div>
+      <footer class="history-credits" aria-labelledby="history-credits-title">
+        <h3 id="history-credits-title">Thanks to all who contributed</h3>
+        <dl>
+          <div>
+            <dt>devs</dt>
+            <dd translate="no">
+              muso.sk, netrunner, SimoleS, NewEdit, Majko, Yamiru, TotaLama,
+              MAX_007, Spirit, Mysteria, w4rezz, Dr!fter, Peace-Maker,
+              Francisco, Vojko
+            </dd>
+          </div>
+          <div>
+            <dt>owners</dt>
+            <dd translate="no">
+              crazy69, Pan Sokol, dejv, Matias, Nitro, Mats, Error, elkubik
+            </dd>
+          </div>
+          <div>
+            <dt>betatesters</dt>
+            <dd translate="no">
+              Zuzule, Ipos, ToNy, jakub, bl@ck j@ck, dnkcko, capseN, Imblik
+            </dd>
+          </div>
+          <div>
+            <dt>hosting</dt>
+            <dd translate="no">FakaHeda</dd>
+          </div>
+        </dl>
+      </footer>
+    </section>
+  )}
+
   <style>
+    .home-history {
+      min-width: 0;
+      margin-top: clamp(2rem, 4vw, 3rem);
+    }
+    .history-heading {
+      max-width: 76ch;
+    }
+    .history-lead {
+      display: grid;
+      gap: 0.75em;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+    .history-hint {
+      margin-block: clamp(1.25rem, 3vw, 2rem) 0.75rem;
+      color: var(--muted);
+      font-size: 0.8125rem;
+    }
+    .history-graph {
+      min-width: 0;
+      padding: 0.5rem;
+      border: 1px solid var(--edge);
+      border-radius: 12px;
+      background: #0b0c10;
+    }
+    .history-credits {
+      margin-top: clamp(1.5rem, 3vw, 2rem);
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--edge);
+      color: var(--muted);
+      font-size: 0.8125rem;
+      line-height: 1.7;
+    }
+    .history-credits h3 {
+      margin-bottom: 0.75rem;
+      color: var(--brand-accent);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .history-credits dl {
+      display: grid;
+      gap: 0.5rem;
+    }
+    .history-credits dl > div {
+      display: grid;
+      grid-template-columns: 6.5em minmax(0, 1fr);
+      gap: 0.75rem;
+    }
+    .history-credits dt {
+      font-weight: 600;
+    }
+    .history-credits dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
     .home-top-row {
       display: contents;
     }

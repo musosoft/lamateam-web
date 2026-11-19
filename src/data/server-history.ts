@@ -65,30 +65,31 @@ export const historyNetworkRows: {
   },
   {
     id: "zonax",
-    lane: "branch",
-    context: "Separate community · codebase received · merge circa 2013–14",
+    lane: "main",
+    context: "Separate community · joined main line first · codebase received",
+  },
+  {
+    id: "aggressive-zone",
+    lane: "main",
+    context:
+      "AGT + ZonaX · circa 2013–14; ZonaX joined main first for short interval, then AGZ formed; Steam group founded 12 Nov 2013",
   },
   {
     id: "vcielka",
     lane: "branch",
     context:
-      "Independent coexisted with ZonaX · continued until ~2015 · members joined Rivals",
-  },
-  {
-    id: "aggressive-zone",
-    lane: "main",
-    context: "AGT + ZonaX · circa 2013–14; Steam group founded 12 Nov 2013",
+      "Independent coexisted with ZonaX · Vcielka members joined ZonaX line before AGZ formation · continued until ~2015",
   },
   {
     id: "battleforce",
     lane: "branch",
     context:
-      "Earlier independent line · later joins main AGT→AGZ→Battleforce→Rivals→LaMaTeAm",
+      "Earlier independent line · later joins main AGT→AGZ→BattleForce→Rivals→LaMaTeAm",
   },
   {
-    id: "vega",
+    id: "old-vega",
     lane: "branch",
-    context: "Vega’s Zly Kocur · parallel, later ended and participants joined",
+    context: "Old VEGA · parallel, later ended and participants joined",
   },
   {
     id: "fakaheda",
@@ -99,7 +100,7 @@ export const historyNetworkRows: {
     id: "tweakgaming",
     lane: "branch",
     context:
-      "Observed 2008–2012 · GunGame/Surf · Jailbreak hosting partnership",
+      "Observed 2008–2012 · GunGame/Surf · Jailbreak hosting partnership · servers provided around 2011",
   },
   {
     id: "gamers-germany",
@@ -109,36 +110,36 @@ export const historyNetworkRows: {
   {
     id: "black-birds",
     lane: "branch",
-    context: "Improved by Muso · merges with Red Skillers, later into Rivals",
+    context: "Started when Red-Skillers ended (2015) · merges into Rivals",
   },
   {
     id: "red-skillers",
     lane: "branch",
     context:
-      "First joins Black Birds · later players move from main line · community moves to JZD",
+      "First joins St.Páni - Black Birds · later players move from main line · community moves to JZD",
   },
   {
     id: "rivals",
     lane: "main",
     context:
-      "Black Birds + Red Skillers · main line pauses around 2018 as players move to Red Skillers",
+      "St.Páni - Black Birds + Red-Skillers · main line pauses around 2018 as players move to Red-Skillers",
   },
   {
     id: "noobstyle",
     lane: "branch",
-    context: "Ended 2016 · players later joined Rivals.cz; move date unknown",
+    context: "Players joined main line before 2014 · observations through 2016",
   },
   {
     id: "zaparit",
     lane: "branch",
     context:
-      "Observed 2007–2015 · [CZ] www.Zaparit.cz · players joined AGZ/Battleforce line",
+      "Observed 2007–2015 · Zaparit.cz and title variants · players joined AGZ/BattleForce line",
   },
   {
     id: "games-community",
     lane: "branch",
     context:
-      "Merged into Aggressive Zone before Battleforce join · oral account",
+      "Merged into Aggressive Zone before BattleForce join · oral account",
   },
   {
     id: "avalon",
@@ -155,7 +156,7 @@ export const historyNetworkRows: {
     id: "jzd",
     lane: "branch",
     context:
-      "Red Skillers community moves here · continuation rejoins main as LaMaTeAm around 2024",
+      "Red-Skillers community moves here · continuation rejoins main as LaMaTeAm around 2024",
   },
   {
     id: "lamateam",
@@ -339,17 +340,17 @@ export const historyNodes: HistoryNode[] = [
     name: "Aggressive Zone",
     kind: "community",
     summary:
-      "AGT and the separate ZonaX community merged around 2013–14 into Aggressive Zone, according to the owner. Games Community existed before 2015 and merged into Aggressive Zone before the Battleforce join; this is oral only. Aggressive Zone joined Battleforce in September 2014 after organizational dispute, funding problems and lost IPs; it discontinued as Muso left the head role. Steam dates only the group foundation to 12 November 2013, and the tracker is only an identity snapshot.",
-    period: "Merge circa 2013–14 · Battleforce move Sep 2014 · closure undated",
+      "AGT and the separate ZonaX community merged around 2013–14 into Aggressive Zone, according to the owner. Games Community existed before 2015 and merged into Aggressive Zone before the BattleForce join; this is oral only. Aggressive Zone joined BattleForce in September 2014 after organizational dispute, funding problems and lost IPs; it discontinued as Muso left the head role. Steam dates only the group foundation to 12 November 2013, and the tracker is only an identity snapshot.",
+    period: "Merge circa 2013–14 · BattleForce move Sep 2014 · closure undated",
     sources: [groupSource, snapshotSource(identitySnapshots[3])],
     graph: true,
   },
   {
     id: "battleforce",
-    name: "Battleforce",
+    name: "BattleForce",
     kind: "server",
     summary:
-      "Battleforce existed earlier on its own server line and later merged/joined the main AGT→AGZ→Battleforce→Rivals→LaMaTeAm line. An Aggressive Zone announcement lists new Battleforce addresses for Dust2, Public and DeathMatch on 21 Sep 2014; this does not by itself establish an ownership transfer or a community merger.",
+      "BattleForce existed earlier on its own server line and later merged/joined the main AGT→AGZ→BattleForce→Rivals→LaMaTeAm line. An Aggressive Zone announcement lists new BattleForce addresses for Dust2, Public and DeathMatch on 21 Sep 2014; this does not by itself establish an ownership transfer or a community merger.",
     period:
       "Earlier own line · joins main line Sep 2014 · exact earlier origin unknown",
     sources: [battleforceSource],
@@ -360,7 +361,7 @@ export const historyNodes: HistoryNode[] = [
     name: "Rivals",
     kind: "community",
     summary:
-      "Black Birds and Red Skillers combined into one Rivals.cz community/server around 2015; neither remained separate. Around 2018, the main line paused as players moved to the reborn Red Skillers. The Red Skillers community later moved to JZD; JZD continued into LaMaTeAm, resuming the main line around 2024. The original Rivals server gradually shut down as credits ran out. Steam dates the group only to 24 July 2015. The undated Aggressive Zone About text directs people to Rivals, not proof of a direct server or ownership succession. The README’s retrospective 2008 refers to the code core under another name, not the Rivals brand.",
+      "St.Páni - Black Birds and Red-Skillers combined into one Rivals.cz community/server around 2015; neither remained separate. Around 2018, the main line paused as players moved to the reborn Red-Skillers. The Red-Skillers community later moved to JZD; JZD continued into LaMaTeAm, resuming the main line around 2024. The original Rivals server gradually shut down as credits ran out. Steam dates the group only to 24 July 2015. The undated Aggressive Zone About text directs people to Rivals, not proof of a direct server or ownership succession. The README's retrospective 2008 refers to the code core under another name, not the Rivals brand.",
     period:
       "Combined community circa 2015 · later joins main line · shutdown gradual, exact date unknown",
     sources: [rivalsGroupSource, groupSource],
@@ -418,31 +419,45 @@ export const historyNodes: HistoryNode[] = [
   oralNode(
     "vcielka",
     "Vcielka",
-    "Vcielka coexisted separately with ZonaX, continued from the ZonaX community after its merger with AGT/Aggressive Zone, and ended around 2015. Its members joined Rivals. This is not an ownership merger; the exact date is unknown.",
+    "Vcielka coexisted separately with ZonaX. Vcielka members joined ZonaX's line shortly before Aggressive Zone formed in circa 2013–14. Vcielka continued independently until around 2015 and ended without being absorbed. Its members joined Rivals. This is not an ownership merger.",
   ),
   oralNode(
-    "vega",
-    "Vega",
-    "Vega's Zly Kocur ran alongside Aggressive Zone, later ended and its participants joined. The exact date is unknown; no organizational merger or invented sequence is implied.",
+    "old-vega",
+    "Old VEGA",
+    "Old VEGA ran alongside Aggressive Zone, later ended and its participants joined. The exact date is unknown; no organizational merger or invented sequence is implied.",
   ),
   oralNode(
     "noobstyle",
-    "noobstyle.sk",
-    "noobstyle.sk ended in 2016 and its players joined Rivals.cz. The exact player-movement date is unknown; this was not an organizational merger.",
+    "NOOBSTYLE.SK",
+    "Players moved from NOOBSTYLE.SK to Aggressive Zone/main line before 2014. Server observations continued until 2016. The exact player-movement date is unknown; this was not an organizational merger.",
   ),
   {
     ...oralNode(
       "zaparit",
-      "[CZ] www.Zaparit.cz",
-      "GameTracker observed [CZ] www.Zaparit.cz on 195.47.67.228:27017 (2007–2008) and 195.47.67.228:27019 (2009–2015). The portal and server observations track a consistent title, not uptime. After Zaparit.cz servers ended, players joined the Aggressive Zone/Battleforce line. This is participant movement, not an organizational merger.",
+      "Zaparit.cz",
+      "GameTracker observed Zaparit.cz at 195.47.67.228:27017 (2007–2008) and 195.47.67.228:27019 (2009–2015). Game-Monitor captures ([CZ] Zaparit.cz [ Small Maps ] at 89.185.242.231:27019, [CZ] www.Zaparit.cz [ Surf ] at 81.0.217.175:27284) provide title/variant observations. These sources track the same community identity, not uptime. After Zaparit.cz servers ended, players joined the Aggressive Zone/BattleForce line. This is participant movement, not an organizational merger.",
     ),
+    sources: [
+      {
+        label:
+          "Game-Monitor: [CZ] Zaparit.cz [ Small Maps ] at 89.185.242.231:27019 (title/address observation only)",
+        url: "https://www.game-monitor.com/cstrike2_GameServer/89.185.242.231:27019/CZ_Zaparit.cz__Small_Maps_-ImageBanners.html",
+        kind: "document",
+      },
+      {
+        label:
+          "Game-Monitor: [CZ] www.Zaparit.cz [ Surf ] at 81.0.217.175:27284 (title/address observation only)",
+        url: "https://www.game-monitor.com/cstrike2_GameServer/81.0.217.175:27284/CZ_www.Zaparit.cz__Surf_.html",
+        kind: "document",
+      },
+    ],
     period: "Observed 2007–2015 · archive capture range, not inferred lifespan",
   },
   {
     ...oralNode(
       "games-community",
       "Games Community",
-      "Games Community existed before 2015 and merged into Aggressive Zone before Aggressive Zone's later Battleforce join. This lineage is oral; no exact date is established. The archived gamescommunity.net site shows a general community portal, not direct CS:S or merger evidence.",
+      "Games Community existed before 2015 and merged into Aggressive Zone before Aggressive Zone's later BattleForce join. This lineage is oral; no exact date is established. The archived gamescommunity.net site shows a general community portal, not direct CS:S or merger evidence.",
     ),
     sources: [gamesCommunity2013Source, gamesCommunity2016Source],
   },
@@ -457,7 +472,7 @@ export const historyNodes: HistoryNode[] = [
   oralNode(
     "gamers-germany",
     "Gamers of Germany",
-    "Gamers of Germany remained independent, hosted GameME, promoted the community and exchanged players. Collaboration does not imply an organizational merger; dates are unknown.",
+    "Gamers of Germany remained independent, hosted GameME, promoted the community and exchanged players. Collaboration does not imply an organizational merger. The owner recalls Gamers of Germany servers closed circa 2018; this is owner-recalled/approximate, not publicly verified. Start date and exact closure date remain unknown.",
   ),
   oralNode(
     "fakaheda",
@@ -469,24 +484,25 @@ export const historyNodes: HistoryNode[] = [
     ...oralNode(
       "tweakgaming",
       "NL Tweakgaming",
-      "GameTracker observed NL Tweakgaming (GunGame/Surf) 2008–2012. This is a capture range, not inferred uptime. The user recalls a tweakgaming.com partnership after the FakaHeda partnership. A separate NL server hosted the Aggressive Zone Jailbreak server. Partnership, not merger.",
+      "GameTracker observed NL Tweakgaming (GunGame/Surf) 2008–2012. This is a capture range, not inferred uptime. The owner recalls Tweakgaming providing servers to the community around 2011, during a period when its own servers were struggling; the original servers ended around 2012. This is owner-recalled/approximate, not publicly verified. GameTracker captures exist from 2008–2012 but do not establish continuous uptime or exact closure timing. The user recalls a tweakgaming.com partnership after the FakaHeda partnership. A separate NL server hosted the Aggressive Zone Jailbreak server. Partnership, not merger.",
     ),
-    period: "Observed 2008–2012 · archive capture range, not inferred lifespan",
+    period:
+      "Observed 2008–2012 · archive capture range, not inferred lifespan; servers provided around 2011, closure around 2012 (owner-recalled/approximate)",
   },
   oralNode(
     "black-birds",
-    "Black Birds",
-    "The user joined and improved Black Birds. Black Birds later merged with Red Skillers into Rivals.cz around 2015. Named among the rivals who collectively became friends in the user's account.",
+    "St.Páni - Black Birds",
+    "The user joined and improved St.Páni - Black Birds. St.Páni - Black Birds started when Red-Skillers ended around 2015. St.Páni - Black Birds later merged into Rivals.cz. Named among the rivals who collectively became friends in the user's account.",
   ),
   oralNode(
     "red-skillers",
-    "Red Skillers",
-    "An independent rival community. The user recalls Red Skillers copying servers and bans. Red Skillers first merged into Black Birds, which later merged into Rivals. After Red Skillers copied and reopened our server, players left the main line for Red Skillers around 2018. The Red Skillers community later moved/merged into JZD during the off-main interval ending around 2024.",
+    "Red-Skillers",
+    "An independent rival community. The user recalls Red-Skillers copying servers and bans. Red-Skillers first merged into St.Páni - Black Birds, which later merged into Rivals. After Red-Skillers copied and reopened our server, players left the main line for Red-Skillers around 2018. The Red-Skillers community later moved/merged into JZD during the off-main interval ending around 2024.",
   ),
   oralNode(
     "jzd",
     "JZD",
-    "Used a partial fork of rivals-srcds (half or more of the base), not maintained by the user. The Red Skillers community moved/merged into JZD. JZD continued into LaMaTeAm, which resumed the main line around 2024 and continues to present/future.",
+    "Used a partial fork of rivals-srcds (half or more of the base), not maintained by the user. The Red-Skillers community moved/merged into JZD. JZD continued into LaMaTeAm, which resumed the main line around 2024 and continues to present/future.",
   ),
   {
     ...oralNode(
@@ -565,7 +581,7 @@ export const historyLinks: HistoryLink[] = [
     "games-community",
     "aggressive-zone",
     "merge",
-    "Games Community merged into Aggressive Zone before Aggressive Zone joined Battleforce. This is owner-recalled lineage; the archived Games Community site does not document the merger or a CS:S server.",
+    "Games Community merged into Aggressive Zone before Aggressive Zone joined BattleForce. This is owner-recalled lineage; the archived Games Community site does not document the merger or a CS:S server.",
     "Before Sep 2014 · approximate owner account",
   ),
   oralLink(
@@ -577,40 +593,40 @@ export const historyLinks: HistoryLink[] = [
   ),
   oralLink(
     "vcielka",
-    "aggressive-zone",
+    "zonax",
     "participant-move",
-    "Vcielka coexisted separately with ZonaX, continued from the ZonaX community after its merger with AGT/Aggressive Zone, and ended around 2015. Members joined Rivals. This is not a takeover or organizational merger.",
+    "Vcielka members joined ZonaX's line shortly before Aggressive Zone formed in circa 2013–14. Vcielka continued independently until around 2015 and ended without being absorbed. Members later joined Rivals. This is not a takeover or organizational merger.",
   ),
   oralLink(
-    "vega",
+    "old-vega",
     "aggressive-zone",
     "parallel",
-    "Vega's Zly Kocur ran alongside Aggressive Zone as a separate community before ending.",
+    "Old VEGA ran alongside Aggressive Zone as a separate community before ending.",
   ),
   oralLink(
-    "vega",
-    "aggressive-zone",
+    "old-vega",
+    "black-birds",
     "participant-move",
-    "Vega's Zly Kocur ran alongside Aggressive Zone, later ended and participants joined. Exact date unknown; not an organizational merger.",
+    "Old VEGA ran alongside Aggressive Zone, later ended and participants joined. Exact date unknown; not an organizational merger.",
   ),
   oralLink(
     "noobstyle",
-    "rivals",
+    "aggressive-zone",
     "participant-move",
-    "noobstyle.sk ended in 2016 and its players joined Rivals.cz. The exact player-movement date is unknown; no organizational merger is implied.",
-    "After closure in 2016 · exact player-movement date unknown",
+    "Players moved from NOOBSTYLE.SK to Aggressive Zone/the main line before 2014. Server observations continued until 2016. The exact player-movement date is unknown; no organizational merger is implied.",
+    "Before 2014 · owner-recalled movement; observations continued until 2016",
   ),
   oralLink(
     "zaparit",
     "battleforce",
     "participant-move",
-    "After Zaparit.cz's servers ended, its players joined the Aggressive Zone/Battleforce line. The date is unknown; this is participant movement, not an organizational merger.",
+    "After Zaparit.cz's servers ended, its players joined the Aggressive Zone/BattleForce line. The date is unknown; this is participant movement, not an organizational merger.",
   ),
   oralLink(
     "gamers-germany",
-    "aggressive-zone",
+    "agteam",
     "partnership",
-    "Gamers of Germany remained independent, hosted GameME, promoted the community and exchanged players. Dates unknown; no merger is asserted.",
+    "Gamers of Germany remained independent, hosted GameME, promoted the community and exchanged players. Closure circa 2018 (owner-recalled/approximate, not publicly verified); no merger is asserted.",
   ),
   oralLink(
     "aggressive-zone",
@@ -625,43 +641,50 @@ export const historyLinks: HistoryLink[] = [
     "The user recalls a later tweakgaming.com partnership, after the FakaHeda partnership. Later expresses remembered relative order only, not an invented year, exclusive agreement or ownership merger.",
   ),
   oralLink(
+    "agteam",
+    "tweakgaming",
+    "partnership",
+    "The owner recalls Tweakgaming providing servers to AGT around 2011 while Tweakgaming's own servers were struggling. This is approximate oral history, not a code contribution or merger.",
+    "Circa 2011 · owner-recalled server provision",
+  ),
+  oralLink(
     "aggressive-zone",
     "red-skillers",
     "rival",
-    "Red Skillers was an independent rival; the owner recalls it copying servers and bans. This is an attributed recollection, not independently verified misconduct.",
+    "Red-Skillers was an independent rival; the owner recalls it copying servers and bans. This is an attributed recollection, not independently verified misconduct.",
   ),
   oralLink(
     "battleforce",
     "red-skillers",
     "participant-move",
-    "Players and admins moved during Battleforce-era network/IP problems. This is participant movement, not a transfer of community ownership.",
+    "Players and admins moved during BattleForce-era network/IP problems. This is participant movement, not a transfer of community ownership.",
   ),
   oralLink(
     "red-skillers",
     "black-birds",
     "merge",
-    "Red Skillers first merged into Black Birds, which later merged into Rivals around 2015. The exact sequence and date are recalled, not independently verified.",
-    "Undated · sequence recalled, not dated",
+    "St.Páni - Black Birds began when Red-Skillers ended around 2015, according to the owner; St.Páni - Black Birds later merged into Rivals. The transition and sequence are recalled, not independently verified.",
+    "Circa 2015 · St.Páni - Black Birds starts as Red-Skillers ends; owner account",
   ),
   oralLink(
     "black-birds",
     "rivals",
     "merge",
-    "Black Birds later merged into Rivals around 2015. The exact sequence and date are recalled, not independently verified.",
+    "St.Páni - Black Birds later merged into Rivals around 2015. The exact sequence and date are recalled, not independently verified.",
     "Circa 2015 · approximate",
   ),
   oralLink(
     "rivals",
     "red-skillers",
     "participant-move",
-    "After Red Skillers copied our server and was reborn, the main line paused around 2018–2024 as players left to play at Red Skillers. This is participant movement, not a community merger.",
+    "After Red-Skillers copied our server and was reborn, the main line paused around 2018–2024 as players left to play at Red-Skillers. This is participant movement, not a community merger.",
     "Circa 2018–2024 · broad interval, approximate",
   ),
   oralLink(
     "red-skillers",
     "jzd",
     "merge",
-    "Following the player movement period, the Red Skillers community moved/merged into JZD. This represents the community moving, not just participant flow.",
+    "Following the player movement period, the Red-Skillers community moved/merged into JZD. This represents the community moving, not just participant flow.",
     "After circa 2018 · before LaMaTeAm returns to main line around 2024",
   ),
   oralLink(
@@ -695,7 +718,7 @@ export const historyLinks: HistoryLink[] = [
     kind: "community-join",
     period: "Sep 2014 · oral account; 21 Sep addresses announced",
     account:
-      "The owner recalls Aggressive Zone joining Battleforce after organizational dispute, funding problems and lost IPs. Aggressive Zone discontinued as Muso left the head role; its exact closure date is unknown. The announcement separately dates only the new Battleforce addresses to 21 September, not the dispute or closure.",
+      "The owner recalls Aggressive Zone joining BattleForce after organizational dispute, funding problems and lost IPs. Aggressive Zone discontinued as Muso left the head role; its exact closure date is unknown. The announcement separately dates only the new BattleForce addresses to 21 September, not the dispute or closure.",
     sources: [],
     provenance: oralProvenance,
   },
@@ -750,8 +773,8 @@ export const historyEvents: HistoryEvent[] = [
   },
   oralEvent(
     "bedroom-origin",
-    "Bedroom hosting and an early admin pack",
-    "Around 2006, Muso ran the first public bedroom-hosted CS:S server. The year is approximate; no precise admin-tool adoption date is claimed.",
+    "Bedroom hosting and early admin tools",
+    "Around 2006, Muso ran the first public bedroom-hosted CS:S server and provided servers to the community. The year is approximate; no precise admin-tool adoption date is claimed.",
     ["bedroom"],
     2006,
     "Around 2006 · approximate",
@@ -771,9 +794,9 @@ export const historyEvents: HistoryEvent[] = [
     id: "battleforce-addresses",
     year: 2014,
     dateLabel: "21 Sep 2014",
-    title: "Battleforce server addresses announced",
+    title: "BattleForce server addresses announced",
     account:
-      "Aggressive Zone announces new Dust2, Public and DeathMatch addresses under Battleforce. The post is signed muso.sk; this does not establish an admin tenure.",
+      "Aggressive Zone announces new Dust2, Public and DeathMatch addresses under BattleForce. The post is signed muso.sk; this does not establish an admin tenure.",
     nodeIds: ["aggressive-zone", "battleforce"],
     sources: [battleforceSource],
     provenance: "Primary dated announcement",
@@ -796,7 +819,7 @@ export const historyEvents: HistoryEvent[] = [
     dateLabel: "17 Oct 2015 · monitoring snapshot",
     title: "Game-Monitor lists a Rivals.cz public server",
     account:
-      "The dated Game-Monitor server index lists [CZ/SK] RIVALS.CZ | Public. This is a point-in-time server observation, not evidence of the server's launch date or the Black Birds/Red Skillers merger date.",
+      "The dated Game-Monitor server index lists [CZ/SK] RIVALS.CZ | Public. This is a point-in-time server observation, not evidence of the server's launch date or the St.Páni - Black Birds/Red-Skillers merger date.",
     nodeIds: ["rivals"],
     sources: [
       {
@@ -845,7 +868,7 @@ export const historyEvents: HistoryEvent[] = [
     "The user recalls additions, players and admins joining or partnering, and provider partnerships in the wider community thread. The specific associations are recorded below. Their dates are unknown; participation and partnership do not establish shared ownership or mergers.",
     [
       "vcielka",
-      "vega",
+      "old-vega",
       "noobstyle",
       "zaparit",
       "gamers-germany",
@@ -860,21 +883,21 @@ export const historyEvents: HistoryEvent[] = [
   ),
   oralEvent(
     "vcielka-joining",
-    "Vcielka continues until ~2015 and members join Rivals",
-    "Vcielka coexisted separately with ZonaX, continued from the ZonaX community after its merger with AGT/Aggressive Zone, and ended around 2015. Members joined Rivals. The exact date is unknown; this does not imply acquisition of the former community.",
-    ["vcielka", "aggressive-zone", "rivals"],
+    "Vcielka members join ZonaX line before AGZ formation, continue independently until ~2015",
+    "Vcielka members joined ZonaX's line shortly before Aggressive Zone formed in circa 2013–14. Vcielka continued independently until around 2015 and ended without being absorbed. Its members joined Rivals. The exact date is unknown; this does not imply acquisition of the former community.",
+    ["vcielka", "zonax", "aggressive-zone", "rivals"],
   ),
   oralEvent(
     "subsequent-additions",
-    "Vega and noobstyle.sk: subsequent additions",
-    "Vega's Zly Kocur ran alongside Aggressive Zone, later ended and participants joined. Separately, noobstyle.sk ended in 2016 and its players joined Rivals.cz; the exact movement date is unknown. No organizational merger or imposed sequence is implied.",
-    ["vcielka", "vega", "noobstyle", "aggressive-zone"],
+    "Old Vega and NOOBSTYLE.SK: separate community additions",
+    "Old Vega's Zly Kocur ran alongside Aggressive Zone, later ended and participants joined. Separately, NOOBSTYLE.SK players moved to the Aggressive Zone/main line before 2014; server observations continued until 2016. No organizational merger or imposed sequence is implied.",
+    ["vcielka", "old-vega", "noobstyle", "aggressive-zone"],
   ),
   oralEvent(
     "admins-players-collaboration",
     "Admins and players join or partner",
-    "Zaparit players joined the Aggressive Zone/Battleforce line after its servers ended; the date is unknown. Gamers of Germany remained independent and exchanged players, hosted GameME and promoted the community. These are distinct participant movement and partnership claims, not ownership mergers.",
-    ["zaparit", "gamers-germany", "battleforce"],
+    "Zaparit players joined the Aggressive Zone/BattleForce line after its servers ended; the date is unknown. Gamers of Germany remained independent and exchanged players, hosted GameME and promoted the community. These are distinct participant movement and partnership claims, not ownership mergers.",
+    ["zaparit", "gamers-germany", "battleforce", "agteam"],
   ),
   oralEvent(
     "fakaheda-partnership",
@@ -915,23 +938,23 @@ export const historyEvents: HistoryEvent[] = [
   oralEvent(
     "games-community-agz-merge",
     "Games Community merges into Aggressive Zone",
-    "Games Community merged into Aggressive Zone before the September 2014 Battleforce join, according to the owner. The transition date and CS:S-specific documentary evidence are not established.",
+    "Games Community merged into Aggressive Zone before the September 2014 BattleForce join, according to the owner. The transition date and CS:S-specific documentary evidence are not established.",
     ["games-community", "aggressive-zone", "battleforce"],
     null,
     "Before Sep 2014 · owner account; exact date unknown",
   ),
   oralEvent(
     "battleforce-joining",
-    "Aggressive Zone joins Battleforce",
-    "After organizational dispute, funding problems and lost IPs, Aggressive Zone joined Battleforce in September 2014. Aggressive Zone discontinued as Muso left the head role; the exact closure date is unknown. Player/admin movement occurred during the network/IP problems.",
+    "Aggressive Zone joins BattleForce",
+    "After organizational dispute, funding problems and lost IPs, Aggressive Zone joined BattleForce in September 2014. Aggressive Zone discontinued as Muso left the head role; the exact closure date is unknown. Player/admin movement occurred during the network/IP problems.",
     ["aggressive-zone", "battleforce", "red-skillers"],
     2014,
     "Sep 2014 · joining; closure date unknown",
   ),
   oralEvent(
     "rivals-merge",
-    "Black Birds and Red Skillers become one Rivals.cz",
-    "Muso improved Black Birds, reusing a trimmed customized base from the short-lived Noaco side project. Red Skillers first merged into Black Birds, which later combined into one Rivals.cz community/server around 2015; neither remained separate. The exact sequence and date are recalled, not independently verified.",
+    "St.Páni - Black Birds and Red-Skillers become one Rivals.cz",
+    "Muso improved St.Páni - Black Birds, reusing a trimmed customized base from the short-lived Noaco side project. According to the owner, St.Páni - Black Birds began when Red-Skillers ended around 2015; St.Páni - Black Birds later combined into one Rivals.cz community/server, and neither remained separate. The exact dates are recalled, not independently verified.",
     ["red-skillers", "black-birds", "rivals"],
     2015,
     "Circa 2015 · approximate",
@@ -950,8 +973,8 @@ export const historyEvents: HistoryEvent[] = [
   },
   oralEvent(
     "red-skillers-reopen",
-    "Main line pauses as players move to reborn Red Skillers",
-    "After Red Skillers copied and reopened our server, players left the main line to play there around 2018. The main route stays off-line through the Red Skillers-to-JZD transition before LaMaTeAm resumes it around 2024. This is owner-recalled sequence and approximate timing.",
+    "Main line pauses as players move to reborn Red-Skillers",
+    "After Red-Skillers copied and reopened our server, players left the main line to play there around 2018. The main route stays off-line through the Red-Skillers-to-JZD transition before LaMaTeAm resumes it around 2024. This is owner-recalled sequence and approximate timing.",
     ["red-skillers", "jzd", "lamateam"],
     null,
     "Around 2018–2024 · off-main interval, approximate",
@@ -959,18 +982,18 @@ export const historyEvents: HistoryEvent[] = [
   oralEvent(
     "jzd-joins-main",
     "JZD continues into LaMaTeAm; main line resumes",
-    "The Red Skillers community moved/merged into JZD. JZD then continued into LaMaTeAm, which resumed the main line around 2024 and continues to the present and future. This is approximate owner-recalled chronology, not proof of uninterrupted technical uptime.",
+    "The Red-Skillers community moved/merged into JZD. JZD then continued into LaMaTeAm, which resumed the main line around 2024 and continues to the present and future. This is approximate owner-recalled chronology, not proof of uninterrupted technical uptime.",
     ["jzd", "lamateam"],
     2024,
     "Around 2024 · approximate main-line resumption",
   ),
   oralEvent(
     "noobstyle-closure",
-    "noobstyle.sk closes; players later join",
-    "noobstyle.sk ended in 2016 and its players later joined Rivals.cz. The closure year is known, but the exact player-movement date is not; this was not an organizational merger.",
-    ["noobstyle", "rivals"],
+    "NOOBSTYLE.SK observations end in 2016",
+    "NOOBSTYLE.SK observations continued until 2016 after its players moved to Aggressive Zone/the main line before 2014. The exact player-movement date is unknown; this was not an organizational merger.",
+    ["noobstyle"],
     2016,
-    "2016 · closure; player join date unknown",
+    "2016 · observations end; player move date unknown",
   ),
   {
     id: "rivals-repository-created",

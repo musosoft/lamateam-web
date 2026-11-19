@@ -115,8 +115,8 @@ test(
       );
       const maps = [
         ...new Map(
-          JSON.parse(source("data/maps.generated.json")).items
-            .filter((item) => item.map !== "min_players")
+          JSON.parse(source("data/maps.generated.json"))
+            .items.filter((item) => item.map !== "min_players")
             .map((item) => [item.map, item]),
         ).values(),
       ];

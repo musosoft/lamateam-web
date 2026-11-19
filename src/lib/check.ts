@@ -497,9 +497,12 @@ export function createCheckHandlers(deps: Dependencies) {
     if (limit.success !== true) fail(limit.success === false ? 429 : 503);
     if (action === "roster") return ingest(request);
     if (action === "source-roster") return ingest(request, true);
-    if (action === "players") return json(await latestCheckPlayers(deps.kv, now()));
+    if (action === "players")
+      return json(await latestCheckPlayers(deps.kv, now()));
     if (action === "search") {
-      const body = object(parseJSON(await boundedText(request.body, 1024, 413)));
+      const body = object(
+        parseJSON(await boundedText(request.body, 1024, 413)),
+      );
       fields(body, ["communityId"]);
       const id = checkSteamId(body.communityId);
       if (!id) fail(400);

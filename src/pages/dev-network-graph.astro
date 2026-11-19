@@ -1,0 +1,39 @@
+---
+// Temporary local-only preview route for the standalone network graph.
+import HistoryNetwork from '../components/HistoryNetwork.astro';
+import { historyLinks, historyNodes } from '../data/server-history';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Network graph preview</title>
+  </head>
+  <body>
+    <main>
+      <HistoryNetwork nodes={historyNodes} links={historyLinks} />
+    </main>
+  </body>
+</html>
+
+<style>
+  :global(*) {
+    box-sizing: border-box;
+  }
+
+  :global(body) {
+    margin: 0;
+    padding: 24px;
+    background: #0b0c10;
+    color: #e4e8f0;
+    font-family: system-ui, sans-serif;
+  }
+
+  main {
+    width: 100%;
+    max-width: none;
+    margin-inline: auto;
+  }
+</style>
