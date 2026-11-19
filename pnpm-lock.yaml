@@ -2015,8 +2015,8 @@ packages:
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
-  colord@2.13.0:
-    resolution: {integrity: sha512-2g8RPH6UvoD1ZXYmccAuo0zfMw4mxqzXbeToeVoMSm6na0QEDXggahcZdlTFnFdahlV3I158ipRb2AIvCcwiAQ==}
+  colord@2.14.0:
+    resolution: {integrity: sha512-eSdMel9EBvdFxnchObp7gljRoqYQLr+zXhaxjkym7syVphw1FIhfQwgsA5Bv3jArflZPJEa1rmQtGpa7NRc7Rw==}
 
   comma-separated-tokens@2.0.3:
     resolution: {integrity: sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==}
@@ -2417,8 +2417,8 @@ packages:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
 
-  js-base64@3.9.6:
-    resolution: {integrity: sha512-LjkzbLtU6Lx6fjXMYGEACEB7rdtqZtxkBe9aS1ZpDNUyWgUivw3yBEIhQ37OVygJYRt+C+9e9fVT8PpFzH2Hww==}
+  js-base64@3.9.7:
+    resolution: {integrity: sha512-UT2XYOCbXOXYoymbytretRDFnb6E6vYPqC1blehA/alnG6vRC0mNTQ6ijXYAPtiCG9o1FDNJXJvQtCwbChFDRQ==}
 
   js-tokens@9.0.1:
     resolution: {integrity: sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==}
@@ -4185,7 +4185,7 @@ snapshots:
     dependencies:
       '@libsql/core': 0.18.0
       '@libsql/hrana-client': 0.10.0
-      js-base64: 3.9.6
+      js-base64: 3.9.7
       libsql: 0.5.29
       promise-limit: 2.7.0
     transitivePeerDependencies:
@@ -4194,7 +4194,7 @@ snapshots:
 
   '@libsql/core@0.18.0':
     dependencies:
-      js-base64: 3.9.6
+      js-base64: 3.9.7
 
   '@libsql/darwin-arm64@0.5.29':
     optional: true
@@ -4205,7 +4205,7 @@ snapshots:
   '@libsql/hrana-client@0.10.0':
     dependencies:
       '@libsql/isomorphic-ws': 0.1.5
-      js-base64: 3.9.6
+      js-base64: 3.9.7
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -4956,7 +4956,7 @@ snapshots:
 
   color-name@1.1.4: {}
 
-  colord@2.13.0: {}
+  colord@2.14.0: {}
 
   comma-separated-tokens@2.0.3: {}
 
@@ -5359,7 +5359,7 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  js-base64@3.9.6: {}
+  js-base64@3.9.7: {}
 
   js-tokens@9.0.1: {}
 
@@ -5915,7 +5915,7 @@ snapshots:
       '@csstools/media-query-list-parser': 5.0.3(@csstools/css-parser-algorithms@4.0.3(@csstools/css-tokenizer@4.0.3))(@csstools/css-tokenizer@4.0.3)
       '@csstools/selector-resolve-nested': 4.0.2(postcss-selector-parser@7.2.1)
       '@csstools/selector-specificity': 6.0.1(postcss-selector-parser@7.2.1)
-      colord: 2.13.0
+      colord: 2.14.0
       cosmiconfig: 10.0.1
       css-tree: 3.2.1
       ignore: 7.0.16
